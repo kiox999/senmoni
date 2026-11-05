@@ -807,6 +807,9 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 .subjcard .sp b{color:var(--ink);font-weight:800}
 .subjcard .sarrow{position:absolute;right:16px;top:18px;font:700 16px var(--sans);color:var(--soft)}
 .subjcard.new .sk::after{content:"NEW";margin-left:8px;background:var(--accent);color:var(--accentInk);border-radius:6px;padding:1px 6px;font-size:9px;letter-spacing:.08em}
+.hubtools{display:flex;gap:10px;margin:14px 0 0}
+.hubtool{flex:1;font:600 13px var(--sans);padding:12px 8px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.hubtool:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #hub .hubnote{font:400 11.5px/1.6 var(--sans);color:var(--soft);margin-top:18px}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--soft);font:600 13px var(--mono);z-index:50}
 .hide{display:none !important}
@@ -828,6 +831,10 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
   <h1>専門医試験 演習</h1>
   <div class="hubsub">科目を選んでください。学習履歴・段位・復習予定は科目ごとに別々に保存されます。</div>
   <div id="hubCards"></div>
+  <div class="hubtools">
+    <button class="hubtool" type="button" data-hubact="settings">見た目・音の設定</button>
+    <button class="hubtool" type="button" data-hubact="tut">使い方を見る</button>
+  </div>
   <div class="hubnote">ヘッダー右上の「科目切替」からいつでも他の科目へ移動できます。</div>
 </div>
 <div id="loading" class="hide">読み込み中…</div>
@@ -872,6 +879,9 @@ var S = load();
 function load(){
   var d = { theme:'auto', cats:CATS.slice(), count:10, mode:'random', qtype:'all', shadow:false, sound:false, soundVol:0.7, rank:0, examLog:[], xp:0, xpTotal:0, palette:'default', owned:['default'], skin:'default', ownedSkins:['default'], pack:'bell', ownedPacks:['bell'], prog:{}, hist:{}, log:[], marks:{}, tutSeen:0, chicken:0, timeatk:0, taMin:10, bmNames:{1:'セット1',2:'セット2',3:'セット3'}, spacing:{lowMin:10, mid:2, high:9}, fontsize:'md', fontfamily:'default', feedback:[], dailyGoal:20, session:null };
   try{ var r = JSON.parse(localStorage.getItem(K)); if(r) for(var k in r) d[k]=r[k]; }catch(e){}
+  /* 見た目・音・チュートリアル既読は全科目で共通。科目ごとの学習データとは分けて保存する */
+  var SHARED_KEYS = ['theme','fontsize','fontfamily','sound','soundVol','tutSeen'];
+  try{ var g = JSON.parse(localStorage.getItem('board-global-v1')); if(g) for(var sk in g) if(SHARED_KEYS.indexOf(sk)>=0) d[sk]=g[sk]; }catch(e){}
   if(!d.cats || !d.cats.length) d.cats = CATS.slice();
   d.cats = d.cats.filter(function(c){ return CATS.indexOf(c) >= 0; });   /* 旧バージョンの分野名など無効値を除去 */
   if(!d.cats.length) d.cats = CATS.slice();   /* サニタイズの結果すべて無効だった場合は全選択に戻す */
@@ -906,7 +916,7 @@ function load(){
   return d;
 }
 var saveTimer=null;
-function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} },80); }
+function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} try{ var g={}; ['theme','fontsize','fontfamily','sound','soundVol','tutSeen'].forEach(function(k){ g[k]=S[k]; }); localStorage.setItem('board-global-v1', JSON.stringify(g)); }catch(e){} },80); }
 
 var PALETTES = [
   { id:'default',   name:'スタンダード', cost:0,     sw:'#1B5FC1', note:'最初からある色' },
@@ -3638,9 +3648,10 @@ function renderSettings(){
 applyTheme();
 applyFont();
 updateHeader();
-go('home');
-/* 初回起動時のみ使い方を表示する */
-if(!S.tutSeen) setTimeout(showTutorial, 400);
+var START = window.BOARD_START || {};
+go(START.view || 'home');
+/* 初回起動時（全科目で1回）のみ使い方を表示する。ホームの「使い方」からは常に表示する */
+if(START.tut || !S.tutSeen) setTimeout(showTutorial, 400);
 }
 </script>
 
@@ -3652,7 +3663,7 @@ if(!S.tutSeen) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "8e5f7e851c";
+<script>window.BOARD_BUILD = "09cb64ad0b";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -3737,8 +3748,9 @@ function renderHub(){
   document.getElementById('app').classList.add('hide');
   document.getElementById('loading').classList.add('hide');
 }
-function loadSubject(id){
+function loadSubject(id, start){
   var s = byId(id); if(!s){ renderHub(); return; }
+  window.BOARD_START = start || {};
   document.getElementById('hub').classList.add('hide');
   document.getElementById('loading').classList.remove('hide');
   document.title = s.name + ' 演習';
@@ -3753,6 +3765,12 @@ function loadSubject(id){
   sc.onerror = function(){ alert('問題データの読み込みに失敗しました（'+s.name+'）。通信状況を確認して再度お試しください。'); try{ localStorage.removeItem(SKEY); }catch(e){} renderHub(); };
   document.body.appendChild(sc);
 }
+document.querySelector('.hubtools').addEventListener('click', function(e){
+  var b = e.target.closest('[data-hubact]'); if(!b) return;
+  var last = null; try{ last = localStorage.getItem(SKEY); }catch(err){}
+  var id = (last && byId(last)) ? last : 'naika';
+  loadSubject(id, b.dataset.hubact === 'tut' ? {tut:true} : {view:'settings'});
+});
 document.getElementById('hubCards').addEventListener('click', function(e){
   var b = e.target.closest('[data-subj]'); if(!b) return;
   try{ localStorage.setItem(SKEY, b.dataset.subj); }catch(err){ loadSubject(b.dataset.subj); return; }

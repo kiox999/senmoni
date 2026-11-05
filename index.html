@@ -1183,7 +1183,7 @@ function audioCtx(){
       /* --- マスターチェーン --- */
       aMaster = actx.createGain(); aMaster.gain.value = 1;
       var lp = actx.createBiquadFilter();      /* 高域のキツさを落とす */
-      lp.type = 'lowpass'; lp.frequency.value = (SUBJ.sound === 'b' ? 5200 : 4200); lp.Q.value = 0.4;
+      lp.type = 'lowpass'; lp.frequency.value = (SUBJ.sound === 'c' ? 4800 : SUBJ.sound === 'b' ? 5200 : 4200); lp.Q.value = 0.4;
       var shelf = actx.createBiquadFilter();   /* 中低域に少し厚みを */
       shelf.type = 'lowshelf'; shelf.frequency.value = 320; shelf.gain.value = 2.5;
       var comp = actx.createDynamicsCompressor();
@@ -1411,7 +1411,43 @@ var SND_B = {
     tone(1567.98, 0.055,{dur:0.44, vol:0.34, wet:1.1});
   }
 };
-var SND = (SUBJ.sound === 'b') ? SND_B : SND_A;
+var SND_C = {
+  correct: function(){
+    tone(880, 0,    {dur:0.12, vol:0.40, parts:[[1,1],[2,0.12]]});
+    tone(1318.51, 0.09, {dur:0.26, vol:0.42, parts:[[1,1],[2,0.10]], wet:0.5});
+  },
+  wrong: function(){
+    tone(329.63, 0,    {dur:0.16, vol:0.36, parts:[[1,1],[2,0.10]]});
+    tone(246.94, 0.12, {dur:0.30, vol:0.34, parts:[[1,1],[2,0.08]]});
+  },
+  combo: function(step){
+    var s = Math.min(4, Math.max(0, step||0));
+    var idx = [0,2,4,7,9][s];
+    tone(pt(idx), 0, {dur:0.14, vol:0.44, parts:[[1,1],[2,0.12]]});
+    tone(pt(idx+4), 0.07, {dur:0.14, vol:0.40, parts:[[1,1],[2,0.12]]});
+    if(s>=2) tone(pt(idx+7), 0.14, {dur:0.22, vol:0.36, wet:0.9});
+    if(s>=4) tone(pt(idx+12), 0.24, {dur:0.5, vol:0.30, wet:1.2});
+  },
+  broke: function(){
+    tone(880, 0, {dur:0.45, vol:0.40, drop:0.45, parts:[[1,1],[2,0.12]]});
+  },
+  pass: function(){
+    [659.25, 830.61, 987.77, 1318.51].forEach(function(f,i){
+      tone(f, i*0.08, {dur: i===3?0.9:0.22, vol: i===3?0.42:0.36, wet:0.9});
+    });
+    noise(0, {f:6000, q:2.2, dur:0.04, vol:0.10, wet:0.3});
+  },
+  fail: function(){
+    tone(293.66, 0,    {dur:0.45, vol:0.36, parts:[[1,1],[2,0.12]]});
+    tone(196.00, 0.22, {dur:0.8,  vol:0.32, parts:[[1,1],[2,0.10]]});
+  },
+  buy: function(){
+    noise(0, {f:7000, q:3, dur:0.03, vol:0.14, wet:0.2});
+    tone(1318.51, 0.02, {dur:0.12, vol:0.36});
+    tone(1760, 0.07, {dur:0.30, vol:0.30, wet:1.0});
+  }
+};
+var SND = (SUBJ.sound === 'c') ? SND_C : (SUBJ.sound === 'b') ? SND_B : SND_A;
 
 function playSnd(name, arg){
   if(!S.sound) return;
@@ -3616,7 +3652,7 @@ if(!S.tutSeen) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "9e6cf5aead";
+<script>window.BOARD_BUILD = "8e5f7e851c";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -3674,7 +3710,7 @@ var SUBJECTS = [
    desc:'周産期・内分泌・感染症・遺伝など18分野。画像問題あり。',
    catLetter:{"消化管":"A","肝・胆・膵":"B","循環器":"C","内分泌・代謝":"D","腎・体液":"E","アレルギー・免疫":"F","血液・腫瘍":"G","感染症・予防接種":"H","呼吸器":"I","神経":"J","中毒・救急":"K","総論":"L","遺伝・発達":"M","周産期・新生児":"N","皮膚科":"O","精神科":"P","泌尿器":"Q","公衆衛生":"R"}},
   {id:'kyukyu', short:'救急科', name:'救急科専門医試験', kicker:'EMERGENCY MED BOARD PREP', title:'救急科 演習',
-   exam:'救急科専門医試験', multi:'2つ選べ', phStudy:'敗血症、熱中症', phSearch:'心停止', sound:'a', isNew:true,
+   exam:'救急科専門医試験', multi:'2つ選べ', phStudy:'敗血症、熱中症', phSearch:'心停止', sound:'c', isNew:true,
    desc:'蘇生・外傷・中毒・環境障害・災害医療・法規など14分野。',
    catLetter:{"心肺蘇生・気道管理": "A", "ショック・循環管理": "B", "呼吸不全・人工呼吸管理": "C", "外傷": "D", "熱傷・電撃傷・化学損傷": "E", "中毒": "F", "環境障害": "G", "神経救急": "H", "感染症・敗血症": "I", "消化器・腎・代謝救急": "J", "小児・産科・高齢者救急": "K", "精神科救急・特殊病態": "L", "災害医療・救急医療体制・法規": "M", "救急検査・画像・手技": "N"}}
 ];

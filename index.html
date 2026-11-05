@@ -879,8 +879,8 @@ var S = load();
 function load(){
   var d = { theme:'auto', cats:CATS.slice(), count:10, mode:'random', qtype:'all', shadow:false, sound:false, soundVol:0.7, rank:0, examLog:[], xp:0, xpTotal:0, palette:'default', owned:['default'], skin:'default', ownedSkins:['default'], pack:'bell', ownedPacks:['bell'], prog:{}, hist:{}, log:[], marks:{}, tutSeen:0, chicken:0, timeatk:0, taMin:10, bmNames:{1:'セット1',2:'セット2',3:'セット3'}, spacing:{lowMin:10, mid:2, high:9}, fontsize:'md', fontfamily:'default', feedback:[], dailyGoal:20, session:null };
   try{ var r = JSON.parse(localStorage.getItem(K)); if(r) for(var k in r) d[k]=r[k]; }catch(e){}
-  /* 見た目・音・チュートリアル既読は全科目で共通。科目ごとの学習データとは分けて保存する */
-  var SHARED_KEYS = ['theme','fontsize','fontfamily','sound','soundVol','tutSeen'];
+  /* 見た目・音・チュートリアル既読・XPと買ったもの（色・音色・演出）は全科目で共通。学習データ・段位は科目ごと */
+  var SHARED_KEYS = ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack'];
   try{ var g = JSON.parse(localStorage.getItem('board-global-v1')); if(g) for(var sk in g) if(SHARED_KEYS.indexOf(sk)>=0) d[sk]=g[sk]; }catch(e){}
   if(!d.cats || !d.cats.length) d.cats = CATS.slice();
   d.cats = d.cats.filter(function(c){ return CATS.indexOf(c) >= 0; });   /* 旧バージョンの分野名など無効値を除去 */
@@ -916,7 +916,7 @@ function load(){
   return d;
 }
 var saveTimer=null;
-function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} try{ var g={}; ['theme','fontsize','fontfamily','sound','soundVol','tutSeen'].forEach(function(k){ g[k]=S[k]; }); localStorage.setItem('board-global-v1', JSON.stringify(g)); }catch(e){} },80); }
+function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} try{ var g={}; ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack'].forEach(function(k){ g[k]=S[k]; }); localStorage.setItem('board-global-v1', JSON.stringify(g)); }catch(e){} },80); }
 
 var PALETTES = [
   { id:'default',   name:'スタンダード', cost:0,     sw:'#1B5FC1', note:'最初からある色' },
@@ -3663,7 +3663,7 @@ if(START.tut || !S.tutSeen) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "09cb64ad0b";
+<script>window.BOARD_BUILD = "4602532bf3";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

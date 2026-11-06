@@ -72,6 +72,7 @@ import { createFirebaseTransport, isConfigured } from './transport-firebase.js';
     configured: true,
     startup: function () { return remembered ? sync.ready : Promise.resolve(); },
     open: function () { ui.openPanel(); },
+    summary: function () { return ui.statusText(); },
     _sync: sync
   };
 })();

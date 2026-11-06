@@ -183,7 +183,10 @@ export function createUI(api) {
 
   injectCss();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountButton); else mountButton();
-  sync.subscribe(function () { renderBtn(); if (st.pending) showBar(); else hideBar(); });
+  sync.subscribe(function () {
+    renderBtn(); if (st.pending) showBar(); else hideBar();
+    var cs = document.getElementById('csStat'); if (cs) cs.textContent = statusText().sub;   /* 設定タブのカード */
+  });
 
-  return { ask: ask, openPanel: openPanel };
+  return { ask: ask, openPanel: openPanel, statusText: statusText };
 }

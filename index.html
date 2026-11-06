@@ -847,6 +847,10 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 .subjcard .sp b{color:var(--ink);font-weight:800}
 .subjcard .sarrow{position:absolute;right:16px;top:18px;font:700 16px var(--sans);color:var(--soft)}
 .subjcard.new .sk::after{content:"NEW";margin-left:8px;background:var(--accent);color:var(--accentInk);border-radius:6px;padding:1px 6px;font-size:9px;letter-spacing:.08em}
+.hubtotal{display:flex;gap:10px;margin:0 0 12px}
+.hubtotal>div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.hubtotal span{display:block;font:600 11px var(--sans);color:var(--soft)}
+.hubtotal b{display:block;margin-top:2px;font:800 20px var(--mono);color:var(--accent)}
 .hubtools{display:flex;gap:10px;margin:14px 0 0}
 .hubtool{flex:1;font:600 13px var(--sans);padding:12px 8px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 .hubtool:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -870,6 +874,7 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
   <div class="hubk">BOARD PREP</div>
   <h1>専門医試験 演習</h1>
   <div class="hubsub">科目を選んでください。学習履歴・段位・復習予定は科目ごとに別々に保存されます。</div>
+  <div id="hubTotal"></div>
   <div id="hubCards"></div>
   <div class="hubtools">
     <button class="hubtool" type="button" data-hubact="settings">見た目・音の設定</button>
@@ -3783,16 +3788,25 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ ret
 function progressOf(id){
   try{ var S = JSON.parse(localStorage.getItem('board-'+id+'-v1')); if(!S) return null;
        var seen = 0; for(var k in (S.prog||{})) if(S.prog[k] && S.prog[k].seen) seen++;
-       return {seen:seen, xp:S.xpTotal||0, rank:S.rank||0}; }catch(e){ return null; }
+       return {seen:seen, rank:S.rank||0}; }catch(e){ return null; }
 }
 var RANKNAME = ['なし','5級','4級','3級','2級','1級','初段','二段','三段','四段','五段','六段','七段','八段','九段','十段'];
 function renderHub(){
+  /* XPは全科目で共通の財布なので、科目カードではなく一覧の上部に1回だけ表示する */
+  var g = null; try{ g = JSON.parse(localStorage.getItem('board-global-v1')); }catch(e){}
+  var ht = document.getElementById('hubTotal');
+  if(ht){
+    ht.innerHTML = (g && (g.xpTotal || g.xp))
+      ? '<div class="hubtotal"><div><span>累計XP（全科目）</span><b>'+(g.xpTotal||0).toLocaleString('ja-JP')+'</b></div>'
+        + '<div><span>使えるXP</span><b>'+(g.xp||0).toLocaleString('ja-JP')+'</b></div></div>'
+      : '';
+  }
   var h = '';
   SUBJECTS.forEach(function(s){
     var p = progressOf(s.id);
     h += '<button class="subjcard'+(s.isNew?' new':'')+'" type="button" data-subj="'+s.id+'">'
        + '<div class="sk">'+esc(s.kicker)+'</div><div class="sn">'+esc(s.name)+'</div><div class="sd">'+esc(s.desc)+'</div>'
-       + '<div class="sp">' + (p ? '<span>解答済 <b>'+p.seen+'</b> 問</span><span>累計 <b>'+p.xp+'</b> XP</span><span>段位 <b>'+esc(RANKNAME[p.rank]||p.rank)+'</b></span>' : '<span>まだ学習データはありません</span>') + '</div>'
+       + '<div class="sp">' + (p ? '<span>解答済 <b>'+p.seen+'</b> 問</span><span>段位 <b>'+esc(RANKNAME[p.rank]||p.rank)+'</b></span>' : '<span>まだ学習データはありません</span>') + '</div>'
        + '<div class="sarrow">›</div></button>';
   });
   document.getElementById('hubCards').innerHTML = h;

@@ -3426,6 +3426,15 @@ function renderSettings(){
   var h = '';
   h += '<h1 style="margin:8px 0 14px">設定</h1>';
 
+  /* クラウド同期（firebase-config.js が設定済みのときだけ表示） */
+  if(window.BoardSync && window.BoardSync.configured){
+    var cst = window.BoardSync.summary ? window.BoardSync.summary() : {main:'クラウド同期', sub:''};
+    h += '<h2>クラウド同期</h2><div class="card" style="margin-bottom:16px">'
+       + '<div class="sub" style="margin-bottom:10px">Googleログインで、XP・成績・復習予定を他の端末へ引き継げます。</div>'
+       + '<button class="ghost" data-cloudsync="1" style="width:100%;text-align:left;padding:12px 14px">'
+       + '<b>☁ '+esc(cst.main)+'</b><div id="csStat" class="sub" style="margin-top:3px">'+esc(cst.sub)+'</div></button></div>';
+  }
+
   h += '<h2>テーマ</h2><div class="card" style="margin-bottom:16px">'
      + '<div class="sub" style="margin-bottom:10px">画面の色合いを選べます。</div>'
      + '<div style="display:flex;gap:6px">'
@@ -3670,6 +3679,7 @@ function renderSettings(){
     if(e.target.closest('[data-act="tut"]')){ showTutorial(); return; }
     var th = e.target.closest('[data-settheme]');
     if(th){ S.theme = th.dataset.settheme; applyTheme(); save(); renderSettings(); return; }
+    if(e.target.closest('[data-cloudsync]')){ if(window.BoardSync && window.BoardSync.open) window.BoardSync.open(); return; }
     var gl = e.target.closest('[data-goal]');
     if(gl){ S.dailyGoal = parseInt(gl.dataset.goal,10); save(); renderSettings(); return; }
     var pr = e.target.closest('[data-preset]');

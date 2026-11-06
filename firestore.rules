@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 自分のデータ(users/<自分のuid>/state/*)だけ読み書きできる。それ以外は全面禁止。
+    match /users/{uid}/state/{docId} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && docId in ['global', 'naika', 'shouni', 'kyukyu']
+        && request.resource.data.keys().hasOnly(['json', 'updatedAt', 'v'])
+        && request.resource.data.json is string
+        && request.resource.data.json.size() < 950000;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

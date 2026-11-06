@@ -1,8 +1,8 @@
 /* オフライン用キャッシュ。ビルドごとに CACHE 名が変わり、古いキャッシュは削除される */
-var CACHE = 'board-7ae78dca42';
+var CACHE = 'board-sync-20261106';
 var FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
              'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
-             'data/naika.js', 'data/shouni.js', 'data/kyukyu.js'];
+             'data/naika.js', 'data/shouni.js', 'data/kyukyu.js', 'firebase-config.js', 'sync.bundle.js'];
 self.addEventListener('install', function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(FILES); }).then(function(){ return self.skipWaiting(); }));
 });

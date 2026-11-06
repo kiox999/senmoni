@@ -28,6 +28,23 @@
   });
 })();
 </script>
+<script src="firebase-config.js"></script>
+<script>
+/* クラウド同期(任意)。バンドルは非同期で読み込み、前回ログイン済みの端末だけ起動前に最大2.5秒だけ同期完了を待つ */
+(function(){
+  var loaded = new Promise(function(res){
+    var s = document.createElement('script'); s.src = 'sync.bundle.js'; s.async = true;
+    s.onload = function(){ res(window.BoardSync || null); }; s.onerror = function(){ res(null); };
+    document.head.appendChild(s);
+  });
+  window.BoardSyncGate = function(ms){
+    return Promise.race([
+      loaded.then(function(b){ return b ? b.startup() : null; }),
+      new Promise(function(r){ setTimeout(r, ms); })
+    ]);
+  };
+})();
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -858,6 +875,7 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
     <button class="hubtool" type="button" data-hubact="settings">見た目・音の設定</button>
     <button class="hubtool" type="button" data-hubact="tut">使い方を見る</button>
   </div>
+  <div id="syncMount"></div>
   <div class="hubnote">ヘッダー右上の「科目切替」からいつでも他の科目へ移動できます。</div>
 </div>
 <div id="loading" class="hide">読み込み中…</div>
@@ -3809,8 +3827,12 @@ document.getElementById('subjBtn').addEventListener('click', function(){
 var q = /[?&]s=([a-z]+)/.exec(location.search);
 var want = q ? q[1] : null;
 if(!want){ try{ want = localStorage.getItem(SKEY); }catch(e){} }
-if(want && byId(want)){ try{ localStorage.setItem(SKEY, want); }catch(e){} loadSubject(want); }
-else renderHub();
+function boot(){
+  if(want && byId(want)){ try{ localStorage.setItem(SKEY, want); }catch(e){} loadSubject(want); }
+  else renderHub();
+}
+var syncedBefore = ''; try{ syncedBefore = localStorage.getItem('bsync-uid') || ''; }catch(e){}
+if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, boot); else boot();
 })();
 </script>
 

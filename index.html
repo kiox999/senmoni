@@ -230,7 +230,10 @@ details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0
 #fbDetails summary{font:700 12px var(--sans);cursor:pointer;list-style:revert;color:var(--ink)}
 #fbDetails summary::marker{color:var(--soft)}
 #fbDetails .list{margin-top:6px}
-.qtop .star{font:600 15px var(--mono)}
+/* 星は小さいとスマホ・タブレットでほとんど見えないため、大きく表示する */
+.qtop .star{font:400 32px/1 var(--sans);width:52px;height:52px;margin:-14px -4px -14px 0}
+.qtop .star:not(.on){color:var(--ink);opacity:.5}
+@media (min-width:600px){ .qtop .star{font-size:38px;width:60px;height:60px} }
 .qtop .star.c1{color:#E8A100}
 .qtop .star.c2{color:#E02418}
 .qtop .star.c3{color:#1B5FC1}

@@ -3887,4 +3887,19 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
 })();
 </script>
 
+<script>
+/* 戻る操作（左スワイプ・戻るボタン）でサイトから抜けないようにする。
+   戻ろうとするたびに履歴を積み直して、その場にとどまる。
+   ブラウザは操作前の履歴追加を無視することがあるため、最初のタップ時にも積む。 */
+(function(){
+  if(!window.history || !history.pushState) return;
+  function arm(){ try{ history.pushState({board:1}, '', location.href); }catch(e){} }
+  arm();
+  var armed = false;
+  function once(){ if(armed) return; armed = true; arm(); }
+  window.addEventListener('pointerdown', once, { once:true, passive:true });
+  window.addEventListener('touchstart', once, { once:true, passive:true });
+  window.addEventListener('popstate', function(){ arm(); });
+})();
+</script>
 </body></html>

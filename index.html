@@ -1637,6 +1637,13 @@ function submitAnswer(bet){
   }
   save(); renderQuiz();
 }
+/* 次の問題へ進んだら必ず先頭へ。描画直後の高さ変化（百科の閉じ等）でスクロール位置が
+   残らないよう、即時と次フレームの2回戻す */
+function pageTop(){
+  function t(){ window.scrollTo(0,0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; }
+  t();
+  if(window.requestAnimationFrame) requestAnimationFrame(function(){ t(); setTimeout(t, 60); });
+}
 function nextQuestion(){
   if(S.session && S.session.tut) return;   /* 体験中は案内側で進める */
   if(S.session){ S.session.open = 0; S.session.autoPick = 0; }   /* Chicken mode の状態を戻す */
@@ -1647,10 +1654,10 @@ function nextQuestion(){
     sX.revealed = true;
     sX.picked = (sX.hist[sX.i] || []).slice();
     if(!sX.hist[sX.i]){ sX.revealed = false; sX.picked = []; }
-    save(); renderQuiz(); return;
+    save(); renderQuiz(); pageTop(); return;
   }
   var s=S.session; if(!s) return;
-  if(s.i+1 < s.ids.length){ s.i++; s.picked=[]; s.revealed=false; s.qt=Date.now(); save(); renderQuiz(); window.scrollTo(0,0); }
+  if(s.i+1 < s.ids.length){ s.i++; s.picked=[]; s.revealed=false; s.qt=Date.now(); save(); renderQuiz(); pageTop(); }
   else { save(); go('result'); }
 }
 
@@ -1736,11 +1743,11 @@ function examMove(d){
   examStash();
   var t = s.i + d;
   if(t < 0 || t >= s.ids.length) return;
-  s.i = t; examLoad(); s.qt = Date.now(); save(); renderQuiz(); window.scrollTo(0,0);
+  s.i = t; examLoad(); s.qt = Date.now(); save(); renderQuiz(); pageTop();
 }
 function examJump(i){
   var s=S.session; if(!s||!s.exam) return;
-  examStash(); s.i = i; examLoad(); s.qt = Date.now(); save(); renderQuiz(); window.scrollTo(0,0);
+  examStash(); s.i = i; examLoad(); s.qt = Date.now(); save(); renderQuiz(); pageTop();
 }
 function examAnsweredCount(){
   var s=S.session; if(!s||!s.ans) return 0;
@@ -2956,7 +2963,7 @@ if(e.target.closest('[data-act="qa"]')){ qaOn = true; qaNext(); renderHome(); wi
       } else { qaStat.ng++; qaStat.streak = 0; qaStat.gain = 0; playSnd('wrong'); }
       renderHome(); return;
     }
-    if(e.target.closest('[data-qanext]')){ qaNext(); renderHome(); return; }
+    if(e.target.closest('[data-qanext]')){ qaNext(); renderHome(); pageTop(); return; }
     var qe = e.target.closest('[data-qaenc]');
     if(qe){
       var idx = parseInt(qe.dataset.qaenc, 10);

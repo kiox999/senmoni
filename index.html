@@ -5,6 +5,29 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#FFFFFF">
+<script>
+/* ホーム（科目選択）画面でも、全科目共通の外観設定（ライト／ダーク・配色・文字）を表示前に反映する */
+(function(){
+  var g = {}; try{ g = JSON.parse(localStorage.getItem('board-global-v1')) || {}; }catch(e){}
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function apply(){
+    var t = g.theme || 'auto';
+    if(t === 'auto') t = (mq && mq.matches) ? 'dark' : 'light';
+    var de = document.documentElement;
+    de.setAttribute('data-theme', t);
+    var pal = (g.owned || []).indexOf(g.palette) >= 0 ? g.palette : 'default';
+    de.setAttribute('data-palette', pal || 'default');
+    de.setAttribute('data-fontsize', g.fontsize || 'md');
+    var m = document.querySelector('meta[name="theme-color"]');
+    if(m) m.setAttribute('content', t === 'dark' ? '#0A0B0D' : '#FFFFFF');
+  }
+  apply();
+  if(mq && mq.addEventListener) mq.addEventListener('change', function(){
+    /* 科目画面に入った後はエンジン側が管理する */
+    if(!window.BOARD_ENGINE_ON && (g.theme || 'auto') === 'auto') apply();
+  });
+})();
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -861,6 +884,7 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 <script>
 function startEngine(SUBJ, DATA){
 "use strict";
+window.BOARD_ENGINE_ON = true;
 var RAW = DATA.raw;
 var QUESTIONS = RAW.questions || [];
 var IMAGES = RAW.images || {};
@@ -3663,7 +3687,7 @@ if(START.tut || !S.tutSeen) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "4602532bf3";
+<script>window.BOARD_BUILD = "fefb07e0a5";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

@@ -859,6 +859,26 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 .hubtool{flex:1;font:600 13px var(--sans);padding:12px 8px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 .hubtool:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #hub .hubnote{font:400 11.5px/1.6 var(--sans);color:var(--soft);margin-top:18px}
+.hubxenc{display:flex;align-items:center;gap:12px;width:100%;margin:2px 0 0;padding:14px 16px;border-radius:14px;border:1.5px solid var(--accent);background:var(--accentSoft);color:var(--accent);font:700 14px var(--sans);cursor:pointer;text-align:left}
+.hubxenc small{display:block;font:500 11.5px/1.5 var(--sans);color:var(--soft);margin-top:2px}
+.hubxenc .xi{font-size:20px;flex:0 0 auto}
+.hubxenc:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#xenc{max-width:620px;margin:0 auto;min-height:100vh;min-height:100dvh;padding:calc(env(safe-area-inset-top) + 14px) 14px 40px;background:var(--bg);color:var(--ink)}
+#xenc .xtop{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+#xenc .xback{font:600 13px var(--sans);padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+#xenc h1{font:800 19px/1.3 var(--sans);margin:0}
+#xenc .xsub{font:400 12px/1.6 var(--sans);color:var(--soft);margin:0 2px 10px}
+#xenc .xchips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+#xenc .xchips .chip{min-height:38px;padding:8px 12px}
+#xenc .xsnip{display:block;font:400 11.5px/1.55 var(--sans);color:var(--soft);margin-top:3px}
+#xenc .xsnip b{color:var(--accent);font-weight:700}
+#xenc .xpar{font:500 11px var(--sans);color:var(--soft);margin-left:6px}
+#xenc .xsub2{font:400 12px/1.6 var(--sans);color:var(--soft);margin:2px 0 8px}
+#xenc .xbtns{display:flex;gap:8px;margin-top:6px}
+#xenc .xbtns .enquiz{margin-top:0}
+#xenc .xbtns .xopen{background:none;border-color:var(--line);color:var(--ink)}
+#xenc .xmore{text-align:center;font:500 12px var(--sans);color:var(--soft);padding:12px}
+.xencgo{float:right;font:600 11.5px var(--sans);padding:6px 10px;border-radius:9px;border:1px solid var(--accent);background:var(--accentSoft);color:var(--accent);cursor:pointer;margin-top:6px}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--soft);font:600 13px var(--mono);z-index:50}
 .hide{display:none !important}
 #dlg{position:fixed;inset:0;z-index:100;background:rgba(10,14,22,.45);display:flex;align-items:center;justify-content:center;padding:24px max(16px, env(safe-area-inset-left, 0px))}
@@ -880,6 +900,7 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
   <div class="hubsub">科目を選んでください。学習履歴・段位・復習予定は科目ごとに別々に保存されます。</div>
   <div id="hubTotal"></div>
   <div id="hubCards"></div>
+  <button class="hubxenc" type="button" id="hubXenc"><span class="xi">📖</span><span>全科目の事典をまとめて検索<small>内科・小児科・救急科の疾患事典を一度に探せます</small></span></button>
   <div class="hubtools">
     <button class="hubtool" type="button" data-hubact="settings">見た目・音の設定</button>
     <button class="hubtool" type="button" data-hubact="tut">使い方を見る</button>
@@ -887,6 +908,7 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
   <div id="syncMount"></div>
   <div class="hubnote">ヘッダー右上の「科目切替」からいつでも他の科目へ移動できます。</div>
 </div>
+<div id="xenc" class="hide"></div>
 <div id="loading" class="hide">読み込み中…</div>
 
 <div id="app" class="hide">
@@ -2094,7 +2116,7 @@ function bindChipScroll(el){
 function renderStudy(){
   var h = '';
   h += '<h1 style="margin:8px 0 4px">勉強</h1>';
-  h += '<div class="sub" style="margin-bottom:12px">問題の関連知識をまとめた疾患事典です。全'+ENCYC.length+'項目。</div>';
+  h += '<div class="sub" style="margin-bottom:12px">問題の関連知識をまとめた疾患事典です。全'+ENCYC.length+'項目。<button class="xencgo" type="button" id="xencGo">全科目で探す</button></div>';
   h += '<input class="search" id="stq" type="search" inputmode="text" lang="ja" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="疾患名・キーワードで探す（例：'+SUBJ.phStudy+'）" value="'+esc(studyQ)+'">';
   h += '<div class="scrollwrap"><div class="chiprow chipscroll" id="stcat"><button class="chip'+(studyCat?'':' on')+'" data-scat="">すべて</button>'
      + CATS.map(function(cc){
@@ -2179,6 +2201,11 @@ function refreshStudyResults(){
   if(el) el.innerHTML = studyResultsHtml();
 }
 function bindStudy(){
+  var xg = document.getElementById('xencGo');
+  if(xg) xg.onclick = function(){
+    try{ localStorage.removeItem('board-subject'); }catch(e){}
+    location.href = location.pathname + '?xenc=' + encodeURIComponent(studyQ.trim());
+  };
 
   var stc = document.getElementById('stcat');
   if(stc){
@@ -3733,9 +3760,18 @@ applyTheme();
 applyFont();
 updateHeader();
 var START = window.BOARD_START || {};
-go(START.view || 'home');
+if(START.enc){
+  (function(){
+    var hit = null; for(var i=0;i<ENCYC.length;i++) if(ENCYC[i].n===START.enc){ hit = ENCYC[i]; break; }
+    if(!hit){ go('home'); return; }
+    if(START.enq && hit.q.length){ go('home'); startSession(hit.q.slice(), false); return; }
+    studyCat = ''; studyQ = hit.p || hit.n; studyOpen = hit.p || hit.n; studyChildOpen = hit.p ? hit.n : null;
+    go('study');
+    setTimeout(function(){ var o = document.querySelector('#main .enchild.open') || document.querySelector('#main .encard.open'); if(o) o.scrollIntoView({block:'start'}); }, 60);
+  })();
+} else go(START.view || 'home');
 /* 初回起動時（全科目で1回）のみ使い方を表示する。ホームの「使い方」からは常に表示する */
-if(START.tut || !S.tutSeen) setTimeout(showTutorial, 400);
+if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
 }
 </script>
 
@@ -3747,7 +3783,7 @@ if(START.tut || !S.tutSeen) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "20261108-b5";
+<script>window.BOARD_BUILD = "20261108-xenc";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -3875,6 +3911,193 @@ document.getElementById('subjBtn').addEventListener('click', function(){
   if(location.search){ location.replace(location.pathname); return; }
   location.reload();
 });
+/* ---------- 全科目の事典検索 ---------- */
+var XE = { items:null, loading:false, q:'', subj:'', open:null, limit:150 };
+function xSecs(body){
+  var guard = [];
+  body = body.replace(/\[TABLE\][\s\S]*?\[\/TABLE\]/g, function(t){ guard.push(t); return '\u0000TBL' + (guard.length-1) + '\u0000'; });
+  var restore = function(x){ return x.replace(/\u0000TBL(\d+)\u0000/g, function(_,i){ return guard[+i]; }); };
+  var out = [], re2 = /(?:^|。|\n)([^。：:\n]{2,12})[：:]/g, ms = [], mm;
+  while((mm = re2.exec(body)) !== null){
+    var off = mm[0].length - mm[1].length - 1;
+    ms.push({ label: mm[1], s: mm.index + off, e: re2.lastIndex });
+  }
+  if(!ms.length) return [{ label:'', text: restore(body) }];
+  if(ms[0].s > 0) out.push({ label:'', text: restore(body.slice(0, ms[0].s)).trim() });
+  for(var i=0;i<ms.length;i++){
+    var end = (i+1<ms.length) ? ms[i+1].s : body.length;
+    out.push({ label: ms[i].label, text: restore(body.slice(ms[i].e, end)).trim() });
+  }
+  return out.filter(function(x){ return x.text; });
+}
+function xPlain(t){ return String(t).replace(/\{\{([^{}]{1,40})\}\}/g, '$1'); }
+function xContent(c){
+  var m = /\[TABLE\]([\s\S]*?)\[\/TABLE\]/.exec(c);
+  if(!m) return c.trim() ? '<p>'+esc(xPlain(c))+'</p>' : '';
+  var h = '', before = c.slice(0, m.index).trim(), after = c.slice(m.index + m[0].length);
+  if(before) h += '<p>'+esc(xPlain(before))+'</p>';
+  var rows = m[1].trim().split('\n').map(function(r){ return r.split('|').map(function(x){ return x.trim(); }); })
+    .filter(function(r){ return r.some(function(x){ return x!==''; }); });
+  if(rows.length){
+    h += '<div class="ddtwrap"><table class="ddtable"><tbody>';
+    rows.forEach(function(cells, ri){ var tg = ri===0 ? 'th' : 'td';
+      h += '<tr>' + cells.map(function(x){ return '<'+tg+'>'+esc(xPlain(x))+'</'+tg+'>'; }).join('') + '</tr>'; });
+    h += '</tbody></table></div>';
+  }
+  return h + xContent(after);
+}
+function xLoad(done){
+  if(XE.items){ done(); return; }
+  if(XE.loading) return;
+  XE.loading = true;
+  var items = [], i = 0;
+  (function next(){
+    if(i >= SUBJECTS.length){ XE.items = items; XE.loading = false; done(); return; }
+    var s = SUBJECTS[i++];
+    var sc = document.createElement('script');
+    sc.src = 'data/' + s.id + '.js?v=' + (window.BOARD_BUILD||'1');
+    sc.onload = function(){
+      var d = window.BOARD_DATA; window.BOARD_DATA = null;
+      var en = (d && d.raw && d.raw.encyc) || [];
+      en.forEach(function(e){
+        items.push({ s:s, n:e.n, ab:e.ab||'', c:e.c, p:e.p||'', b:e.b||'', nq:(e.q||[]).length,
+                     key:(e.n+' '+(e.ab||'')).toLowerCase(), plain:xPlain(e.b||'') });
+      });
+      sc.parentNode.removeChild(sc);
+      next();
+    };
+    sc.onerror = function(){ sc.parentNode.removeChild(sc); next(); };
+    document.body.appendChild(sc);
+  })();
+}
+function xMatch(){
+  var q = XE.q.trim().toLowerCase();
+  var qa = q.replace(/[\s\-・.]/g,'');
+  var re = null;
+  if(/^[\x00-\x7f]+$/.test(q) && q.length && q.length <= 4)
+    re = new RegExp('(^|[^A-Za-z])'+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'($|[^A-Za-z])','i');
+  var head = [], body = [];
+  XE.items.forEach(function(it){
+    if(XE.subj && it.s.id !== XE.subj) return;
+    if(!q){ head.push({it:it}); return; }
+    var hh = re ? (re.test(it.n) || re.test(it.ab)) :
+      (it.key.indexOf(q) >= 0 || (qa && it.key.replace(/[\s\-・.]/g,'').indexOf(qa) >= 0));
+    if(hh){ head.push({it:it}); return; }
+    var pos = -1;
+    if(re){ var mm = re.exec(it.plain); if(mm) pos = mm.index + mm[1].length; }
+    else pos = it.plain.toLowerCase().indexOf(q);
+    if(pos >= 0) body.push({it:it, pos:pos, len:q.length});
+  });
+  /* 名前に一致したものを先に。完全一致・前方一致を優先する */
+  head.sort(function(a,b){
+    var sa = a.it.n.toLowerCase()===q || a.it.ab.toLowerCase()===q ? 0 : (a.it.key.indexOf(q)===0 ? 1 : 2);
+    var sb = b.it.n.toLowerCase()===q || b.it.ab.toLowerCase()===q ? 0 : (b.it.key.indexOf(q)===0 ? 1 : 2);
+    return sa - sb;
+  });
+  return q ? head.concat(body) : head;
+}
+function xSnip(r){
+  if(r.pos == null) return '';
+  var t = r.it.plain.replace(/\[\/?TABLE\]/g,' ').replace(/\n/g,' ');
+  var a = Math.max(0, r.pos - 22), z = Math.min(t.length, r.pos + r.len + 30);
+  return '<span class="xsnip">'+(a>0?'…':'')+esc(t.slice(a, r.pos))+'<b>'+esc(t.slice(r.pos, r.pos+r.len))+'</b>'
+       + esc(t.slice(r.pos+r.len, z))+(z<t.length?'…':'')+'</span>';
+}
+function xResults(){
+  var el = document.getElementById('xres'); if(!el) return;
+  var all = xMatch();
+  var h = '<div class="xsub2">'+all.length+'件'+(XE.q.trim() ? '' : '（キーワードを入れると絞り込めます）')+'</div>';
+  if(!all.length) h += '<div class="xsub2">該当する項目がありません。別の言葉や略語で探してみてください。</div>';
+  h += '<div class="enlist">';
+  all.slice(0, XE.limit).forEach(function(r){
+    var it = r.it, id = it.s.id + '|' + it.n, op = XE.open === id;
+    h += '<div class="encard'+(op?' open':'')+'">'
+       + '<button class="enhead" data-xen="'+esc(id)+'"><span class="enname">'+esc(it.n)
+       + (it.ab ? '<span class="enab">'+esc(it.ab)+'</span>' : '')
+       + (it.p ? '<span class="xpar">（'+esc(it.p)+'）</span>' : '')
+       + (op ? '' : xSnip(r)) + '</span>'
+       + '<span class="encat">'+esc(it.s.short)+'</span><span class="enchev">'+(op?'▴':'▾')+'</span></button>';
+    if(op){
+      h += '<div class="enbody"><div class="xsub2" style="margin-top:8px">'+esc(it.s.short)+' ／ '+esc(it.c)+'</div>';
+      xSecs(it.b).forEach(function(sec){
+        if(sec.label) h += '<div class="enlabel">'+esc(sec.label)+'</div>';
+        h += xContent(sec.text);
+      });
+      h += '<div class="xbtns">'
+         + '<button class="enquiz xopen" type="button" data-xgo="'+esc(id)+'">'+esc(it.s.short)+'の事典で開く</button>'
+         + (it.nq ? '<button class="enquiz" type="button" data-xq="'+esc(id)+'">問題を解く（'+it.nq+'問）</button>' : '')
+         + '</div></div>';
+    }
+    h += '</div>';
+  });
+  h += '</div>';
+  if(all.length > XE.limit) h += '<button class="enquiz xopen" type="button" data-xmore="1" style="margin-top:10px">さらに表示（残り'+(all.length-XE.limit)+'件）</button>';
+  el.innerHTML = h;
+}
+function xChips(){
+  var el = document.getElementById('xchips'); if(!el) return;
+  var cnt = {}; XE.items.forEach(function(it){ cnt[it.s.id] = (cnt[it.s.id]||0) + 1; });
+  el.innerHTML = '<button class="chip'+(XE.subj?'':' on')+'" data-xs="">すべて '+XE.items.length+'</button>'
+    + SUBJECTS.map(function(s){ return '<button class="chip'+(XE.subj===s.id?' on':'')+'" data-xs="'+s.id+'">'+esc(s.short)+' '+(cnt[s.id]||0)+'</button>'; }).join('');
+}
+function openXenc(q){
+  XE.q = q || XE.q; XE.open = null; XE.limit = 150;
+  var v = document.getElementById('xenc');
+  document.getElementById('hub').classList.add('hide');
+  v.classList.remove('hide');
+  v.innerHTML = '<div class="xtop"><button class="xback" type="button" id="xback">‹ 戻る</button><h1>全科目の事典検索</h1></div>'
+    + '<div class="xsub">内科・小児科・救急科の疾患事典をまとめて探せます。略語（AKI、DKAなど）や本文中の語でも検索できます。</div>'
+    + '<input class="search" id="xq" type="search" lang="ja" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="疾患名・略語・キーワード（例：敗血症、DKA、川崎病）" value="'+esc(XE.q)+'">'
+    + '<div class="xchips" id="xchips"></div><div id="xres"><div class="xsub2">事典を読み込み中…</div></div>';
+  window.scrollTo(0, 0);
+  var inp = document.getElementById('xq'), composing = false, tm = null;
+  var upd = function(){ XE.q = inp.value; XE.open = null; XE.limit = 150; if(XE.items) xResults(); };
+  inp.addEventListener('compositionstart', function(){ composing = true; });
+  inp.addEventListener('compositionend', function(){ composing = false; upd(); });
+  inp.addEventListener('input', function(){ if(composing) return; clearTimeout(tm); tm = setTimeout(upd, 120); });
+  document.getElementById('xback').onclick = closeXenc;
+  xLoad(function(){ xChips(); xResults(); });
+}
+function closeXenc(){
+  document.getElementById('xenc').classList.add('hide');
+  renderHub();
+}
+function xFind(id){
+  for(var i=0;i<XE.items.length;i++){ var it = XE.items[i]; if(it.s.id + '|' + it.n === id) return it; }
+  return null;
+}
+document.getElementById('xenc').addEventListener('click', function(e){
+  var t;
+  if((t = e.target.closest('[data-xs]'))){ XE.subj = t.dataset.xs; XE.open = null; XE.limit = 150; xChips(); xResults(); return; }
+  if((t = e.target.closest('[data-xmore]'))){ XE.limit += 150; xResults(); return; }
+  if((t = e.target.closest('[data-xgo]')) || (t = e.target.closest('[data-xq]'))){
+    var it = xFind(t.dataset.xgo || t.dataset.xq); if(!it) return;
+    try{ localStorage.setItem(SKEY, it.s.id); }catch(err){}
+    document.getElementById('xenc').classList.add('hide');
+    loadSubject(it.s.id, { enc: it.n, enq: !!t.dataset.xq });
+    return;
+  }
+  if((t = e.target.closest('[data-xen]'))){
+    XE.open = (XE.open === t.dataset.xen) ? null : t.dataset.xen;
+    xResults();
+    var o = document.querySelector('#xenc .encard.open'); if(o) o.scrollIntoView({block:'nearest'});
+  }
+});
+document.getElementById('hubXenc').addEventListener('click', function(){ openXenc(''); });
+var XQ = /[?&]xenc=([^&]*)/.exec(location.search);
+if(XQ){
+  try{ localStorage.removeItem(SKEY); }catch(e){}
+  var _renderHub = renderHub, xencBooted = false;
+  renderHub = function(){
+    _renderHub();
+    if(!xencBooted){
+      xencBooted = true;
+      try{ history.replaceState(null, '', location.pathname); }catch(e){}
+      var qv = ''; try{ qv = decodeURIComponent(XQ[1].replace(/\+/g,' ')); }catch(e){}
+      openXenc(qv);
+    }
+  };
+}
 var q = /[?&]s=([a-z]+)/.exec(location.search);
 var want = q ? q[1] : null;
 if(!want){ try{ want = localStorage.getItem(SKEY); }catch(e){} }

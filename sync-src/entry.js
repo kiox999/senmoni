@@ -8,7 +8,8 @@ import { createFirebaseTransport, isConfigured } from './transport-firebase.js';
   var cfg = window.BOARD_FIREBASE;
   var testTransport = window.__BOARD_SYNC_TRANSPORT__;   /* 自動テスト専用 */
   if (!testTransport && !isConfigured(cfg)) {
-    window.BoardSync = { configured: false, startup: function () { return Promise.resolve(); } };
+    window.BoardSync = { configured: false, startup: function () { return Promise.resolve(); },
+      sendInquiry: function () { return Promise.reject(new Error('送信機能が設定されていません')); } };
     return;
   }
 
@@ -73,6 +74,7 @@ import { createFirebaseTransport, isConfigured } from './transport-firebase.js';
     startup: function () { return remembered ? sync.ready : Promise.resolve(); },
     open: function () { ui.openPanel(); },
     summary: function () { return ui.statusText(); },
+    sendInquiry: function (d) { return transport.sendInquiry ? transport.sendInquiry(d) : Promise.reject(new Error('送信できません')); },
     _sync: sync
   };
 })();

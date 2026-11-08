@@ -11,5 +11,27 @@ service cloud.firestore {
         && request.resource.data.json.size() < 950000;
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
+
+    // お問い合わせ: ログインなしでも1件ずつ「追加」だけできる。
+    // 読み取り・変更・削除はアプリからは不可（届いた内容は Firebaseコンソール → Firestore の inquiries で確認する）
+    match /inquiries/{id} {
+      allow read, update, delete: if false;
+      allow create: if validInquiry(request.resource.data);
+    }
+
+    function validInquiry(d) {
+      return d.keys().hasOnly(['kind', 'message', 'contact', 'subj', 'qid', 'page', 'ua', 'ver', 'uid', 'createdAt'])
+        && d.keys().hasAll(['kind', 'message', 'contact', 'subj', 'qid', 'page', 'ua', 'ver', 'uid', 'createdAt'])
+        && d.kind in ['question', 'bug', 'request', 'other']
+        && d.message is string && d.message.size() > 0 && d.message.size() <= 4000
+        && d.contact is string && d.contact.size() <= 200
+        && d.subj is string && d.subj.size() <= 20
+        && d.qid is int
+        && d.page is string && d.page.size() <= 40
+        && d.ua is string && d.ua.size() <= 400
+        && d.ver is string && d.ver.size() <= 40
+        && ((request.auth == null && d.uid == '') || (request.auth != null && d.uid == request.auth.uid))
+        && d.createdAt == request.time;
+    }
   }
 }

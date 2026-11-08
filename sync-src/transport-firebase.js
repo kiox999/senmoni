@@ -4,7 +4,7 @@ import {
   initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, browserPopupRedirectResolver,
   GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut
 } from 'firebase/auth';
-import { initializeFirestore, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { initializeFirestore, doc, runTransaction, serverTimestamp, collection, addDoc } from 'firebase/firestore';
 
 var MAX_JSON = 900000;   /* Firestoreは1ドキュメント1MiBまで */
 
@@ -45,6 +45,11 @@ export function createFirebaseTransport(cfg) {
       }
     },
     signOut: function () { return signOut(auth); },
+    /* お問い合わせ: inquiries に1件追加する（ログイン不要。読み取りはコンソールからのみ） */
+    sendInquiry: function (d) {
+      var u = auth.currentUser;
+      return addDoc(collection(db, 'inquiries'), Object.assign({}, d, { uid: u ? u.uid : '', createdAt: serverTimestamp() }));
+    },
     /* クラウドの1ドキュメントを読み、mergeFn(cloudData)の結果を（変化があれば）書き込む。競合時はトランザクションが自動で再試行する */
     syncDoc: function (uid, docId, mergeFn) {
       var ref = doc(db, 'users', uid, 'state', docId);

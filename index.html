@@ -37,6 +37,7 @@
     s.onload = function(){ res(window.BoardSync || null); }; s.onerror = function(){ res(null); };
     document.head.appendChild(s);
   });
+  window.BoardSyncLoaded = loaded;
   window.BoardSyncGate = function(ms){
     return Promise.race([
       loaded.then(function(b){ return b ? b.startup() : null; }),
@@ -278,6 +279,18 @@ details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0
 .memobtns .cta{flex:1;margin:0}
 .memodel{flex:0 0 84px;margin:0;color:var(--bad);border-color:var(--badTint)}
 .fbli{position:relative}
+/* ---- お問い合わせ ---- */
+.fbrow{display:flex;gap:18px;flex-wrap:wrap}
+.ctkinds{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.ctkind{padding:9px 6px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:600 12.5px var(--sans);cursor:pointer}
+.ctkind.on{border-color:var(--accent);background:var(--accentSoft);color:var(--accent)}
+.ctlab{display:block;font:600 12px var(--sans);color:var(--soft);margin:10px 0 5px}
+.ctin{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:500 13.5px var(--sans)}
+.ctin:focus{outline:none;border-color:var(--accent)}
+.ctmeta{margin-top:8px;font:500 11.5px/1.6 var(--sans);color:var(--soft)}
+.ctx{background:none;border:none;color:var(--soft);font:700 18px var(--mono);cursor:pointer;width:40px;height:40px;margin:-10px -8px -10px 0}
+.ctdone{text-align:center;padding:18px 4px 6px;font:600 14px/1.8 var(--sans);color:var(--ink)}
+.hubcontact{display:block;margin:12px auto 0;padding:8px 10px;border:none;background:none;font:600 12.5px var(--sans);color:var(--soft);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .fbph{display:inline-block;margin-left:6px;font:700 9.5px var(--mono);color:var(--accent);
   background:var(--accentSoft);padding:1px 6px;border-radius:6px}
 .fbthumbs{display:flex;gap:5px;margin-top:6px}
@@ -907,6 +920,7 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
   </div>
   <div id="syncMount"></div>
   <div class="hubnote">ヘッダー右上の「科目切替」からいつでも他の科目へ移動できます。</div>
+  <button class="hubcontact" type="button" id="hubContact">✉ お問い合わせ・不具合の報告</button>
 </div>
 <div id="xenc" class="hide"></div>
 <div id="loading" class="hide">読み込み中…</div>
@@ -929,6 +943,72 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
   </footer>
 </div>
 
+
+<script>
+/* ---------- お問い合わせ（Firestore の inquiries へ送信。ハブ・科目画面のどちらからも開ける） ---------- */
+(function(){
+  var KINDS = [['question','問題・解説の誤り'],['bug','不具合'],['request','要望'],['other','その他']];
+  var SUBJ_NAME = {naika:'内科', shouni:'小児科', kyukyu:'救急科'};
+  var LAST_KEY = 'board-contact-last';
+  function h(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function ver(){ try{ return (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) ? 'homescreen' : 'browser'; }catch(e){ return 'browser'; } }
+  window.openContact = function(opt){
+    opt = opt || {};
+    var qid = opt.qid ? parseInt(opt.qid,10) : 0;
+    var subj = opt.subj || '';
+    var kind = qid ? 'question' : 'bug';
+    var old = document.getElementById('contactOverlay'); if(old) old.remove();
+    var o = document.createElement('div');
+    o.id = 'contactOverlay'; o.className = 'ctov';
+    o.setAttribute('style','position:fixed;inset:0;z-index:220;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:20px');
+    function form(){
+      return '<div class="memobox">'
+        + '<div class="memohead"><span class="memot">'+(qid ? (h(SUBJ_NAME[subj]||'')+' 問題 #'+qid+' について') : 'お問い合わせ')+'</span>'
+        + '<button class="ctx" data-ct="close" aria-label="閉じる">✕</button></div>'
+        + '<div class="ctkinds">'+KINDS.map(function(k){ return '<button class="ctkind'+(k[0]===kind?' on':'')+'" data-ctkind="'+k[0]+'">'+k[1]+'</button>'; }).join('')+'</div>'
+        + '<textarea id="ctMsg" class="memoarea" maxlength="4000" placeholder="'+(qid ? '例：正解は「〇〇」では？（根拠のガイドラインなど）／解説の〇〇が古い など' : 'お気づきの点、不具合が起きた操作、ほしい機能など')+'"></textarea>'
+        + '<label class="ctlab" for="ctContact">返信先（任意・メールアドレスなど）</label>'
+        + '<input id="ctContact" class="ctin" type="text" maxlength="200" autocomplete="email" placeholder="返信が不要なら空欄でかまいません">'
+        + '<div class="ctmeta">'+(qid ? '問題番号と科目は自動で添付されます。' : '')+'個別の返信はお約束できません。医療相談にはお答えできません。</div>'
+        + '<div class="memobtns"><button class="cta" data-ct="send">送信する</button></div>'
+        + '</div>';
+    }
+    o.innerHTML = form();
+    document.body.appendChild(o);
+    o.onclick = function(e){
+      if(e.target === o){ o.remove(); return; }
+      var k = e.target.closest('[data-ctkind]');
+      if(k){ kind = k.dataset.ctkind; o.querySelectorAll('.ctkind').forEach(function(b){ b.classList.toggle('on', b.dataset.ctkind===kind); }); return; }
+      var a = e.target.closest('[data-ct]'); if(!a) return;
+      if(a.dataset.ct === 'close'){ o.remove(); return; }
+      if(a.dataset.ct !== 'send') return;
+      var msg = (document.getElementById('ctMsg').value || '').trim();
+      var contact = (document.getElementById('ctContact').value || '').trim().slice(0,200);
+      if(!msg){ alert('内容を入力してください。'); return; }
+      var last = 0; try{ last = parseInt(localStorage.getItem(LAST_KEY)||'0',10); }catch(err){}
+      if(Date.now() - last < 30000){ alert('続けて送信するには少し時間をおいてください。'); return; }
+      a.disabled = true; a.textContent = '送信中…';
+      var data = { kind: kind, message: msg.slice(0,4000), contact: contact, subj: String(subj||'').slice(0,20), qid: qid,
+                   page: String(opt.page || (qid ? 'question' : 'hub')).slice(0,40), ua: String(navigator.userAgent||'').slice(0,400), ver: ver() };
+      var loaded = window.BoardSyncLoaded || Promise.resolve(window.BoardSync || null);
+      var timeout = new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('timeout')); }, 15000); });
+      Promise.race([loaded.then(function(b){
+        if(!b || !b.sendInquiry) throw new Error('unavailable');
+        return b.sendInquiry(data);
+      }), timeout]).then(function(){
+        try{ localStorage.setItem(LAST_KEY, String(Date.now())); }catch(err){}
+        o.querySelector('.memobox').innerHTML = '<div class="memohead"><span class="memot">送信しました</span><button class="ctx" data-ct="close" aria-label="閉じる">✕</button></div>'
+          + '<div class="ctdone">ご連絡ありがとうございます。<br>いただいた内容は今後の改善に役立てます。</div>'
+          + '<div class="memobtns"><button class="cta" data-ct="close">閉じる</button></div>';
+      }).catch(function(){
+        a.disabled = false; a.textContent = '送信する';
+        alert('送信できませんでした。通信状況を確認して、もう一度お試しください。\n（入力内容はそのまま残っています）');
+      });
+    };
+    setTimeout(function(){ var t = document.getElementById('ctMsg'); if(t) t.focus(); }, 50);
+  };
+})();
+</script>
 
 <script>
 function startEngine(SUBJ, DATA){
@@ -3150,7 +3230,8 @@ function renderQuiz(){
     h += '<button class="qmark'+(mkOn?' on':'')+'" data-qmark="'+q.id+'">'
        +   '<span>'+(mkOn?'★':'☆')+'</span>'+(mkOn?'あとで見返す（登録済み）':'あとで見返す')
        + '</button>';
-    h += '<button class="fbbtn" data-act="feedback" data-qid="'+q.id+'">この問題にメモを残す</button>';
+    h += '<div class="fbrow"><button class="fbbtn" data-act="feedback" data-qid="'+q.id+'">この問題にメモを残す</button>'
+       +  (s.tut ? '' : '<button class="fbbtn" data-act="report" data-qid="'+q.id+'">誤りを報告する</button>') + '</div>';
     var p2 = P(q.id);
     h += '<div class="nextwrap"><div class="nextnote">次にこの問題が出るのは <b>'+fmtIval(p2.ival)+'後</b></div>'
        + '<button class="cta" id="nextBtn">'+((s.i+1<s.ids.length)?'次の問題へ':'結果を見る')+'</button></div>';
@@ -3207,6 +3288,7 @@ function renderQuiz(){
       if(a.dataset.act==='bm'){ p.bm = ((p.bm||0)+1) % 4; save(); renderQuiz(); return; }
       if(a.dataset.act==='zoom'){ zoom(a.getAttribute('src')); return; }
       if(a.dataset.act==='feedback'){ openMemo(parseInt(a.dataset.qid,10)); return; }
+      if(a.dataset.act==='report'){ window.openContact({ qid: parseInt(a.dataset.qid,10), subj: SUBJ.id, page: 'question' }); return; }
     }
     var qm = e.target.closest('[data-qmark]');
     if(qm){
@@ -3494,6 +3576,10 @@ function renderSettings(){
        + '<b>☁ '+esc(cst.main)+'</b><div id="csStat" class="sub" style="margin-top:3px">'+esc(cst.sub)+'</div></button></div>';
   }
 
+  h += '<h2>お問い合わせ</h2><div class="card" style="margin-bottom:16px">'
+     + '<div class="sub" style="margin-bottom:10px">問題・解説の誤り、不具合、要望などをお送りいただけます。問題ごとの報告は、解説画面の「誤りを報告する」からどうぞ。</div>'
+     + '<button class="ghost" data-contact="1" style="width:100%;text-align:left;padding:12px 14px"><b>✉ お問い合わせフォームを開く</b></button></div>';
+
   h += '<h2>テーマ</h2><div class="card" style="margin-bottom:16px">'
      + '<div class="sub" style="margin-bottom:10px">画面の色合いを選べます。</div>'
      + '<div style="display:flex;gap:6px">'
@@ -3738,6 +3824,7 @@ function renderSettings(){
     if(e.target.closest('[data-act="tut"]')){ showTutorial(); return; }
     var th = e.target.closest('[data-settheme]');
     if(th){ S.theme = th.dataset.settheme; applyTheme(); save(); renderSettings(); return; }
+    if(e.target.closest('[data-contact]')){ window.openContact({ subj: SUBJ.id, page: 'settings' }); return; }
     if(e.target.closest('[data-cloudsync]')){ if(window.BoardSync && window.BoardSync.open) window.BoardSync.open(); return; }
     var gl = e.target.closest('[data-goal]');
     if(gl){ S.dailyGoal = parseInt(gl.dataset.goal,10); save(); renderSettings(); return; }
@@ -3900,6 +3987,7 @@ document.querySelector('.hubtools').addEventListener('click', function(e){
   var id = (last && byId(last)) ? last : 'naika';
   loadSubject(id, b.dataset.hubact === 'tut' ? {tut:true} : {view:'settings'});
 });
+document.getElementById('hubContact').addEventListener('click', function(){ window.openContact({ page: 'hub' }); });
 document.getElementById('hubCards').addEventListener('click', function(e){
   var b = e.target.closest('[data-subj]'); if(!b) return;
   try{ localStorage.setItem(SKEY, b.dataset.subj); }catch(err){ loadSubject(b.dataset.subj); return; }

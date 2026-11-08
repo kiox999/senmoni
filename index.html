@@ -952,6 +952,32 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
   var LAST_KEY = 'board-contact-last';
   function h(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function ver(){ try{ return (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) ? 'homescreen' : 'browser'; }catch(e){ return 'browser'; } }
+  var KIND_NAME = {}; KINDS.forEach(function(k){ KIND_NAME[k[0]] = k[1]; });
+  function anyOk(ps){
+    return new Promise(function(res, rej){
+      var n = ps.length, bad = 0;
+      ps.forEach(function(p){ p.then(res, function(){ if(++bad === n) rej(new Error('all failed')); }); });
+    });
+  }
+  function sendMail(d){
+    var key = window.BOARD_WEB3FORMS_KEY;
+    if(!key) return Promise.reject(new Error('no key'));
+    var where = d.qid ? ((SUBJ_NAME[d.subj]||d.subj)+' #'+d.qid) : (SUBJ_NAME[d.subj] || 'ホーム');
+    var body = {
+      access_key: key,
+      subject: '[専門医演習] '+(KIND_NAME[d.kind]||d.kind)+'：'+where,
+      from_name: '専門医試験 演習アプリ',
+      '種類': KIND_NAME[d.kind] || d.kind,
+      '対象': where,
+      '内容': d.message,
+      '返信先': d.contact || '（なし）',
+      '画面': d.page, '利用環境': d.ver + ' / ' + d.ua
+    };
+    if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.contact)) body.email = d.contact;   /* 返信ボタンでそのまま返せる */
+    return fetch('https://api.web3forms.com/submit', {
+      method: 'POST', headers: {'Content-Type':'application/json', 'Accept':'application/json'}, body: JSON.stringify(body)
+    }).then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok || j.success === false) throw new Error(j.message || 'mail failed'); return j; }); });
+  }
   window.openContact = function(opt){
     opt = opt || {};
     var qid = opt.qid ? parseInt(opt.qid,10) : 0;
@@ -991,11 +1017,14 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
       var data = { kind: kind, message: msg.slice(0,4000), contact: contact, subj: String(subj||'').slice(0,20), qid: qid,
                    page: String(opt.page || (qid ? 'question' : 'hub')).slice(0,40), ua: String(navigator.userAgent||'').slice(0,400), ver: ver() };
       var loaded = window.BoardSyncLoaded || Promise.resolve(window.BoardSync || null);
-      var timeout = new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('timeout')); }, 15000); });
-      Promise.race([loaded.then(function(b){
+      function withTimeout(pr){ return Promise.race([pr, new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('timeout')); }, 15000); })]); }
+      /* 保存（Firestore）とメール（Web3Forms）を並行して送り、どちらか一方でも届けば成功とする */
+      var toDb = withTimeout(loaded.then(function(b){
         if(!b || !b.sendInquiry) throw new Error('unavailable');
         return b.sendInquiry(data);
-      }), timeout]).then(function(){
+      }));
+      var toMail = withTimeout(sendMail(data));
+      anyOk([toDb, toMail]).then(function(){
         try{ localStorage.setItem(LAST_KEY, String(Date.now())); }catch(err){}
         o.querySelector('.memobox').innerHTML = '<div class="memohead"><span class="memot">送信しました</span><button class="ctx" data-ct="close" aria-label="閉じる">✕</button></div>'
           + '<div class="ctdone">ご連絡ありがとうございます。<br>いただいた内容は今後の改善に役立てます。</div>'

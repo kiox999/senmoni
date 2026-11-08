@@ -55,6 +55,8 @@ window.BOARD_FIREBASE = {
 - 項目: `kind`(question=問題・解説の誤り / bug / request / other)・`message`・`contact`(任意の返信先)・`subj`・`qid`・`page`・`ua`・`ver`(ホーム画面アプリかブラウザか)・`uid`(ログイン中のみ)・`createdAt`
 - **`firestore.rules` を更新したら、コンソールの「ルール」タブに貼り直して「公開」が必要です**（貼り直すまで送信は失敗します）。
 - 連投防止として、同じ端末からは30秒に1件までです。
+- **メール通知**: `firebase-config.js` の `BOARD_WEB3FORMS_KEY` に [Web3Forms](https://web3forms.com) のアクセスキー（受信したいアドレスを入力すると届く。公開してよい値）を入れると、送信と同時にメールでも届きます（無料で月250件）。
+  返信先にメールアドレスが書かれていれば、届いたメールの「返信」でそのまま返せます。保存とメールのどちらか一方でも成功すれば送信完了と表示します。
 
 ## 5. 開発メモ
 

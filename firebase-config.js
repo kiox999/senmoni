@@ -6,3 +6,7 @@ window.BOARD_FIREBASE = {
   projectId: "senmoni-board",
   appId: "1:940899832203:web:8e88cf5436d2986d0adf8e"
 };
+
+/* お問い合わせをメールでも受け取る（Web3Forms のアクセスキー。公開してよい値です）。
+   https://web3forms.com で受信したいメールアドレスを入力すると届くキーを貼る。空ならメール送信はしない */
+window.BOARD_WEB3FORMS_KEY = "";

@@ -9,4 +9,4 @@ window.BOARD_FIREBASE = {
 
 /* お問い合わせをメールでも受け取る（Web3Forms のアクセスキー。公開してよい値です）。
    https://web3forms.com で受信したいメールアドレスを入力すると届くキーを貼る。空ならメール送信はしない */
-window.BOARD_WEB3FORMS_KEY = "";
+window.BOARD_WEB3FORMS_KEY = "0b9db279-0a29-4510-97c4-a4caccfccf5a";

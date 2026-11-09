@@ -470,6 +470,16 @@ html[data-theme="dark"] .certstats b{color:#EBD79A} html[data-theme="dark"] .cer
 .exdot.done{background:var(--accentSoft);border-color:var(--accent);color:var(--accent)}
 .exdot.cur{border-width:2.5px;border-color:var(--ink);color:var(--ink)}
 .exdot:active{background:var(--deep)}
+.exdot.ok{background:var(--goodTint);border-color:var(--good);color:var(--good)}
+.exdot.ng{background:var(--badTint);border-color:var(--bad);color:var(--bad)}
+.exdot.ok.cur,.exdot.ng.cur{border-width:2.5px;border-color:var(--ink)}
+.exrevbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.exrevbtns .cta,.exrevbtns .ghost{margin:0}
+.exrevbtns .wide{grid-column:1/-1}
+.rvfilter{display:flex;gap:6px;margin:0 0 12px}
+.rvfilter button{flex:1;padding:7px 0;border-radius:9px;border:1.5px solid var(--line);background:var(--card);font:600 12px var(--sans);color:var(--soft)}
+.rvfilter button.on{border-color:var(--accent);color:var(--accent);background:var(--accentSoft)}
+.exrow .revgo{margin-left:6px;font:600 11px var(--sans);color:var(--accent);white-space:nowrap}
 /* ---- 段位認定 UI ---- */
 .ranknow{display:flex;align-items:baseline;gap:10px;border:1.5px solid var(--line);border-radius:12px;
           padding:11px 15px;margin-bottom:9px;background:var(--card)}
@@ -1261,9 +1271,10 @@ function go(v){
     var on = b.dataset.tab===v;
     if(v==='result') on = (b.dataset.tab === ((S.session&&S.session.exam)?'rank':'home'));
     if(v==='quiz')   on = (b.dataset.tab === ((S.session&&S.session.exam)?'rank':'home'));
+    if(v==='exrev')  on = (b.dataset.tab === 'rank');
     b.classList.toggle('on', on);
   });
-  document.getElementById('tabs').classList.toggle('hide', v==='quiz'||v==='result');
+  document.getElementById('tabs').classList.toggle('hide', v==='quiz'||v==='result'||v==='exrev');
   updateHeader();
   render(); window.scrollTo(0,0);
 }
@@ -1273,6 +1284,7 @@ function render(){
   else if(view==='result') renderResult();
   else if(view==='study') renderStudy();
   else if(view==='rank') renderRank();
+  else if(view==='exrev') renderExamReview();
   else if(view==='settings') renderSettings();
   else renderStats();
 }
@@ -1822,12 +1834,17 @@ function renderExamResult(s){
        + ' 間違えた問題は復習リストに入っています。ポイントを貯めて再挑戦できます。</div>';
   }
   var wrong = s.res.filter(function(x){ return !x.ok; });
+  h += '<div class="exrevbtns">'
+     + '<button class="cta'+(wrong.length?'':' wide')+'" data-rev="all">全問を見直す</button>'
+     + (wrong.length ? '<button class="cta" data-rev="wrong">間違えた問題を見直す</button>'
+                     + '<button class="ghost wide" data-act="redo">間違えた'+wrong.length+'問を解き直す</button>' : '')
+     + '</div>';
   if(wrong.length){
     h += '<h2>間違えた'+wrong.length+'問</h2><div class="list">';
-    wrong.forEach(function(x){
-      var q = null; for(var i=0;i<QUESTIONS.length;i++) if(QUESTIONS[i].id===x.id){ q=QUESTIONS[i]; break; }
-      if(!q) return;
-      h += '<div class="li" data-open="'+q.id+'"><span class="n">#'+q.id+'</span><span style="flex:1">'+esc(q.stem.slice(0,42))+'…</span><span class="mono" style="color:var(--soft)">›</span></div>';
+    s.res.forEach(function(x, ri){
+      if(x.ok) return;
+      var q = qById(x.id); if(!q) return;
+      h += '<div class="li" data-revat="'+ri+'"><span class="n">#'+q.id+'</span><span style="flex:1">'+esc(q.stem.slice(0,42))+'…</span><span class="mono" style="color:var(--soft)">'+(x.answered?'›':'未解答 ›')+'</span></div>';
     });
     h += '</div>';
   }
@@ -1835,9 +1852,114 @@ function renderExamResult(s){
   h += '<div style="height:20px"></div>';
   main.innerHTML = h;
   main.onclick = function(e){
-    var o = e.target.closest('[data-open]');
-    if(o){ S.session=null; save(); startSession([parseInt(o.dataset.open,10)], true); return; }
+    var rec = { rank:er.rank, ok:er.ok, total:er.total, passed:er.passed, timeUp:er.timeUp, ts:er.ts,
+                res: s.res, order: s.order || {} };
+    var rv = e.target.closest('[data-rev]');
+    if(rv){ openExamReview(rec, rv.dataset.rev, 0, 'result'); return; }
+    var ra = e.target.closest('[data-revat]');
+    if(ra){ openExamReview(rec, 'all', parseInt(ra.dataset.revat,10), 'result'); return; }
+    if(e.target.closest('[data-act="redo"]')){
+      var ids = s.res.filter(function(x){ return !x.ok; }).map(function(x){ return x.id; });
+      S.session=null; save(); startSession(ids, true); return;
+    }
     if(e.target.closest('[data-act="toRank"]')){ S.session=null; save(); go('rank'); return; }
+  };
+}
+
+/* ---------- 段位試験の見直し ----------
+   採点後の試験を1問ずつ見返す。学習記録・復習間隔・XPは変えない。 */
+function qById(id){ for(var i=0;i<QUESTIONS.length;i++) if(QUESTIONS[i].id===id) return QUESTIONS[i]; return null; }
+var EXR = null;   /* { rec, filter:'all'|'wrong', i, from } */
+function exrList(){
+  var out = [];
+  EXR.rec.res.forEach(function(x, ri){ if(EXR.filter!=='wrong' || !x.ok) out.push(ri); });
+  return out;
+}
+function openExamReview(rec, filter, at, from){
+  EXR = { rec:rec, filter: filter==='wrong' ? 'wrong' : 'all', i:0, from:from };
+  var L = exrList();
+  if(!L.length){ EXR.filter='all'; L = exrList(); }
+  var k = L.indexOf(at); EXR.i = k>=0 ? k : 0;
+  go('exrev');
+}
+function closeExamReview(){
+  var back = (EXR && EXR.from==='result' && S.session && S.session.examResult) ? 'result' : 'rank';
+  EXR = null; go(back);
+}
+function renderExamReview(){
+  if(!EXR || !EXR.rec || !EXR.rec.res){ go('rank'); return; }
+  var rec = EXR.rec, L = exrList();
+  if(EXR.i >= L.length) EXR.i = Math.max(0, L.length-1);
+  var ri = L[EXR.i], x = rec.res[ri], q = x ? qById(x.id) : null;
+  var r = rankById(rec.rank);
+  var h = '';
+  h += '<div class="qtop"><button class="x" data-rv="close">✕</button>'
+     + '<span class="track" style="flex:1"><i style="width:'+Math.round(100*(EXR.i+1)/Math.max(1,L.length))+'%"></i></span>'
+     + '<span>見直し '+(EXR.i+1)+' / '+L.length+'</span>'
+     + '<span class="exbadge">'+esc(r?r.name:'')+'</span></div>';
+  var nWrong = rec.res.filter(function(y){ return !y.ok; }).length;
+  h += '<div class="rvfilter"><button data-rvf="all"'+(EXR.filter==='all'?' class="on"':'')+'>全問（'+rec.res.length+'）</button>'
+     + '<button data-rvf="wrong"'+(EXR.filter==='wrong'?' class="on"':'')+(nWrong?'':' disabled')+'>間違えた問題（'+nWrong+'）</button></div>';
+  if(!q){
+    h += '<div class="soft">この問題（#'+(x?x.id:'')+'）は現在のデータに見つかりません。</div>';
+  } else {
+    var LS = letters(q.choices.length);
+    var order = (rec.order && rec.order[q.id] && rec.order[q.id].length===q.choices.length) ? rec.order[q.id] : q.choices.map(function(_,i){ return i; });
+    var ol2dl = {}; order.forEach(function(oi,j){ ol2dl[LS[oi]] = LS[j]; });
+    function toDisp(arr){ return arr.map(function(v){ return ol2dl[v] || v; }).sort().join(', '); }
+    var mine = x.ans || [];
+    h += '<div class="banner '+(x.ok?'ok':'ng')+'"><div class="glyph">'+(x.ok?'○':'✕')+'</div><div style="flex:1"><b>'+(x.ok?'正解':(mine.length?'不正解':(x.ans?'未解答':'不正解')))+'</b>'
+       + '<div class="m">あなた: '+(mine.length?toDisp(mine):(x.ans?'—':'記録なし'))+' ／ 正解: '+toDisp(q.correct)+' ／ '+esc(catLabel(q.category))+' ／ #'+q.id+'</div></div></div>';
+    h += '<div style="font:700 16px/1.75 var(--sans);margin-bottom:14px">'+esc(q.stem)+'</div>';
+    var img = q.img || q.image;
+    if(img && IMAGES[img]) h += '<img class="qimg" src="data:image/png;base64,'+IMAGES[img]+'" alt="別冊画像" data-rv="zoom">';
+    order.forEach(function(oi,j){
+      var Lt = LS[oi], cls = 'choice';
+      if(q.correct.indexOf(Lt)>=0) cls += ' ok';
+      else if(mine.indexOf(Lt)>=0) cls += ' ng';
+      else cls += ' dim';
+      h += '<div class="'+cls+'"><span class="head"><span class="mk">'+LS[j]+'</span><span class="tx">'+esc(q.choices[oi])+'</span></span>'
+         + (q.notes && q.notes[Lt] ? '<span class="cnote">'+esc(q.notes[Lt])+'</span>' : '') + '</div>';
+    });
+    h += '<div class="pointcard"><div class="tag">ここだけ暗記ポイント</div><p>'+esc(q.explanation)+'</p></div>';
+    if(q.deepdive) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
+    var mkOn = !!(S.marks && S.marks[q.id]);
+    h += '<button class="qmark'+(mkOn?' on':'')+'" data-rvmark="'+q.id+'"><span>'+(mkOn?'★':'☆')+'</span>'+(mkOn?'あとで見返す（登録済み）':'あとで見返す')+'</button>';
+    h += '<div class="fbrow"><button class="fbbtn" data-rv="memo" data-qid="'+q.id+'">この問題にメモを残す</button>'
+       + '<button class="fbbtn" data-rv="report" data-qid="'+q.id+'">誤りを報告する</button></div>';
+  }
+  var last = EXR.i+1 >= L.length;
+  h += '<div class="examnav"><button class="exprev" data-rvmove="-1"'+(EXR.i>0?'':' disabled')+'>← 前の問題</button>'
+     + (last ? '<button class="cta" data-rv="close">見直しを終える</button>' : '<button class="cta" data-rvmove="1">次の問題 →</button>')
+     + '</div>';
+  h += '<details class="exmap" open><summary>問題一覧（○ '+(rec.res.length-nWrong)+' ／ ✕ '+nWrong+'）</summary><div class="exgrid">';
+  L.forEach(function(k, j){
+    var y = rec.res[k];
+    h += '<button class="exdot '+(y.ok?'ok':'ng')+(j===EXR.i?' cur':'')+'" data-rvjump="'+j+'">'+(k+1)+'</button>';
+  });
+  h += '</div></details><div style="height:20px"></div>';
+  main.innerHTML = h;
+  main.onclick = function(e){
+    var a = e.target.closest('[data-rv]');
+    if(a){
+      var act = a.dataset.rv;
+      if(act==='close'){ closeExamReview(); return; }
+      if(act==='zoom'){ zoom(a.getAttribute('src')); return; }
+      if(act==='memo'){ openMemo(parseInt(a.dataset.qid,10)); return; }
+      if(act==='report'){ window.openContact({ qid: parseInt(a.dataset.qid,10), subj: SUBJ.id, page: 'question' }); return; }
+    }
+    var f = e.target.closest('[data-rvf]');
+    if(f && !f.disabled){
+      var cur = L[EXR.i]; EXR.filter = f.dataset.rvf;
+      var NL = exrList(), k2 = NL.indexOf(cur); EXR.i = k2>=0 ? k2 : 0;
+      renderExamReview(); pageTop(); return;
+    }
+    var mv = e.target.closest('[data-rvmove]');
+    if(mv && !mv.disabled){ EXR.i = Math.max(0, Math.min(L.length-1, EXR.i + parseInt(mv.dataset.rvmove,10))); renderExamReview(); pageTop(); return; }
+    var jp = e.target.closest('[data-rvjump]');
+    if(jp){ EXR.i = parseInt(jp.dataset.rvjump,10); renderExamReview(); pageTop(); return; }
+    var mk = e.target.closest('[data-rvmark]');
+    if(mk){ var qid = parseInt(mk.dataset.rvmark,10); if(!S.marks) S.marks={}; if(S.marks[qid]) delete S.marks[qid]; else S.marks[qid]=1; save(); renderExamReview(); return; }
   };
 }
 
@@ -1916,7 +2038,7 @@ function finishExam(timeUp){
     hh.a++; if(okq) hh.c++;
     p.ival = okq ? (p.ival>0 ? Math.max(sp.mid*0.5, p.ival*1.6) : sp.mid) : sp.lowMin/1440;
     p.due = Date.now() + p.ival*DAY;
-    s.res.push({ id:qid, ok:okq, answered: mine!=='' });
+    s.res.push({ id:qid, ok:okq, answered: mine!=='', ans: (s.ans && s.ans[idx]) ? s.ans[idx].slice() : [] });
   });
   var r = rankById(s.exam);
   var ok = s.res.filter(function(x){ return x.ok; }).length;
@@ -1926,8 +2048,12 @@ function finishExam(timeUp){
                    rate:rate, passed:passed, timeUp:!!timeUp, ts:Date.now() };
   if(passed && r.id > (S.rank||0)) S.rank = r.id;
   playSnd(passed ? 'pass' : 'fail');
-  S.examLog.unshift({ rank:r.id, ok:ok, total:r.n, passed:passed, timeUp:!!timeUp, ts:Date.now() });
+  /* 見直し用に出題・解答・選択肢の並びも残す（容量を抑えるため直近10回分だけ） */
+  var ord = {}; s.ids.forEach(function(qid){ if(s.order && s.order[qid]) ord[qid] = s.order[qid]; });
+  S.examLog.unshift({ rank:r.id, ok:ok, total:r.n, passed:passed, timeUp:!!timeUp, ts:Date.now(),
+                      res: s.res.map(function(x){ return { id:x.id, ok:x.ok, ans:x.ans }; }), order: ord });
   if(S.examLog.length>30) S.examLog.length = 30;
+  for(var li=10; li<S.examLog.length; li++){ delete S.examLog[li].res; delete S.examLog[li].order; }
   save(); go('result');
 }
 
@@ -2102,6 +2228,7 @@ function renderRank(){
      + '</details>';
   if((S.examLog||[]).length){
     h += '<h2>受験履歴</h2>';
+    h += '<div class="sub" style="margin:-4px 2px 8px">直近10回分は「見直す」から問題・自分の解答・解説を確認できます。</div>';
     h += '<details'+(certOpen?' open':'')+' style="margin:0 0 16px" id="examHist"><summary style="font:600 12px var(--sans);color:var(--accent);cursor:pointer">過去の受験履歴（'+S.examLog.length+'件）</summary>'
        + '<div class="exhist">'
        + S.examLog.slice(0,30).map(function(e,i){
@@ -2113,6 +2240,7 @@ function renderRank(){
                 + '<span class="exscore">'+e.ok+'/'+e.total+'　'+(e.total?Math.round(100*e.ok/e.total):0)+'%</span>'
                 + '<span class="'+(e.passed?'exok':'exng')+'">'+(e.passed?'合格':(e.timeUp?'時間切れ':'不合格'))+'</span>'
                 + (e.passed? '<span class="certgo">認定証 ›</span>' : '')
+                + (e.res && e.res.length ? '<span class="revgo" data-histrev="'+i+'">見直す ›</span>' : '')
                 + '</button>';
          }).join('')
        + '</div></details>';
@@ -2126,6 +2254,8 @@ function renderRank(){
     if(exa){ var rr = rankById(parseInt(exa.dataset.exam,10)); if(rr) startExam(rr); return; }
     var rt = e.target.closest('[data-retry]');
     if(rt){ var r2 = rankById(parseInt(rt.dataset.retry,10)); if(r2) startExam(r2, true); return; }
+    var hr = e.target.closest('[data-histrev]');
+    if(hr){ var hrec = (S.examLog||[])[parseInt(hr.dataset.histrev,10)]; if(hrec && hrec.res) openExamReview(hrec, 'all', 0, 'rank'); return; }
     var ce = e.target.closest('[data-cert]');
     if(ce){ var rec = (S.examLog||[])[parseInt(ce.dataset.cert,10)]; if(rec && rec.passed) showCert(rec); return; }
   };
@@ -3899,7 +4029,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "20261109-shrx";
+<script>window.BOARD_BUILD = "20261109-exrev";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

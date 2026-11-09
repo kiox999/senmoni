@@ -474,6 +474,10 @@ html[data-theme="dark"] .certstats b{color:#EBD79A} html[data-theme="dark"] .cer
 .exdot.ng{background:var(--badTint);border-color:var(--bad);color:var(--bad)}
 .exdot.ok.cur,.exdot.ng.cur{border-width:2.5px;border-color:var(--ink)}
 .exdot:disabled{opacity:.45}
+.resgrid{margin-top:4px}
+.qmpages{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.qmpages button{padding:4px 9px;border-radius:7px;border:1.5px solid var(--line);background:var(--card);font:600 11px var(--mono);color:var(--soft)}
+.qmpages button.on{border-color:var(--accent);color:var(--accent);background:var(--accentSoft)}
 .pastlab{margin-left:8px;font:600 10.5px var(--sans);padding:2px 7px;border-radius:6px;background:var(--card);color:var(--soft);vertical-align:1px}
 .exrevbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
 .exrevbtns .cta,.exrevbtns .ghost{margin:0}
@@ -1714,7 +1718,7 @@ function submitAnswer(bet){
   if(!BETS[bet]) bet = 'mid';
   s.hist = s.hist || {};
   s.hist[s.i] = s.picked.slice();   /* 前の問題を見直すときに選択を再現する */
-  s.pendPick = null; s.pendOpen = null;
+  s.pendPick = null; s.pendOpen = null; s.mapPage = null;
   var cor = q.correct.slice().sort().join(',');
   var mine = s.picked.slice().sort().join(',');
   var ok = cor===mine;
@@ -1826,6 +1830,19 @@ function renderExamResult(s){
                   : 'あと'+(-diff)+'問で合格でした')
      + '</div>';
 
+  var wrong = s.res.filter(function(x){ return !x.ok; });
+  h += '<div class="exrevbtns">'
+     + '<button class="cta'+(wrong.length?'':' wide')+'" data-rev="all">全問を見直す</button>'
+     + (wrong.length ? '<button class="cta" data-rev="wrong">誤答を見直す</button>'
+                     + '<button class="ghost wide" data-act="redo">間違えた'+wrong.length+'問を解き直す</button>' : '')
+     + '</div>';
+  /* 全問の番号一覧。正解は緑、不正解は赤。押すとその問題の見直しを開く */
+  h += '<h2>問題一覧<span class="sub" style="margin-left:8px;font-weight:400">○ '+(s.res.length-wrong.length)+' ／ ✕ '+wrong.length+'　番号を押すと見直せます</span></h2>';
+  h += '<div class="exgrid resgrid">';
+  s.res.forEach(function(x, ri){
+    h += '<button class="exdot '+(x.ok?'ok':'ng')+'" data-revat="'+ri+'">'+(ri+1)+'</button>';
+  });
+  h += '</div>';
   if(er.passed){
     h += certHtml({ rank:er.rank, ok:er.ok, total:er.total, ts:er.ts||Date.now() });
     var nx = rankById(er.rank+1);
@@ -1835,21 +1852,6 @@ function renderExamResult(s){
   } else {
     h += '<div class="soft" style="margin-top:14px">'+(er.timeUp?'制限時間を過ぎました。':'惜しくも届きませんでした。')
        + ' 間違えた問題は復習リストに入っています。ポイントを貯めて再挑戦できます。</div>';
-  }
-  var wrong = s.res.filter(function(x){ return !x.ok; });
-  h += '<div class="exrevbtns">'
-     + '<button class="cta'+(wrong.length?'':' wide')+'" data-rev="all">全問を見直す</button>'
-     + (wrong.length ? '<button class="cta" data-rev="wrong">間違えた問題を見直す</button>'
-                     + '<button class="ghost wide" data-act="redo">間違えた'+wrong.length+'問を解き直す</button>' : '')
-     + '</div>';
-  if(wrong.length){
-    h += '<h2>間違えた'+wrong.length+'問</h2><div class="list">';
-    s.res.forEach(function(x, ri){
-      if(x.ok) return;
-      var q = qById(x.id); if(!q) return;
-      h += '<div class="li" data-revat="'+ri+'"><span class="n">#'+q.id+'</span><span style="flex:1">'+esc(q.stem.slice(0,42))+'…</span><span class="mono" style="color:var(--soft)">'+(x.answered?'›':'未解答 ›')+'</span></div>';
-    });
-    h += '</div>';
   }
   h += '<div style="margin-top:16px"><button class="ghost" data-act="toRank">ホームへ戻る</button></div>';
   h += '<div style="height:20px"></div>';
@@ -3279,6 +3281,7 @@ function quizJump(j){
   var s=S.session; if(!s || s.exam) return;
   if(j < 0 || j > s.res.length || j >= s.ids.length || j === s.i) return;
   if(!s.revealed){ s.pendPick = s.picked.slice(); s.pendOpen = s.open; }     /* 解答中の選択は残しておく */
+  s.mapPage = null;
   s.i = j;
   if(j < s.res.length && s.hist && s.hist[j]){ s.revealed = true; s.picked = s.hist[j].slice(); }
   else { s.revealed = false; s.picked = (s.pendPick || []).slice(); s.open = (s.pendOpen != null) ? s.pendOpen : null; }
@@ -3449,12 +3452,21 @@ function renderQuiz(){
   }
   /* 解いた問題の番号一覧。正解は緑、不正解は赤で、押すとその問題を見直せる（段位試験では正誤を伏せるので出さない） */
   if(!ex && !s.tut && s.ids.length > 1){
-    var nShow = s.taEnd ? Math.min(s.ids.length, s.res.length+1) : s.ids.length;
+    /* 出すのは解いた問題と解答中の問題だけ。多いときは40問ずつのページに分ける */
+    var nShow = Math.min(s.ids.length, s.res.length+1), PG = 40;
+    var nPg = Math.ceil(nShow / PG);
+    var pg = (s.mapPage != null && s.mapPage < nPg) ? s.mapPage : Math.floor(s.i / PG);
     var nOk = s.res.filter(function(x){ return x.ok; }).length;
-    h += '<details class="exmap qmap"'+(s.mapClosed?'':' open')+'><summary>解答状況（○ '+nOk+' ／ ✕ '+(s.res.length-nOk)+'）</summary><div class="exgrid">';
-    for(var qi=0; qi<nShow; qi++){
-      var rr = s.res[qi], can = qi <= s.res.length;
-      h += '<button class="exdot'+(rr?(rr.ok?' ok':' ng'):'')+(qi===s.i?' cur':'')+'" data-qjump="'+qi+'"'+(can?'':' disabled')+'>'+(qi+1)+'</button>';
+    h += '<details class="exmap qmap"'+(s.mapClosed?'':' open')+'><summary>解答状況（○ '+nOk+' ／ ✕ '+(s.res.length-nOk)+'）</summary>';
+    if(nPg > 1){
+      h += '<div class="qmpages">';
+      for(var pj=0; pj<nPg; pj++) h += '<button data-qpage="'+pj+'"'+(pj===pg?' class="on"':'')+'>'+(pj*PG+1)+'–'+Math.min(nShow,(pj+1)*PG)+'</button>';
+      h += '</div>';
+    }
+    h += '<div class="exgrid">';
+    for(var qi=pg*PG; qi<Math.min(nShow,(pg+1)*PG); qi++){
+      var rr = s.res[qi];
+      h += '<button class="exdot'+(rr?(rr.ok?' ok':' ng'):'')+(qi===s.i?' cur':'')+'" data-qjump="'+qi+'">'+(qi+1)+'</button>';
     }
     h += '</div></details>';
   }
@@ -3506,6 +3518,8 @@ function renderQuiz(){
       else s.picked = [L];
       save(); renderQuiz(); return;
     }
+    var qpg = e.target.closest('[data-qpage]');
+    if(qpg){ s.mapPage = parseInt(qpg.dataset.qpage,10); save(); renderQuiz(); return; }
     var qj = e.target.closest('[data-qjump]');
     if(qj && !qj.disabled){ quizJump(parseInt(qj.dataset.qjump,10)); return; }
     var em = e.target.closest('[data-exmove]');
@@ -4063,7 +4077,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "20261109-qmap";
+<script>window.BOARD_BUILD = "20261109-qmap2";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

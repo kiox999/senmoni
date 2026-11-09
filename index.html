@@ -473,6 +473,8 @@ html[data-theme="dark"] .certstats b{color:#EBD79A} html[data-theme="dark"] .cer
 .exdot.ok{background:var(--goodTint);border-color:var(--good);color:var(--good)}
 .exdot.ng{background:var(--badTint);border-color:var(--bad);color:var(--bad)}
 .exdot.ok.cur,.exdot.ng.cur{border-width:2.5px;border-color:var(--ink)}
+.exdot:disabled{opacity:.45}
+.pastlab{margin-left:8px;font:600 10.5px var(--sans);padding:2px 7px;border-radius:6px;background:var(--card);color:var(--soft);vertical-align:1px}
 .exrevbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
 .exrevbtns .cta,.exrevbtns .ghost{margin:0}
 .exrevbtns .wide{grid-column:1/-1}
@@ -1712,6 +1714,7 @@ function submitAnswer(bet){
   if(!BETS[bet]) bet = 'mid';
   s.hist = s.hist || {};
   s.hist[s.i] = s.picked.slice();   /* 前の問題を見直すときに選択を再現する */
+  s.pendPick = null; s.pendOpen = null;
   var cor = q.correct.slice().sort().join(',');
   var mine = s.picked.slice().sort().join(',');
   var ok = cor===mine;
@@ -1796,11 +1799,11 @@ function nextQuestion(){
     sX.i++;
     sX.revealed = true;
     sX.picked = (sX.hist[sX.i] || []).slice();
-    if(!sX.hist[sX.i]){ sX.revealed = false; sX.picked = []; }
+    if(!sX.hist[sX.i]){ sX.revealed = false; sX.picked = (sX.pendPick || []).slice(); sX.open = (sX.pendOpen != null) ? sX.pendOpen : null; }
     save(); renderQuiz(); pageTop(); return;
   }
   var s=S.session; if(!s) return;
-  if(s.i+1 < s.ids.length){ s.i++; s.picked=[]; s.revealed=false; s.qt=Date.now(); save(); renderQuiz(); pageTop(); }
+  if(s.i+1 < s.ids.length){ s.i++; s.picked=(s.pendPick||[]).slice(); s.open=(s.pendOpen!=null)?s.pendOpen:null; s.revealed=false; s.qt=Date.now(); save(); renderQuiz(); pageTop(); }
   else { save(); go('result'); }
 }
 
@@ -3271,6 +3274,16 @@ function getOrder(q){
   if(!s.order[q.id]){ s.order[q.id] = shuffle(base.slice()); save(); }
   return s.order[q.id];
 }
+/* 演習中に番号から問題を開く。解答済みは見直し、まだの問題は解答中の続きへ戻る */
+function quizJump(j){
+  var s=S.session; if(!s || s.exam) return;
+  if(j < 0 || j > s.res.length || j >= s.ids.length || j === s.i) return;
+  if(!s.revealed){ s.pendPick = s.picked.slice(); s.pendOpen = s.open; }     /* 解答中の選択は残しておく */
+  s.i = j;
+  if(j < s.res.length && s.hist && s.hist[j]){ s.revealed = true; s.picked = s.hist[j].slice(); }
+  else { s.revealed = false; s.picked = (s.pendPick || []).slice(); s.open = (s.pendOpen != null) ? s.pendOpen : null; }
+  save(); renderQuiz(); pageTop();
+}
 function renderQuiz(){
   var s = S.session, q = curQ();
   if(!s || !q){ go('home'); return; }
@@ -3304,7 +3317,13 @@ function renderQuiz(){
                    + '<button class="star'+(p.bm?' on c'+p.bm:'')+'" data-act="bm">'+(p.bm?'★':'☆')+'</button>'; })())
      + '</div>';
 
-  if(s.revealed){
+  /* 番号から前の問題を開いたときは、その問題の正誤だけを示す（XP・コンボは最新の問題のもの） */
+  var pastView = !!(s.revealed && !s.tut && !ex && s.res.length && s.i < s.res.length-1 && s.hist && s.hist[s.i]);
+  if(pastView){
+    var px = s.res[s.i];
+    h += '<div class="banner '+(px.ok?'ok':'ng')+'"><div class="glyph">'+(px.ok?'○':'✕')+'</div><div style="flex:1"><b>'+(px.ok?'正解':'不正解')+'<span class="pastlab">見直し中</span></b><div class="m">'
+       + (px.ok?('正解: '+toDisp(q.correct)):('あなた: '+toDisp(s.picked)+' ／ 正解: '+toDisp(q.correct)))+' ／ '+esc(catLabel(q.category))+' ／ #'+q.id+'</div></div></div>';
+  } else if(s.revealed){
     var ok = s.res[s.res.length-1] && s.res[s.res.length-1].ok;
     var gain = s.lastGain || {xp:0};
     var bl = BETS[gain.bet] ? BETS[gain.bet].label : '';
@@ -3428,8 +3447,21 @@ function renderQuiz(){
        + '</div></div>';
     }
   }
+  /* 解いた問題の番号一覧。正解は緑、不正解は赤で、押すとその問題を見直せる（段位試験では正誤を伏せるので出さない） */
+  if(!ex && !s.tut && s.ids.length > 1){
+    var nShow = s.taEnd ? Math.min(s.ids.length, s.res.length+1) : s.ids.length;
+    var nOk = s.res.filter(function(x){ return x.ok; }).length;
+    h += '<details class="exmap qmap"'+(s.mapClosed?'':' open')+'><summary>解答状況（○ '+nOk+' ／ ✕ '+(s.res.length-nOk)+'）</summary><div class="exgrid">';
+    for(var qi=0; qi<nShow; qi++){
+      var rr = s.res[qi], can = qi <= s.res.length;
+      h += '<button class="exdot'+(rr?(rr.ok?' ok':' ng'):'')+(qi===s.i?' cur':'')+'" data-qjump="'+qi+'"'+(can?'':' disabled')+'>'+(qi+1)+'</button>';
+    }
+    h += '</div></details>';
+  }
   h += '<div style="height:20px"></div>';
   main.innerHTML = h;
+  var qmapEl = main.querySelector('.qmap');
+  if(qmapEl) qmapEl.addEventListener('toggle', function(){ s.mapClosed = !qmapEl.open; save(); });
   if(ex && s.deadline) startExamClock();
 
   main.onclick = function(e){
@@ -3441,7 +3473,7 @@ function renderQuiz(){
       if(a.dataset.act==='quit'){ stopExamClock(); save(); go('home'); return; }
       if(a.dataset.act==='back'){
         /* 解答済みの前の問題を見直す。記録は変わらず、解説を読み返すだけ。 */
-        if(s.i > 0){ s.i--; s.revealed = true; s.picked = (s.hist && s.hist[s.i]) ? s.hist[s.i].slice() : []; save(); renderQuiz(); }
+        if(s.i > 0){ if(!s.revealed){ s.pendPick = s.picked.slice(); s.pendOpen = s.open; } s.i--; s.revealed = true; s.picked = (s.hist && s.hist[s.i]) ? s.hist[s.i].slice() : []; save(); renderQuiz(); }
         return;
       }
       if(a.dataset.act==='bm'){ p.bm = ((p.bm||0)+1) % 4; save(); renderQuiz(); return; }
@@ -3474,6 +3506,8 @@ function renderQuiz(){
       else s.picked = [L];
       save(); renderQuiz(); return;
     }
+    var qj = e.target.closest('[data-qjump]');
+    if(qj && !qj.disabled){ quizJump(parseInt(qj.dataset.qjump,10)); return; }
     var em = e.target.closest('[data-exmove]');
     if(em && !em.disabled){ examMove(parseInt(em.dataset.exmove,10)); return; }
     var ej = e.target.closest('[data-exjump]');
@@ -4029,7 +4063,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "20261109-exrev";
+<script>window.BOARD_BUILD = "20261109-qmap";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

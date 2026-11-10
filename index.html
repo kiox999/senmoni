@@ -165,6 +165,12 @@ details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0
   background-attachment:local,local,scroll,scroll}
 .ddtwrap::-webkit-scrollbar{height:5px}
 .ddtwrap::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.ddlist{margin:8px 0 0;font:400 13.5px/1.75 var(--sans);color:var(--ink)}
+.ddlist ul{margin:2px 0 6px;padding-left:1.3em}
+.ddlist li{margin:2px 0}
+.ddlist li::marker{color:var(--accent)}
+.ddlh{font-weight:700;color:var(--accent);margin:8px 0 0}
+.ddlist .ddlh:first-child{margin-top:0}
 .ddtable{border-collapse:collapse;margin:0;font:400 12px/1.5 var(--sans);min-width:100%;white-space:nowrap;background:transparent}
 .ddtable td:last-child,.ddtable th:last-child{white-space:normal;min-width:8em}
 .ddtable tbody{display:table;width:100%}
@@ -1196,26 +1202,49 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ ret
    本文の表示では印を外すだけで、強調などの装飾は一切行わない。 */
 function mark(s){ return String(s).replace(/\{\{([^{}]{1,40})\}\}/g, '$1'); }
 function stripMark(s){ return String(s).replace(/\{\{([^{}]{1,40})\}\}/g, '$1'); }
-function renderContentWithTable(content){
-  var tableRe = /\[TABLE\]([\s\S]*?)\[\/TABLE\]/;
-  var m = tableRe.exec(content);
-  if(!m) return content.trim() ? '<p>'+mark(esc(content))+'</p>' : '';
-  var before = content.slice(0, m.index).trim();
-  var after = content.slice(m.index + m[0].length).trim();
-  var tableBody = m[1].trim();
-  var rows = tableBody.split('\n').map(function(r){ return r.split('|').map(function(c){ return c.trim(); }); }).filter(function(r){ return r.length && r.some(function(c){return c!=='';}); });
-  var html = '';
-  if(before) html += '<p>'+mark(esc(before))+'</p>';
-  if(rows.length){
-    html += '<div class="ddtwrap"><table class="ddtable"><tbody>';
-    rows.forEach(function(cells, ri){
-      var tag = ri===0 ? 'th' : 'td';
-      html += '<tr>' + cells.map(function(c){ return '<'+tag+'>'+mark(esc(c))+'</'+tag+'>'; }).join('') + '</tr>';
-    });
-    html += '</tbody></table></div>';
+/* 本文中のブロック記法：[TABLE]〜[/TABLE]（表）と [LIST]〜[/LIST]（箇条書き）。1節に複数あってもよい */
+var BLOCK_RE = /\[(TABLE|LIST)\]([\s\S]*?)\[\/\1\]/g;
+function blockTableHtml(body, fmt){
+  var rows = body.trim().split('\n').map(function(r){ return r.split('|').map(function(c){ return c.trim(); }); }).filter(function(r){ return r.length && r.some(function(c){return c!=='';}); });
+  if(!rows.length) return '';
+  var html = '<div class="ddtwrap"><table class="ddtable"><tbody>';
+  rows.forEach(function(cells, ri){
+    var tag = ri===0 ? 'th' : 'td';
+    html += '<tr>' + cells.map(function(c){ return '<'+tag+'>'+fmt(c)+'</'+tag+'>'; }).join('') + '</tr>';
+  });
+  return html + '</tbody></table></div>';
+}
+/* 各行が1項目。「■」で始まる行は小見出しとして、その下の項目をまとめる */
+function blockListHtml(body, fmt){
+  var lines = body.split('\n').map(function(x){ return x.trim().replace(/^[・\-]\s*/, ''); }).filter(function(x){ return x; });
+  var html = '<div class="ddlist">', open = false;
+  lines.forEach(function(ln){
+    if(ln.charAt(0) === '■'){
+      if(open){ html += '</ul>'; open = false; }
+      html += '<div class="ddlh">'+fmt(ln.slice(1).trim())+'</div>';
+    } else {
+      if(!open){ html += '<ul>'; open = true; }
+      html += '<li>'+fmt(ln)+'</li>';
+    }
+  });
+  if(open) html += '</ul>';
+  return html + '</div>';
+}
+function renderBlocks(content, fmt){
+  var html = '', last = 0, m;
+  BLOCK_RE.lastIndex = 0;
+  while((m = BLOCK_RE.exec(content)) !== null){
+    var before = content.slice(last, m.index).trim();
+    if(before) html += '<p>'+fmt(before)+'</p>';
+    html += m[1] === 'TABLE' ? blockTableHtml(m[2], fmt) : blockListHtml(m[2], fmt);
+    last = BLOCK_RE.lastIndex;
   }
-  if(after) html += '<p>'+mark(esc(after))+'</p>';
+  var rest = content.slice(last).trim();
+  if(rest) html += '<p>'+fmt(rest)+'</p>';
   return html;
+}
+function renderContentWithTable(content){
+  return renderBlocks(content, function(t){ return mark(esc(t)); });
 }
 function formatDeepdive(text){
   if(!text) return '';
@@ -2273,13 +2302,14 @@ var studyQ = '', studyCat = '', studyOpen = null, studyChildOpen = null, studyCh
 function encycSecs(body){
   /* [TABLE]〜[/TABLE] の内部は見出しとして分割しない（表内の「検査|…」等を誤検出しないため） */
   var guard = [];
-  body = body.replace(/\[TABLE\][\s\S]*?\[\/TABLE\]/g, function(t){
+  body = body.replace(/\[(TABLE|LIST)\][\s\S]*?\[\/\1\]/g, function(t){
     guard.push(t); return '\u0000TBL' + (guard.length-1) + '\u0000';
   });
   var restore = function(s){
     return s.replace(/\u0000TBL(\d+)\u0000/g, function(_,i){ return guard[+i]; });
   };
-  var out = [], re2 = /(?:^|。|\n)([^。：:\n]{2,12})[：:]/g, ms = [], mm;
+  /* 表・箇条書きの直後（\u0000）も文の区切りとして扱う */
+  var out = [], re2 = /(?:^|。|\n|\u0000)([^。：:\n\u0000]{2,12})[：:]/g, ms = [], mm;
   /* 見出しは固定語に限らず、文頭または句点直後の短い語＋「：」を節見出しとして扱う */
   while((mm = re2.exec(body)) !== null){
     var off = mm[0].length - mm[1].length - 1;   /* 直前の「。」や改行の分 */
@@ -4212,9 +4242,9 @@ document.getElementById('subjBtn').addEventListener('click', function(){
 var XE = { items:null, loading:false, q:'', subj:'', open:null, limit:150 };
 function xSecs(body){
   var guard = [];
-  body = body.replace(/\[TABLE\][\s\S]*?\[\/TABLE\]/g, function(t){ guard.push(t); return '\u0000TBL' + (guard.length-1) + '\u0000'; });
+  body = body.replace(/\[(TABLE|LIST)\][\s\S]*?\[\/\1\]/g, function(t){ guard.push(t); return '\u0000TBL' + (guard.length-1) + '\u0000'; });
   var restore = function(x){ return x.replace(/\u0000TBL(\d+)\u0000/g, function(_,i){ return guard[+i]; }); };
-  var out = [], re2 = /(?:^|。|\n)([^。：:\n]{2,12})[：:]/g, ms = [], mm;
+  var out = [], re2 = /(?:^|。|\n|\u0000)([^。：:\n\u0000]{2,12})[：:]/g, ms = [], mm;
   while((mm = re2.exec(body)) !== null){
     var off = mm[0].length - mm[1].length - 1;
     ms.push({ label: mm[1], s: mm.index + off, e: re2.lastIndex });
@@ -4229,19 +4259,7 @@ function xSecs(body){
 }
 function xPlain(t){ return String(t).replace(/\{\{([^{}]{1,40})\}\}/g, '$1'); }
 function xContent(c){
-  var m = /\[TABLE\]([\s\S]*?)\[\/TABLE\]/.exec(c);
-  if(!m) return c.trim() ? '<p>'+esc(xPlain(c))+'</p>' : '';
-  var h = '', before = c.slice(0, m.index).trim(), after = c.slice(m.index + m[0].length);
-  if(before) h += '<p>'+esc(xPlain(before))+'</p>';
-  var rows = m[1].trim().split('\n').map(function(r){ return r.split('|').map(function(x){ return x.trim(); }); })
-    .filter(function(r){ return r.some(function(x){ return x!==''; }); });
-  if(rows.length){
-    h += '<div class="ddtwrap"><table class="ddtable"><tbody>';
-    rows.forEach(function(cells, ri){ var tg = ri===0 ? 'th' : 'td';
-      h += '<tr>' + cells.map(function(x){ return '<'+tg+'>'+esc(xPlain(x))+'</'+tg+'>'; }).join('') + '</tr>'; });
-    h += '</tbody></table></div>';
-  }
-  return h + xContent(after);
+  return renderBlocks(c, function(t){ return esc(xPlain(t)); });
 }
 function xLoad(done){
   if(XE.items){ done(); return; }
@@ -4295,7 +4313,7 @@ function xMatch(){
 }
 function xSnip(r){
   if(r.pos == null) return '';
-  var t = r.it.plain.replace(/\[\/?TABLE\]/g,' ').replace(/\n/g,' ');
+  var t = r.it.plain.replace(/\[\/?(TABLE|LIST)\]/g,' ').replace(/■/g,' ').replace(/\n/g,' ');
   var a = Math.max(0, r.pos - 22), z = Math.min(t.length, r.pos + r.len + 30);
   return '<span class="xsnip">'+(a>0?'…':'')+esc(t.slice(a, r.pos))+'<b>'+esc(t.slice(r.pos, r.pos+r.len))+'</b>'
        + esc(t.slice(r.pos+r.len, z))+(z<t.length?'…':'')+'</span>';

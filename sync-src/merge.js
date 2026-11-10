@@ -15,7 +15,7 @@ export var GLOBAL_KEYS = ['theme', 'fontsize', 'fontfamily', 'sound', 'soundVol'
 
 /* 科目ごと（学習データ） */
 export var SUBJECT_KEYS = ['prog', 'hist', 'log', 'marks', 'examLog', 'rank', 'feedback',
-  'bmNames', 'dailyGoal', 'spacing'];
+  'bmNames', 'dailyGoal', 'spacing', 'tagDefs', 'qtags', 'qatags'];
 
 export function keysFor(docId) { return docId === 'global' ? GLOBAL_KEYS : SUBJECT_KEYS; }
 
@@ -177,6 +177,10 @@ export function mergeSubject(base, local, cloud) {
   if (has('examLog')) out.examLog = mergeLog(local.examLog, cloud.examLog, 30, function (e) { return e.rank + '@' + e.ts; });
   if (has('marks')) out.marks = map3(base.marks, local.marks, cloud.marks);
   if (has('bmNames')) out.bmNames = map3(base.bmNames, local.bmNames, cloud.bmNames);
+  /* マイリスト: タグの定義と「問題ID→タグの配列」。問題ごとに、変えた側を採用する */
+  ['tagDefs', 'qtags', 'qatags'].forEach(function (k) {
+    if (has(k)) out[k] = map3(base[k], local[k], cloud[k]);
+  });
   if (has('feedback')) out.feedback = mergeFeedback(base.feedback, local.feedback, cloud.feedback);
   if (has('rank')) out.rank = Math.max(num(local.rank), num(cloud.rank));
   ['dailyGoal', 'spacing'].forEach(function (k) {
@@ -194,5 +198,5 @@ export function mergeDoc(docId, base, local, cloud) {
 export function isEmptyDoc(docId, d) {
   d = obj(d);
   if (docId === 'global') return !(num(d.xpTotal) > 0 || num(d.xp) > 0 || arr(d.owned).length > 1 || arr(d.ownedSkins).length > 1 || arr(d.ownedPacks).length > 1);
-  return !(Object.keys(obj(d.prog)).length || Object.keys(obj(d.hist)).length || arr(d.feedback).length || arr(d.examLog).length || num(d.rank) > 0);
+  return !(Object.keys(obj(d.prog)).length || Object.keys(obj(d.qtags)).length || Object.keys(obj(d.qatags)).length || Object.keys(obj(d.hist)).length || arr(d.feedback).length || arr(d.examLog).length || num(d.rank) > 0);
 }

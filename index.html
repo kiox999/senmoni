@@ -805,6 +805,7 @@ details.shop summary .skprev{width:26px;height:20px;border-radius:6px;display:fl
         background:none;border:none;cursor:pointer;font-family:var(--sans);text-align:left}
 .enhead:active{background:var(--deep)}
 .enname{flex:1;font:600 13.5px/1.45 var(--sans);color:var(--ink)}
+.enyomi{display:block;margin-top:2px;color:var(--soft);font:500 10.5px/1.4 var(--sans);letter-spacing:.02em}
 .enab{display:inline-block;margin-left:6px;padding:0 6px;border-radius:8px;background:var(--bg2,rgba(127,127,127,.15));color:var(--soft);font:600 10.5px/1.6 var(--mono);vertical-align:1px;white-space:nowrap}
 .encat{font:700 10px var(--mono);color:var(--accent);background:var(--accentSoft);
        padding:3px 7px;border-radius:6px;flex:0 0 auto}
@@ -2604,8 +2605,9 @@ function studyList(){
     if(!q){ out.push(e); return; }
     var nm = e.n.toLowerCase();
     var ab = (e.ab||'').toLowerCase();
+    var yo = (e.y||'');
     var head = re ? (re.test(e.n) || re.test(e.ab||'')) :
-      (nm.indexOf(q) >= 0 || ab.indexOf(q) >= 0 ||
+      (nm.indexOf(q) >= 0 || ab.indexOf(q) >= 0 || (yo && yo.indexOf(q) >= 0) ||
       (qa && (nm.replace(/[\s\-・.]/g,'').indexOf(qa) >= 0 || ab.replace(/[\s\-・.]/g,'').indexOf(qa) >= 0)));
     if(head){ out.push(e); return; }
     var body = stripMark(e.b);
@@ -2711,7 +2713,7 @@ function studyResultsHtml(){
     var kids = childrenOf(e.n);
     h += '<div class="encard'+(op?' open':'')+'">'
        + '<button class="enhead" data-en="'+esc(e.n)+'">'
-       +   '<span class="enname">'+esc(e.n)+(e.ab?'<span class="enab">'+esc(e.ab)+'</span>':'')+'</span>'
+       +   '<span class="enname">'+esc(e.n)+(e.ab?'<span class="enab">'+esc(e.ab)+'</span>':'')+(e.y?'<span class="enyomi">'+esc(e.y)+'</span>':'')+'</span>'
        +   (kids.length ? '<span class="enkids">'+kids.length+'</span>' : '')
        +   '<span class="encat">'+esc(letterOf(e.c))+'</span>'
        +   '<span class="enchev">'+(op?'▴':'▾')+'</span>'
@@ -2723,7 +2725,7 @@ function studyResultsHtml(){
         h += '<div class="enchild'+(kop?' open':'')+'">'
            + '<button class="enchead" data-enc="'+esc(k.n)+'">'
            +   '<span class="enctag">関連</span>'
-           +   '<span class="encname">'+esc(k.n)+(k.ab?'<span class="enab">'+esc(k.ab)+'</span>':'')+'</span>'
+           +   '<span class="encname">'+esc(k.n)+(k.ab?'<span class="enab">'+esc(k.ab)+'</span>':'')+(k.y?'<span class="enyomi">'+esc(k.y)+'</span>':'')+'</span>'
            +   '<span class="enchev">'+(kop?'▴':'▾')+'</span>'
            + '</button>'
            + (kop ? '<div class="encbody">' + encBodyHtml(k) + '</div>' : '')
@@ -4643,8 +4645,8 @@ function xLoad(done){
       var d = window.BOARD_DATA; window.BOARD_DATA = null;
       var en = (d && d.raw && d.raw.encyc) || [];
       en.forEach(function(e){
-        items.push({ s:s, n:e.n, ab:e.ab||'', c:e.c, p:e.p||'', b:e.b||'', nq:(e.q||[]).length,
-                     key:(e.n+' '+(e.ab||'')).toLowerCase(), plain:xPlain(e.b||'') });
+        items.push({ s:s, n:e.n, ab:e.ab||'', y:e.y||'', c:e.c, p:e.p||'', b:e.b||'', nq:(e.q||[]).length,
+                     key:(e.n+' '+(e.ab||'')+' '+(e.y||'')).toLowerCase(), plain:xPlain(e.b||'') });
       });
       sc.parentNode.removeChild(sc);
       next();
@@ -4697,6 +4699,7 @@ function xResults(){
     h += '<div class="encard'+(op?' open':'')+'">'
        + '<button class="enhead" data-xen="'+esc(id)+'"><span class="enname">'+esc(it.n)
        + (it.ab ? '<span class="enab">'+esc(it.ab)+'</span>' : '')
+       + (it.y ? '<span class="enyomi">'+esc(it.y)+'</span>' : '')
        + (it.p ? '<span class="xpar">（'+esc(it.p)+'）</span>' : '')
        + (op ? '' : xSnip(r)) + '</span>'
        + '<span class="encat">'+esc(it.s.short)+'</span><span class="enchev">'+(op?'▴':'▾')+'</span></button>';

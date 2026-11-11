@@ -92,4 +92,13 @@ t('mergeDoc(l,l,l) は自分自身(正規形)', () => {
   const sl = { prog: { 1: { seen: 2, ok: 1, ng: 1, last: 5, bm: 1 } }, hist: { d: { a: 2, c: 1 } }, rank: 2 };
   assert.ok(deepEq(mergeDoc('naika', sl, sl, sl), sl));
 });
+t('マイリスト: 別々の問題に付けたタグは両方残り、端末で外したタグは反映', () => {
+  const base = { qtags: { 1: ['t1'], 2: ['later'] }, qatags: {}, tagDefs: { t1: { n: 'A', c: '#000', o: 1 }, later: { n: 'L', c: '#111', o: 0 } } };
+  const local = { qtags: { 1: ['t1', 't2'] }, qatags: { 5: ['t1'] }, tagDefs: base.tagDefs };
+  const cloud = { qtags: { 1: ['t1'], 2: ['later'], 3: ['t1'] }, qatags: {}, tagDefs: { ...base.tagDefs, u9: { n: 'new', c: '#222', o: 4 } } };
+  const m = mergeSubject(base, local, cloud);
+  assert.deepEqual(m.qtags, { 1: ['t1', 't2'], 3: ['t1'] });
+  assert.deepEqual(m.qatags, { 5: ['t1'] });
+  assert.deepEqual(Object.keys(m.tagDefs).sort(), ['later', 't1', 'u9']);
+});
 console.log(n + ' tests passed');

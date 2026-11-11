@@ -148,6 +148,7 @@ html[data-theme="dark"] .primary .badge{background:rgba(0,0,0,.22)}
 .pointcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px}
 .pointcard .tag{font:700 11px var(--mono);color:var(--accent);margin-bottom:6px}
 .pointcard p{font:500 14.5px/1.85 var(--sans);margin:0}
+.pointcard .pmore{margin-top:8px}.pointcard .pmore summary{font:600 12.5px var(--sans);color:var(--accent);cursor:pointer;list-style:none}.pointcard .pmore summary::-webkit-details-marker{display:none}.pointcard .pmore p{font:400 13.5px/1.8 var(--sans);color:var(--soft);margin-top:6px}
 details.deep{margin-top:10px;border:1px solid var(--line);border-radius:11px;padding:12px 14px}
 details.deep summary{font:600 12.5px var(--sans);color:var(--accent);cursor:pointer;list-style:none}
 details.deep summary::-webkit-details-marker{display:none}
@@ -1461,6 +1462,21 @@ function stripMark(s){ return String(s).replace(/\{\{([^{}]{1,40})\}\}/g, '$1');
 function renderContentWithTable(content){
   return renderBlocks(content, function(t){ return mark(esc(t)); });
 }
+/* 暗記ポイントは要点（最初の1文）だけ見せ、残りは折りたたむ */
+function splitPoint(t){
+  t=String(t||'');
+  if(t.length<=110) return [t,''];
+  var i=t.indexOf('。');
+  if(i<0||i>=t.length-1) return [t,''];
+  if(i<30){ var j=t.indexOf('。',i+1); if(j>0&&j<120&&j<t.length-1) i=j; else if(j<0||j>=t.length-1) return [t,'']; }
+  return [t.slice(0,i+1), t.slice(i+1)];
+}
+function pointCard(t, more){
+  var sp=more ? [t, more] : splitPoint(t);
+  var h='<div class="pointcard"><div class="tag">ここだけ暗記ポイント</div><p>'+esc(sp[0])+'</p>';
+  if(sp[1]) h+='<details class="pmore"><summary>'+(more?'詳しい解説 ＋':'解説の続き ＋')+'</summary><p>'+esc(sp[1])+'</p></details>';
+  return h+'</div>';
+}
 function formatDeepdive(text){
   if(!text) return '';
   var title = '';
@@ -2195,7 +2211,7 @@ function renderExamReview(){
       h += '<div class="'+cls+'"><span class="head"><span class="mk">'+LS[j]+'</span><span class="tx">'+esc(q.choices[oi])+'</span></span>'
          + (q.notes && q.notes[Lt] ? '<span class="cnote">'+esc(q.notes[Lt])+'</span>' : '') + '</div>';
     });
-    h += '<div class="pointcard"><div class="tag">ここだけ暗記ポイント</div><p>'+esc(q.explanation)+'</p></div>';
+    h += pointCard(q.explanation, q.exl);
     if(q.deepdive) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
     h += saveBtn('q', q.id, 'data-rvmark="'+q.id+'"');
     h += '<div class="fbrow"><button class="fbbtn" data-rv="memo" data-qid="'+q.id+'">この問題にメモを残す</button>'
@@ -3818,7 +3834,7 @@ function renderQuiz(){
   }
 
   if(s.revealed){
-    h += '<div class="pointcard"><div class="tag">ここだけ暗記ポイント</div><p>'+esc(q.explanation)+'</p></div>';
+    h += pointCard(q.explanation, q.exl);
     if(q.deepdive && !s.tut) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
     /* 正解した問題でも「自信がなかった」ものを後で見返せるようにする */
     h += saveBtn('q', q.id, 'data-qmark="'+q.id+'"');
@@ -4031,7 +4047,7 @@ function searchResultsHtml(){
     var wantId = parseInt(idMatch[1],10);
     hits = QUESTIONS.filter(function(q){ return q.id===wantId; });
   } else {
-    hits = QUESTIONS.filter(function(q){ return (q.stem+q.explanation+(q.deepdive||'')).toLowerCase().indexOf(qraw.toLowerCase())>=0; }).slice(0,20);
+    hits = QUESTIONS.filter(function(q){ return (q.stem+q.explanation+(q.exl||'')+(q.deepdive||'')).toLowerCase().indexOf(qraw.toLowerCase())>=0; }).slice(0,20);
   }
   return '<div class="list">' + (hits.length ? hits.map(function(q){
     return '<div class="li" data-open="'+q.id+'"><span style="flex:1">'+esc(q.stem.slice(0,34))+(q.stem.length>34?'…':'')+'</span><span class="n">'+letterOf(q.category)+'</span><span class="n" style="color:var(--soft)">#'+q.id+'</span></div>';

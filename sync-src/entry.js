@@ -3,13 +3,15 @@ import { createSync } from './core.js';
 import { createStore } from './store.js';
 import { createUI } from './ui.js';
 import { createFirebaseTransport, isConfigured } from './transport-firebase.js';
+import { createQStats } from './qstats.js';
 
 (function () {
   var cfg = window.BOARD_FIREBASE;
   var testTransport = window.__BOARD_SYNC_TRANSPORT__;   /* 自動テスト専用 */
   if (!testTransport && !isConfigured(cfg)) {
     window.BoardSync = { configured: false, startup: function () { return Promise.resolve(); },
-      sendInquiry: function () { return Promise.reject(new Error('送信機能が設定されていません')); } };
+      sendInquiry: function () { return Promise.reject(new Error('送信機能が設定されていません')); },
+      reportFirst: function () {}, qstats: function () { return {}; } };
     return;
   }
 
@@ -65,7 +67,24 @@ import { createFirebaseTransport, isConfigured } from './transport-firebase.js';
     importCode: function (d) { sync.importAll(d); }
   });
 
-  transport.init(function (user, interactive) { sync.onAuth(user, interactive); }, takeInteractive);
+  /* ---- 正答率の集計（ログイン中のみ送信。受信はログイン不要） ---- */
+  var qs = createQStats({ ls: window.localStorage, transport: transport });
+  var qsTimer = null;
+  function qsUid() { var u = sync.state.user; return u ? u.uid : null; }
+  function flushStats() { var uid = qsUid(); if (uid) qs.flush(uid); }
+  function scheduleStats() {
+    if (qsTimer || !qsUid()) return;
+    qsTimer = setTimeout(function () { qsTimer = null; flushStats(); }, 15000);
+  }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flushStats(); });
+  window.addEventListener('pagehide', flushStats);
+  window.addEventListener('online', flushStats);
+  setTimeout(function () { qs.refresh(false); }, 4000);
+
+  transport.init(function (user, interactive) {
+    sync.onAuth(user, interactive);
+    if (user) setTimeout(function () { qs.flush(user.uid); }, 3000);
+  }, takeInteractive);
 
   /* 以前ログインしていない端末では待たない */
   var remembered = store.getRemembered();
@@ -75,6 +94,10 @@ import { createFirebaseTransport, isConfigured } from './transport-firebase.js';
     open: function () { ui.openPanel(); },
     summary: function () { return ui.statusText(); },
     sendInquiry: function (d) { return transport.sendInquiry ? transport.sendInquiry(d) : Promise.reject(new Error('送信できません')); },
+    /* 初めて答えた問題の正誤を集計に送る（送信はログイン中のみ・まとめて行う） */
+    reportFirst: function (subj, qid, ok) { qs.report(subj, qid, ok); scheduleStats(); },
+    /* 回答数が十分な問題の集計 { qid: [回答数, 正答数] } */
+    qstats: function (subj) { return qs.get(subj); },
     _sync: sync
   };
 })();

@@ -12,6 +12,44 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    // 問題ごとの正答率（匿名集計）。読み取りは誰でも可。
+    // 書き込みはログイン中のユーザーが1問につき1回だけ。目印 qstatBy/<科目>_<問題ID>_<uid> を同じ書き込みで作り、
+    // 回答数nは+1、正答数cは+0か+1だけ増やせる
+    match /qstats/{id} {
+      allow read: if true;
+      allow create: if validStatKeys(request.resource.data, id)
+        && request.resource.data.n == 1
+        && request.resource.data.c in [0, 1]
+        && statMarked(id);
+      allow update: if validStatKeys(request.resource.data, id)
+        && request.resource.data.subj == resource.data.subj
+        && request.resource.data.qid == resource.data.qid
+        && request.resource.data.n == resource.data.n + 1
+        && (request.resource.data.c - resource.data.c) in [0, 1]
+        && statMarked(id);
+      allow delete: if false;
+    }
+    match /qstatBy/{mid} {
+      allow read, update, delete: if false;
+      allow create: if request.auth != null
+        && mid.matches('.*_' + request.auth.uid)
+        && request.resource.data.keys().hasOnly(['ok'])
+        && request.resource.data.ok is bool;
+    }
+    function validStatKeys(d, id) {
+      return request.auth != null
+        && d.keys().hasOnly(['subj', 'qid', 'n', 'c'])
+        && d.subj in ['naika', 'shouni', 'kyukyu']
+        && d.qid is int && d.n is int && d.c is int
+        && id == d.subj + '_' + string(d.qid)
+        && d.c <= d.n;
+    }
+    // この書き込みで目印が新しく作られる（＝この人はこの問題をまだ数えられていない）
+    function statMarked(id) {
+      return !exists(/databases/$(database)/documents/qstatBy/$(id + '_' + request.auth.uid))
+        && existsAfter(/databases/$(database)/documents/qstatBy/$(id + '_' + request.auth.uid));
+    }
+
     // お問い合わせ: ログインなしでも1件ずつ「追加」だけできる。
     // 読み取り・変更・削除はアプリからは不可（届いた内容は Firebaseコンソール → Firestore の inquiries で確認する）
     match /inquiries/{id} {

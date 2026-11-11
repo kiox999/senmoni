@@ -395,6 +395,61 @@ body.tutTabs #tabs{position:fixed;left:0;right:0;bottom:0;z-index:203}
 .qmark.on{border-color:#E8A317;color:#B57C0A;background:#FFF8E7}
 html[data-theme="dark"] .qmark.on{background:rgba(232,163,23,.14);color:#E8A317}
 .qmark span{font-size:16px}
+/* ---- マイリスト（タグ） ---- */
+.qtop .star,.resmk,.qastar,.mlstar{position:relative}
+.sdots{position:absolute;left:50%;bottom:3px;transform:translateX(-50%);display:flex;gap:2px;pointer-events:none}
+.sdots i{width:5px;height:5px;border-radius:50%;display:block}
+.qastar{background:none;border:none;color:var(--ink);opacity:.5;font:400 28px/1 var(--sans);width:48px;height:48px;margin:-12px -10px -12px -4px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.qastar.on{opacity:1}
+.resmk.on{opacity:1}
+.qmark{flex-wrap:wrap}
+.qmark .tchip{font-style:normal;font:700 11px var(--sans);border:1.5px solid;border-radius:999px;padding:2px 8px;background:var(--card)}
+.qmark .qmedit{font:600 11px var(--sans);color:var(--soft);margin-left:4px;text-decoration:underline}
+.qmark.on{background:var(--card);color:var(--ink)}
+html[data-theme="dark"] .qmark.on{background:var(--card);color:var(--ink)}
+#tagSheet{position:fixed;inset:0;z-index:230;background:rgba(10,14,22,0);display:flex;align-items:flex-end;justify-content:center;transition:background .18s}
+#tagSheet.show{background:rgba(10,14,22,.45)}
+#tagSheet .tsbox{width:100%;max-width:520px;background:var(--bg);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));
+  max-height:80vh;overflow:auto;transform:translateY(100%);transition:transform .2s ease-out;box-shadow:0 -6px 24px rgba(0,0,0,.18)}
+#tagSheet.show .tsbox{transform:none}
+.tshead{display:flex;align-items:baseline;gap:10px;margin-bottom:2px}
+.tshead b{font:800 16px var(--sans);color:var(--ink)}
+.tshead .n,.tsrow .n{font:600 11px var(--mono);color:var(--soft)}
+.tssub{font:400 12px var(--sans);color:var(--soft);margin-bottom:10px}
+.tslist{display:flex;flex-direction:column;gap:6px}
+.tsrow{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:8px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer;text-align:left}
+.tsrow.on{border-color:var(--ink)}
+.tsck{width:24px;height:24px;border-radius:7px;border:2px solid;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font:800 14px var(--sans)}
+.tsn{flex:1;font:700 14px var(--sans)}
+.tsadd{width:100%;min-height:44px;margin-top:8px;border:1.5px dashed var(--line);border-radius:12px;background:none;color:var(--soft);font:600 13px var(--sans);cursor:pointer}
+.tsclose{margin-top:12px;width:100%}
+#tagToast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:240;max-width:calc(100% - 32px);
+  display:flex;align-items:center;gap:12px;background:#23272F;color:#fff;font:600 13px var(--sans);padding:11px 16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#tagToast button{background:none;border:none;color:#7FB2FF;font:800 13px var(--sans);cursor:pointer;padding:4px 2px;white-space:nowrap}
+.mlseg{display:flex;gap:0;margin-bottom:12px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
+.mlseg button{flex:1;min-height:42px;border:none;background:var(--card);color:var(--soft);font:700 13px var(--sans);cursor:pointer}
+.mlseg button span{font:600 11px var(--mono);margin-left:6px;opacity:.8}
+.mlseg button.on{background:var(--ink);color:var(--bg)}
+.mlchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.mlchip{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:4px 12px;border:1.5px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);font:700 12px var(--sans);cursor:pointer}
+.mlchip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.mlchip i{width:8px;height:8px;border-radius:50%;display:block}
+.mlchip span{font:600 10.5px var(--mono);opacity:.75}
+.mlcat{margin-bottom:8px}
+.mlcat summary{display:flex;align-items:center;gap:8px;padding:9px 2px;font:700 13px var(--sans);color:var(--ink);cursor:pointer;border-bottom:1.5px solid var(--line)}
+.mlcat summary b{font:700 12px var(--mono);color:var(--accent);width:14px}
+.mlcat summary .n{margin-left:auto;font:600 11px var(--mono);color:var(--soft)}
+.mlli{align-items:flex-start;gap:6px}
+.mlstar{background:none;border:none;color:var(--ink);opacity:.45;font:400 20px/1 var(--sans);width:36px;height:36px;margin:-8px 0 -8px -8px;flex:0 0 auto;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.mlstar.on{opacity:1}
+.mlstar .sdots{bottom:1px}
+.mltx{flex:1;cursor:pointer;min-width:0}
+.mlhint{display:block;font:400 10.5px var(--sans);color:var(--soft);margin-top:2px}
+.mlans{display:block;margin-top:6px;padding:8px 10px;border-radius:9px;background:var(--deep);font:400 12px/1.6 var(--sans)}
+.mledit{margin:18px 0 9px}
+.mledit summary{font:700 12px var(--sans);cursor:pointer;color:var(--ink)}
+.mltag{align-items:center}
+.mlcol{width:22px;height:22px;border-radius:50%;border:none;cursor:pointer;flex:0 0 auto}
 /* ---- 事典の親子表示 ---- */
 .enkids{flex:0 0 auto;min-width:19px;height:19px;padding:0 6px;border-radius:7px;background:var(--accentSoft);
   color:var(--accent);font:800 10.5px var(--mono);display:flex;align-items:center;justify-content:center}
@@ -916,7 +971,7 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 .xencgo{float:right;font:600 11.5px var(--sans);padding:6px 10px;border-radius:9px;border:1px solid var(--accent);background:var(--accentSoft);color:var(--accent);cursor:pointer;margin-top:6px}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--soft);font:600 13px var(--mono);z-index:50}
 .hide{display:none !important}
-#dlg{position:fixed;inset:0;z-index:100;background:rgba(10,14,22,.45);display:flex;align-items:center;justify-content:center;padding:24px max(16px, env(safe-area-inset-left, 0px))}
+#dlg{position:fixed;inset:0;z-index:250;background:rgba(10,14,22,.45);display:flex;align-items:center;justify-content:center;padding:24px max(16px, env(safe-area-inset-left, 0px))}
 #dlg.hide{display:none !important}
 .dlgbox{width:100%;max-width:380px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:20px 18px 14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .dlgmsg{font:500 14px/1.7 var(--sans);white-space:pre-wrap;word-break:break-word}
@@ -1125,7 +1180,7 @@ var DAY = 86400000;
 var K = 'board-' + SUBJ.id + '-v1';
 var S = load();
 function load(){
-  var d = { theme:'auto', cats:CATS.slice(), count:10, mode:'random', qtype:'all', shadow:false, sound:false, soundVol:0.7, rank:0, examLog:[], xp:0, xpTotal:0, palette:'default', owned:['default'], skin:'default', ownedSkins:['default'], pack:'bell', ownedPacks:['bell'], prog:{}, hist:{}, log:[], marks:{}, tutSeen:0, chicken:0, timeatk:0, taMin:10, bmNames:{1:'セット1',2:'セット2',3:'セット3'}, spacing:{lowMin:10, mid:2, high:9}, fontsize:'md', fontfamily:'default', feedback:[], dailyGoal:20, session:null };
+  var d = { theme:'auto', cats:CATS.slice(), count:10, mode:'random', qtype:'all', shadow:false, sound:false, soundVol:0.7, rank:0, examLog:[], xp:0, xpTotal:0, palette:'default', owned:['default'], skin:'default', ownedSkins:['default'], pack:'bell', ownedPacks:['bell'], prog:{}, hist:{}, log:[], marks:{}, tutSeen:0, chicken:0, timeatk:0, taMin:10, bmNames:{1:'セット1',2:'セット2',3:'セット3'}, tagDefs:null, qtags:{}, qatags:{}, spacing:{lowMin:10, mid:2, high:9}, fontsize:'md', fontfamily:'default', feedback:[], dailyGoal:20, session:null };
   try{ var r = JSON.parse(localStorage.getItem(K)); if(r) for(var k in r) d[k]=r[k]; }catch(e){}
   /* 見た目・音・チュートリアル既読・XPと買ったもの（色・音色・演出）は全科目で共通。学習データ・段位は科目ごと */
   var SHARED_KEYS = ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack'];
@@ -1161,10 +1216,164 @@ function load(){
   if(!d.feedback) d.feedback = [];
   if(!d.dailyGoal) d.dailyGoal = 20;
   for(var pk in d.prog){ if(d.prog[pk].bm===true) d.prog[pk].bm = 1; if(d.prog[pk].bm===false) d.prog[pk].bm = 0; }
+  tagMigrate(d);
   return d;
 }
 var saveTimer=null;
 function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} try{ var g={}; ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack'].forEach(function(k){ g[k]=S[k]; }); localStorage.setItem('board-global-v1', JSON.stringify(g)); }catch(e){} },80); }
+
+/* ---------- マイリスト（タグ） ----------
+   1問に複数のタグを付けられる。問題は qtags、一問一答は qatags に「ID→タグIDの配列」で持つ。
+   旧データ（★3色＝prog.bm、あとで見返す＝marks）は読み込み時にタグへ移す。 */
+var TAG_COLORS = ['#E8A100','#E02418','#1B5FC1','#0E9E86','#7B52D0','#D4457B','#E06A16','#5A6270'];
+var TAG_MAX = 8;
+function tagMigrate(d){
+  if(!d.tagDefs || typeof d.tagDefs !== 'object' || Array.isArray(d.tagDefs)){
+    var hadOld = Object.keys(d.marks||{}).length || Object.keys(d.prog||{}).some(function(k){ return d.prog[k] && d.prog[k].bm; });
+    var bn = d.bmNames || {};
+    var custom = [1,2,3].some(function(i){ return bn[i] && bn[i] !== 'セット'+i; });
+    var nm = (hadOld || custom) ? [bn[1]||'セット1', bn[2]||'セット2', bn[3]||'セット3'] : ['苦手','暗記もの','直前に見る'];
+    d.tagDefs = {
+      later:{ n:'あとで見返す', c:'#0E9E86', o:0 },
+      t1:{ n:nm[0], c:'#E8A100', o:1 },
+      t2:{ n:nm[1], c:'#E02418', o:2 },
+      t3:{ n:nm[2], c:'#1B5FC1', o:3 }
+    };
+  }
+  if(!d.qtags || typeof d.qtags !== 'object') d.qtags = {};
+  if(!d.qatags || typeof d.qatags !== 'object') d.qatags = {};
+  function add(map, id, t){ if(!d.tagDefs[t]) return; var a = map[id] || (map[id] = []); if(a.indexOf(t) < 0) a.push(t); }
+  /* 古いバージョンの端末から同期で届いた分も、ここで毎回タグへ移す */
+  for(var pk in d.prog){ var b = d.prog[pk] && d.prog[pk].bm; if(b){ if(b>=1 && b<=3) add(d.qtags, pk, 't'+b); d.prog[pk].bm = 0; } }
+  for(var mk in (d.marks||{})){ if(d.marks[mk]) add(d.qtags, mk, 'later'); }
+  d.marks = {};
+}
+function tagList(){
+  return Object.keys(S.tagDefs).map(function(k){ var t = S.tagDefs[k]; return { id:k, n:t.n, c:t.c, o:t.o||0 }; })
+    .sort(function(a,b){ return (a.o-b.o) || (a.id < b.id ? -1 : 1); });
+}
+function tagMap(kind){ return kind === 'qa' ? S.qatags : S.qtags; }
+function tagsOf(kind, id){ var a = tagMap(kind)[id]; return a ? a.filter(function(t){ return S.tagDefs[t]; }) : []; }
+function tagOrdered(ids){ return tagList().filter(function(t){ return ids.indexOf(t.id) >= 0; }); }
+function setTag(kind, id, t, on){
+  var m = tagMap(kind), a = (m[id]||[]).filter(function(x){ return S.tagDefs[x]; }), i = a.indexOf(t);
+  if(on && i < 0) a.push(t);
+  if(!on && i >= 0) a.splice(i, 1);
+  if(a.length) m[id] = a; else delete m[id];
+  save();
+}
+function tagCreate(name){
+  if(tagList().length >= TAG_MAX){ alert('タグは'+TAG_MAX+'個までです。'); return null; }
+  var used = tagList().map(function(t){ return t.c; });
+  var col = TAG_COLORS.filter(function(c){ return used.indexOf(c) < 0; })[0] || TAG_COLORS[0];
+  var o = tagList().reduce(function(m,t){ return Math.max(m, t.o); }, 0) + 1;
+  var id = 'u' + Date.now().toString(36);
+  S.tagDefs[id] = { n:String(name).trim().slice(0,20), c:col, o:o };
+  save(); return id;
+}
+function tagDelete(id){
+  delete S.tagDefs[id];
+  ['q','qa'].forEach(function(kind){
+    var m = tagMap(kind);
+    Object.keys(m).forEach(function(k){ var a = m[k].filter(function(x){ return x !== id; }); if(a.length) m[k] = a; else delete m[k]; });
+  });
+  save();
+}
+/* 有効な（いまの問題データに存在する）保存済みID。filter は「どれかのタグが付いている」で絞る */
+function taggedIds(kind, filter){
+  var src = kind === 'qa' ? QUICKQA : QUESTIONS, out = [];
+  src.forEach(function(x){
+    var ts = tagsOf(kind, x.id);
+    if(!ts.length) return;
+    if(filter && filter.length && !ts.some(function(t){ return filter.indexOf(t) >= 0; })) return;
+    out.push(x.id);
+  });
+  return out;
+}
+function tagCount(kind, t){ var m = tagMap(kind), n = 0; for(var k in m) if(m[k].indexOf(t) >= 0) n++; return n; }
+/* ★ボタン。タグがあれば先頭のタグの色で塗り、2つ以上なら色の点を添える */
+function starBtn(kind, id, cls, attr){
+  var ts = tagOrdered(tagsOf(kind, id));
+  var dots = ts.length > 1 ? '<span class="sdots">'+ts.map(function(t){ return '<i style="background:'+t.c+'"></i>'; }).join('')+'</span>' : '';
+  return '<button class="'+cls+(ts.length?' on':'')+'" '+attr+' title="マイリストに保存"'+(ts.length?' style="color:'+ts[0].c+'"':'')+'>'
+       + (ts.length ? '★' : '☆') + dots + '</button>';
+}
+/* 解説の下に出す大きめの保存ボタン */
+function saveBtn(kind, id, attr){
+  var ts = tagOrdered(tagsOf(kind, id));
+  if(!ts.length) return '<button class="qmark" '+attr+'><span>☆</span>マイリストに保存</button>';
+  return '<button class="qmark on" '+attr+' style="border-color:'+ts[0].c+'"><span style="color:'+ts[0].c+'">★</span>'
+       + ts.map(function(t){ return '<em class="tchip" style="border-color:'+t.c+';color:'+t.c+'">'+esc(t.n)+'</em>'; }).join('')
+       + '<b class="qmedit">変更</b></button>';
+}
+
+/* タグ選択パネル。★を押しただけでは何も保存されず、ここでタグを選んだときだけ変わる */
+function openTagSheet(kind, id, onDone){
+  var old = document.getElementById('tagSheet'); if(old) old.remove();
+  var before = tagsOf(kind, id).slice();
+  var ov = document.createElement('div'); ov.id = 'tagSheet';
+  var opened = Date.now();
+  function paint(){
+    var cur = tagsOf(kind, id), L = tagList();
+    var h = '<div class="tsbox" role="dialog" aria-label="マイリストに保存">'
+          + '<div class="tshead"><b>マイリストに保存</b><span class="n">'+(kind==='qa' ? '一問一答 Q'+id : '問題 #'+id)+'</span></div>'
+          + '<div class="tssub">タグを選んでください（いくつでも付けられます）</div><div class="tslist">';
+    L.forEach(function(t){
+      var on = cur.indexOf(t.id) >= 0;
+      h += '<button class="tsrow'+(on?' on':'')+'" data-ts="'+esc(t.id)+'">'
+         +   '<span class="tsck" style="border-color:'+t.c+(on?';background:'+t.c:'')+'">'+(on?'✓':'')+'</span>'
+         +   '<span class="tsn">'+esc(t.n)+'</span><span class="n">'+tagCount(kind, t.id)+'</span></button>';
+    });
+    if(!L.length) h += '<div class="soft" style="padding:10px 4px">タグがありません。下の「＋ 新しいタグ」から作ってください。</div>';
+    h += '</div>';
+    if(L.length < TAG_MAX) h += '<button class="tsadd" data-tsadd="1">＋ 新しいタグ</button>';
+    h += '<button class="cta tsclose" data-tsclose="1">閉じる</button></div>';
+    ov.innerHTML = h;
+  }
+  function done(){
+    document.removeEventListener('keydown', onKey);
+    ov.remove();
+    var after = tagsOf(kind, id);
+    if(onDone) onDone();
+    if(before.length && !after.length){
+      tagToast('マイリストから外しました', function(){
+        before.forEach(function(t){ setTag(kind, id, t, true); });
+        if(onDone) onDone();
+      });
+    } else if(!before.length && after.length){
+      tagToast(tagOrdered(after).map(function(t){ return '「'+t.n+'」'; }).join('') + 'に保存しました');
+    }
+  }
+  function onKey(e){ if(e.key === 'Escape') done(); }
+  ov.onclick = function(e){
+    /* 開いた直後のタップ（★の連打・ゴーストタップ）は無視して、押し間違いでタグが付かないようにする */
+    if(Date.now() - opened < 350) return;
+    if(e.target === ov || e.target.closest('[data-tsclose]')){ done(); return; }
+    var r = e.target.closest('[data-ts]');
+    if(r){ var t = r.dataset.ts; setTag(kind, id, t, tagsOf(kind, id).indexOf(t) < 0); paint(); return; }
+    if(e.target.closest('[data-tsadd]')){
+      /* 画面内ダイアログは OK 後にこのボタンを押し直して値を返すので、それまで描き直さない */
+      var nm = prompt('新しいタグの名前（20文字まで）', '');
+      if(nm === null) return;
+      if(nm.trim()){ var nid = tagCreate(nm); if(nid) setTag(kind, id, nid, true); }
+      paint(); return;
+    }
+  };
+  document.addEventListener('keydown', onKey);
+  paint();
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+var tagToastTimer = null;
+function tagToast(msg, undo){
+  var el = document.getElementById('tagToast'); if(el) el.remove();
+  clearTimeout(tagToastTimer);
+  el = document.createElement('div'); el.id = 'tagToast';
+  el.innerHTML = '<span>'+esc(msg)+'</span>' + (undo ? '<button>元に戻す</button>' : '');
+  if(undo) el.querySelector('button').onclick = function(){ el.remove(); undo(); };
+  document.body.appendChild(el);
+  tagToastTimer = setTimeout(function(){ el.remove(); }, undo ? 5000 : 2200);
+}
 
 var PALETTES = [
   { id:'default',   name:'スタンダード', cost:0,     sw:'#1B5FC1', note:'最初からある色' },
@@ -1208,7 +1417,7 @@ function applyFont(){
 }
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ if(S.theme==='auto') applyTheme(); });
 
-function P(id){ return S.prog[id] || (S.prog[id] = { seen:0, ok:0, ng:0, due:0, ival:0, last:0, bm:0 }); }
+function P(id){ return S.prog[id] || (S.prog[id] = { seen:0, ok:0, ng:0, due:0, ival:0, last:0 }); }
 function todayKey(d){ d = d||new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 function dueList(){ var n=Date.now(); return QUESTIONS.filter(function(q){ var p=S.prog[q.id]; return p && p.due && p.due<=n; }); }
 function streak(){
@@ -1962,8 +2171,7 @@ function renderExamReview(){
     });
     h += '<div class="pointcard"><div class="tag">ここだけ暗記ポイント</div><p>'+esc(q.explanation)+'</p></div>';
     if(q.deepdive) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
-    var mkOn = !!(S.marks && S.marks[q.id]);
-    h += '<button class="qmark'+(mkOn?' on':'')+'" data-rvmark="'+q.id+'"><span>'+(mkOn?'★':'☆')+'</span>'+(mkOn?'あとで見返す（登録済み）':'あとで見返す')+'</button>';
+    h += saveBtn('q', q.id, 'data-rvmark="'+q.id+'"');
     h += '<div class="fbrow"><button class="fbbtn" data-rv="memo" data-qid="'+q.id+'">この問題にメモを残す</button>'
        + '<button class="fbbtn" data-rv="report" data-qid="'+q.id+'">誤りを報告する</button></div>';
   }
@@ -1998,7 +2206,7 @@ function renderExamReview(){
     var jp = e.target.closest('[data-rvjump]');
     if(jp){ EXR.i = parseInt(jp.dataset.rvjump,10); renderExamReview(); pageTop(); return; }
     var mk = e.target.closest('[data-rvmark]');
-    if(mk){ var qid = parseInt(mk.dataset.rvmark,10); if(!S.marks) S.marks={}; if(S.marks[qid]) delete S.marks[qid]; else S.marks[qid]=1; save(); renderExamReview(); return; }
+    if(mk){ openTagSheet('q', parseInt(mk.dataset.rvmark,10), renderExamReview); return; }
   };
 }
 
@@ -2740,16 +2948,16 @@ var TUTORIAL = [
      +'「難易度を上げる」から XX mode と Chicken mode も選べます。' },
   { demo:1, t:'実際に1問解いてみましょう',
     b:'まず、正しいと思う選択肢を選んでください。' },
-  { tab:'quiz-explain', sel:'.star', t:'ブックマークで仕分ける',
-    b:'画面右上の☆を押すと、黄→赤→青→解除の順に切り替わります。'
-     +'3色を使い分けて問題を仕分けられます（たとえば黄＝苦手、赤＝要暗記、青＝直前に見る）。'
-     +'色ごとの名前は成績タブで変えられ、その色だけを集めて解き直せます。' },
+  { tab:'quiz-explain', sel:'.star', t:'マイリストに保存する',
+    b:'画面右上の☆を押すとタグの一覧が開き、選んだタグでマイリストに保存できます。'
+     +'1問に複数のタグを付けられます（たとえば「苦手」と「直前に見る」の両方）。'
+     +'☆を押しただけでは保存されないので、押し間違えても閉じれば元のままです。' },
   { tab:'quiz-explain', t:'解説を読む',
     b:'解答すると正誤と解説が出ます。選んだ選択肢だけでなく、'
      +'ほかの選択肢が「なぜ違うか」もその場で確認できます。' },
-  { tab:'quiz-explain', sel:'[data-qmark]', t:'あとで見返す',
-    b:'正解しても自信がなかった問題は、ここで★を付けておけます。'
-     +'★を付けた問題は、ホームからまとめて解き直せます。' },
+  { tab:'quiz-explain', sel:'[data-qmark]', t:'解説の下からも保存',
+    b:'正解しても自信がなかった問題は、ここからもマイリストに保存できます。'
+     +'保存した問題はホームの「マイリスト」でタグごとに解き直せます。一問一答も☆で保存できます。' },
   { tab:'quiz-explain', sel:'.fbbtn', t:'メモを残す',
     b:'覚えにくい点や、自分なりの語呂などを問題ごとに書き留められます。'
      +'教科書の図などを撮って添付することもできます（1件につき4枚まで）。'
@@ -2975,6 +3183,7 @@ var qaOn = false, qaQ = null, qaPicked = null, qaFlip = false, qaShowEnc = 0;
 var qaStat = { ok:0, ng:0, streak:0, best:0, gain:0 };
 var qaRecent = [];
 function qaPool(){
+  if(qaTagPool) return QUICKQA.filter(function(x){ return qaTagPool.indexOf(String(x.id)) >= 0; });
   var pool = QUICKQA.slice();
   if(S.cats && S.cats.length && S.cats.length < CATS.length){
     var f = pool.filter(function(x){ return S.cats.indexOf(x.c) >= 0; });
@@ -2998,9 +3207,11 @@ function qaHtml(){
   /* 中断ボタンと進捗は演習画面と同じく枠の外・左上に置き、操作を統一する */
   var h = '<div class="qahead">'
      + '<button class="x" data-qaclose="1">✕</button>'
-     + '<span class="qatitle">一問一答</span>'
+     + '<span class="qatitle">'+(qaTagPool ? '一問一答（マイリスト）' : '一問一答')+'</span>'
      + (qaStat.streak>1 ? '<span class="qastreak">'+qaStat.streak+'連続</span>' : '')
-     + '<span class="qascore">'+qaStat.ok+' / '+(qaStat.ok+qaStat.ng)+'</span></div>';
+     + '<span class="qascore">'+qaStat.ok+' / '+(qaStat.ok+qaStat.ng)+'</span>'
+     + (qaQ ? starBtn('qa', qaQ.id, 'qastar', 'data-qastar="'+qaQ.id+'"') : '')
+     + '</div>';
   h += '<div class="qabox">';
   if(!qaQ){ h += '<div class="soft">出題できる問題がありません。</div></div>'; return h; }
   h += '<div class="qameta"><span class="qacat">'+esc(letterOf(qaQ.c))+'</span>'
@@ -3065,8 +3276,133 @@ function qaHtml(){
   h += '</div>';
   return h;
 }
+/* ---------- マイリスト画面（ホーム内） ---------- */
+var mlOn = false, mlKind = 'q', mlFilter = [], mlOpenQa = null, mlCatOpen = {}, mlEditOpen = false;
+var qaTagPool = null, qaFromMl = false;   /* マイリストから一問一答を解くときの出題範囲 */
+function mlHtml(){
+  var nQ = taggedIds('q').length, nQa = taggedIds('qa').length;
+  mlFilter = mlFilter.filter(function(t){ return S.tagDefs[t]; });
+  var L = tagList();
+  var h = '<div class="qahead"><button class="x" data-mlclose="1">✕</button><span class="qatitle">マイリスト</span>'
+        + '<span class="qascore">'+(nQ+nQa)+'件</span></div>';
+  h += '<div class="mlseg"><button class="'+(mlKind==='q'?'on':'')+'" data-mlkind="q">問題<span>'+nQ+'</span></button>'
+     + '<button class="'+(mlKind==='qa'?'on':'')+'" data-mlkind="qa">一問一答<span>'+nQa+'</span></button></div>';
+  h += '<div class="mlchips"><button class="mlchip'+(mlFilter.length?'':' on')+'" data-mltag="">すべて</button>';
+  L.forEach(function(t){
+    var on = mlFilter.indexOf(t.id) >= 0;
+    h += '<button class="mlchip'+(on?' on':'')+'" data-mltag="'+esc(t.id)+'" style="'+(on?'background:'+t.c+';border-color:'+t.c+';color:#fff':'border-color:'+t.c)+'">'
+       + '<i style="background:'+(on?'#fff':t.c)+'"></i>'+esc(t.n)+'<span>'+tagCount(mlKind, t.id)+'</span></button>';
+  });
+  h += '</div>';
+  if(mlFilter.length > 1) h += '<div class="sub" style="margin:-4px 0 8px">選んだタグのどれかが付いているものを表示しています</div>';
+
+  var ids = taggedIds(mlKind, mlFilter);
+  if(!ids.length){
+    h += '<div class="card soft" style="text-align:center;padding:22px 14px">'
+       + ((mlKind==='q'?nQ:nQa) ? 'このタグの'+(mlKind==='q'?'問題':'一問一答')+'はまだありません。'
+          : (mlKind==='q' ? '問題画面の右上の☆を押すと、ここに保存できます。' : '一問一答の画面の☆を押すと、ここに保存できます。'))
+       + '</div>';
+  } else {
+    h += '<button class="cta" data-mlrun="1" style="margin-bottom:12px">'+(mlKind==='q' ? 'この'+ids.length+'問を解く' : 'この'+ids.length+'問を一問一答で解く')+'</button>';
+    /* 数が多くても見やすいよう、分野ごとに折りたたむ */
+    var src = mlKind==='qa' ? QUICKQA : QUESTIONS, byCat = {}, order = [];
+    src.forEach(function(x){
+      if(ids.indexOf(x.id) < 0) return;
+      var c = mlKind==='qa' ? x.c : x.category;
+      if(!byCat[c]){ byCat[c] = []; order.push(c); }
+      byCat[c].push(x);
+    });
+    order.sort(function(a,b){ return (CAT_LETTER[a]||'Z').localeCompare(CAT_LETTER[b]||'Z'); });
+    var openAll = ids.length <= 15;
+    order.forEach(function(c){
+      var key = mlKind+':'+c, open = (key in mlCatOpen) ? mlCatOpen[key] : openAll;
+      h += '<details class="mlcat" data-mlcat="'+esc(key)+'"'+(open?' open':'')+'><summary><b>'+esc(letterOf(c))+'</b>'+esc(c)+'<span class="n">'+byCat[c].length+'</span></summary><div class="list">';
+      byCat[c].forEach(function(x){
+        var txt = mlKind==='qa' ? x.q : x.stem;
+        var star = starBtn(mlKind, x.id, 'mlstar', 'data-mlstar="'+x.id+'"');
+        if(mlKind==='q'){
+          h += '<div class="li mlli">'+star+'<span class="mltx" data-open="'+x.id+'">'+esc(txt.slice(0,40))+(txt.length>40?'…':'')+'</span><span class="n" style="color:var(--soft)">#'+x.id+'</span></div>';
+        } else {
+          var op = mlOpenQa === x.id;
+          var ans = x.t==='ox' ? (x.a ? '○' : '×') : (x.a==='A' ? x.A : x.B);
+          h += '<div class="li mlli">'+star+'<span class="mltx" data-mlqa="'+x.id+'">'+esc(txt)
+             + (op ? '<span class="mlans"><b>答え：'+esc(ans)+'</b>'+(x.t!=='ox' ? '<span class="soft">（'+esc(x.A)+' / '+esc(x.B)+'）</span>' : '')+'<br>'+esc(x.e)+'</span>'
+                   : '<span class="mlhint">タップで答えを表示</span>')
+             + '</span><span class="n" style="color:var(--soft)">Q'+x.id+'</span></div>';
+        }
+      });
+      h += '</div></details>';
+    });
+  }
+
+  /* タグの管理 */
+  h += '<details class="mledit" data-mledit="1"'+(mlEditOpen?' open':'')+'><summary>タグを編集（'+L.length+' / '+TAG_MAX+'）</summary><div class="sub" style="margin:8px 0">色の丸を押すと色が変わります。タグを消しても問題そのものは消えません。</div><div class="list">';
+  L.forEach(function(t){
+    h += '<div class="li mltag"><button class="mlcol" data-mlcol="'+esc(t.id)+'" style="background:'+t.c+'" title="色を変える"></button>'
+       + '<span style="flex:1">'+esc(t.n)+'</span><span class="n">'+(tagCount('q',t.id)+tagCount('qa',t.id))+'</span>'
+       + '<button class="bmrename" data-mlren="'+esc(t.id)+'" title="名前を変更">✎</button>'
+       + '<button class="bmrename" data-mldel="'+esc(t.id)+'" title="削除">✕</button></div>';
+  });
+  h += '</div>' + (L.length < TAG_MAX ? '<button class="ghost" data-mladd="1" style="margin-top:10px">＋ 新しいタグ</button>' : '') + '</details>';
+  h += '<div style="height:20px"></div>';
+  return h;
+}
+function mlClick(e){
+  var t = e.target;
+  if(t.closest('summary')){
+    var dc = t.closest('[data-mlcat]');
+    if(dc) setTimeout(function(){ mlCatOpen[dc.dataset.mlcat] = dc.open; }, 0);
+    var de = t.closest('[data-mledit]');
+    if(de) setTimeout(function(){ mlEditOpen = de.open; }, 0);
+    return;
+  }
+  if(t.closest('[data-mlclose]')){ mlOn = false; renderHome(); return; }
+  var st = t.closest('[data-mlstar]');
+  if(st){ openTagSheet(mlKind, parseInt(st.dataset.mlstar,10), renderHome); return; }
+  var k = t.closest('[data-mlkind]'); if(k){ mlKind = k.dataset.mlkind; mlOpenQa = null; renderHome(); return; }
+  var tg = t.closest('[data-mltag]');
+  if(tg){
+    var id = tg.dataset.mltag;
+    if(!id) mlFilter = [];
+    else { var i = mlFilter.indexOf(id); if(i >= 0) mlFilter.splice(i,1); else mlFilter.push(id); }
+    renderHome(); return;
+  }
+  var o = t.closest('[data-open]'); if(o){ startSession([parseInt(o.dataset.open,10)], true); return; }
+  var qa = t.closest('[data-mlqa]'); if(qa){ var qid = parseInt(qa.dataset.mlqa,10); mlOpenQa = (mlOpenQa===qid) ? null : qid; renderHome(); return; }
+  if(t.closest('[data-mlrun]')){
+    var ids = taggedIds(mlKind, mlFilter);
+    if(!ids.length) return;
+    if(mlKind === 'q'){ startSession(shuffle(ids.slice()), true); return; }
+    qaTagPool = ids.map(String); qaFromMl = true; qaRecent = []; mlOn = false; qaOn = true;
+    qaStat = { ok:0, ng:0, streak:0, best:0, gain:0 };
+    qaNext(); renderHome(); window.scrollTo(0,0); return;
+  }
+  var col = t.closest('[data-mlcol]');
+  if(col){
+    /* ほかのタグと同じ色は飛ばして次の色へ */
+    var d = S.tagDefs[col.dataset.mlcol], ci = TAG_COLORS.indexOf(d.c);
+    var used = tagList().filter(function(x){ return x.id !== col.dataset.mlcol; }).map(function(x){ return x.c; });
+    for(var st2 = 1; st2 <= TAG_COLORS.length; st2++){ var nc = TAG_COLORS[(ci + st2) % TAG_COLORS.length]; if(used.indexOf(nc) < 0 || st2 === TAG_COLORS.length){ d.c = nc; break; } }
+    save(); renderHome(); return;
+  }
+  var rn = t.closest('[data-mlren]');
+  if(rn){ var d2 = S.tagDefs[rn.dataset.mlren]; var nv = prompt('タグの名前（20文字まで）', d2.n); if(nv !== null && nv.trim()){ d2.n = nv.trim().slice(0,20); save(); renderHome(); } return; }
+  var dl = t.closest('[data-mldel]');
+  if(dl){
+    var did = dl.dataset.mldel, d3 = S.tagDefs[did], n = tagCount('q',did) + tagCount('qa',did);
+    if(confirm('タグ「'+d3.n+'」を削除しますか？' + (n ? '\nこのタグを付けた'+n+'件からタグが外れます（問題そのものは消えません）。' : ''))){ tagDelete(did); renderHome(); }
+    return;
+  }
+  if(t.closest('[data-mladd]')){ var nm = prompt('新しいタグの名前（20文字まで）', ''); if(nm && nm.trim()){ tagCreate(nm); renderHome(); } return; }
+}
+
 var amtOpen = false;   /* 演習量の折りたたみを開いたままにするか */
 function renderHome(){
+  if(mlOn && !qaOn){
+    main.innerHTML = mlHtml();
+    main.onclick = function(e){ if(document.getElementById('tutOverlay')) return; mlClick(e); };
+    return;
+  }
   if(qaOn){
     main.innerHTML = qaHtml();
     main.onclick = homeClick;
@@ -3097,12 +3433,13 @@ function renderHome(){
 
   h += '<button class="primary" data-act="due" style="margin-bottom:9px"><span class="badge">'+due+'</span><span style="flex:1"><span style="display:block;font:700 14px var(--sans)">今日の復習</span><span style="display:block;font:400 11px var(--sans);opacity:.75;margin-top:2px">忘れる前に戻ってくる'+due+'問</span></span><span class="mono" style="opacity:.7">›</span></button>';
 
-  var nMark = Object.keys(S.marks||{}).length;
-  if(nMark) h += '<button class="ghost markbtn" data-act="marked" style="margin-bottom:9px">'
-     + '<span class="badge mk">'+nMark+'</span>'
-     + '<span style="flex:1;text-align:left"><span style="display:block;font:700 14px var(--sans)">★を付けた問題</span>'
-     + '<span style="display:block;font:400 11px var(--sans);color:var(--soft);margin-top:2px">自信がなかった'+nMark+'問を解き直す</span></span>'
-     + '<span class="mono" style="opacity:.6">›</span></button>';
+  var nMq = taggedIds('q').length, nMqa = taggedIds('qa').length;
+  h += '<button class="ghost markbtn" data-act="mylist" style="margin-bottom:9px">'
+     + '<span class="badge mk">'+(nMq+nMqa)+'</span>'
+     + '<span style="flex:1;text-align:left"><span style="display:block;font:700 14px var(--sans)">マイリスト</span>'
+     + '<span style="display:block;font:400 11px var(--sans);color:var(--soft);margin-top:2px">'
+     +   ((nMq+nMqa) ? '問題 '+nMq+'問・一問一答 '+nMqa+'問をタグ別に解き直す' : '☆を押した問題がタグごとにここに集まります')
+     + '</span></span><span class="mono" style="opacity:.6">›</span></button>';
 
   h += '<button class="ghost qabtn" data-act="qa" style="margin-bottom:9px">'
      + '<span style="flex:1;text-align:left"><span style="display:block;font:700 14px var(--sans)">一問一答</span>'
@@ -3253,7 +3590,13 @@ function homeClick(e){
     }
     var tr = t.closest('[data-train]'); if(tr){ var c=tr.dataset.train; var ids = QUESTIONS.filter(function(q){ return q.category===c; }).map(function(q){return q.id;}); startSession(shuffle(ids).slice(0,S.count), false); return; }
 if(e.target.closest('[data-act="qa"]')){ qaOn = true; qaNext(); renderHome(); window.scrollTo(0,0); return; }
-    if(e.target.closest('[data-qaclose]')){ qaOn = false; renderHome(); return; }
+    if(e.target.closest('[data-qaclose]')){
+      qaOn = false;
+      if(qaFromMl){ qaFromMl = false; qaTagPool = null; qaRecent = []; mlOn = true; }
+      renderHome(); return;
+    }
+    var qs = e.target.closest('[data-qastar]');
+    if(qs){ openTagSheet('qa', parseInt(qs.dataset.qastar,10), renderHome); return; }
     var qo = e.target.closest('[data-qa]');
     if(qo && !qaPicked && qaQ){
       qaPicked = qo.dataset.qa;
@@ -3286,12 +3629,7 @@ if(e.target.closest('[data-act="qa"]')){ qaOn = true; qaNext(); renderHome(); wi
     var a = t.closest('[data-act]'); if(!a) return;
     if(a.dataset.act==='start'){ startSession(buildQueue(), false); }
     if(a.dataset.act==='resume'){ go('quiz'); }
-        if(a.dataset.act==='marked'){
-      var mids = Object.keys(S.marks||{}).map(function(x){ return parseInt(x,10); })
-                  .filter(function(id){ return QUESTIONS.some(function(q){ return q.id===id; }); });
-      if(mids.length) startSession(shuffle(mids), true);
-      return;
-    }
+    if(a.dataset.act==='mylist'){ mlOn = true; qaOn = false; renderHome(); window.scrollTo(0,0); return; }
 if(a.dataset.act==='due'){ var d = dueList().map(function(q){return q.id;}); if(!d.length){ alert('いま期限が来ている復習はありません。'); return; } startSession(d.slice(0,50), true); }
   };
   main.onchange = function(e){
@@ -3352,7 +3690,7 @@ function renderQuiz(){
           : (function(){ var n=s.combo||0, t=comboTier(n);
               return (n>=2 ? '<span class="comboMini sk-'+curSkin()+(t?' '+t.cls:'')+'" title="連続正解">'+n+'<i>連</i></span>' : '')
                    + '<span class="mono xpmini" title="現在の合計XP">'+S.xp+' XP</span>'
-                   + '<button class="star'+(p.bm?' on c'+p.bm:'')+'" data-act="bm">'+(p.bm?'★':'☆')+'</button>'; })())
+                   + starBtn('q', q.id, 'star', 'data-act="bm"'); })())
      + '</div>';
 
   /* 番号から前の問題を開いたときは、その問題の正誤だけを示す（XP・コンボは最新の問題のもの） */
@@ -3442,10 +3780,7 @@ function renderQuiz(){
     h += '<div class="pointcard"><div class="tag">ここだけ暗記ポイント</div><p>'+esc(q.explanation)+'</p></div>';
     if(q.deepdive && !s.tut) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
     /* 正解した問題でも「自信がなかった」ものを後で見返せるようにする */
-    var mkOn = !!(S.marks && S.marks[q.id]);
-    h += '<button class="qmark'+(mkOn?' on':'')+'" data-qmark="'+q.id+'">'
-       +   '<span>'+(mkOn?'★':'☆')+'</span>'+(mkOn?'あとで見返す（登録済み）':'あとで見返す')
-       + '</button>';
+    h += saveBtn('q', q.id, 'data-qmark="'+q.id+'"');
     h += '<div class="fbrow"><button class="fbbtn" data-act="feedback" data-qid="'+q.id+'">この問題にメモを残す</button>'
        +  (s.tut ? '' : '<button class="fbbtn" data-act="report" data-qid="'+q.id+'">誤りを報告する</button>') + '</div>';
     var p2 = P(q.id);
@@ -3523,17 +3858,14 @@ function renderQuiz(){
         if(s.i > 0){ if(!s.revealed){ s.pendPick = s.picked.slice(); s.pendOpen = s.open; } s.i--; s.revealed = true; s.picked = (s.hist && s.hist[s.i]) ? s.hist[s.i].slice() : []; save(); renderQuiz(); }
         return;
       }
-      if(a.dataset.act==='bm'){ p.bm = ((p.bm||0)+1) % 4; save(); renderQuiz(); return; }
+      if(a.dataset.act==='bm'){ openTagSheet('q', q.id, renderQuiz); return; }
       if(a.dataset.act==='zoom'){ zoom(a.getAttribute('src')); return; }
       if(a.dataset.act==='feedback'){ openMemo(parseInt(a.dataset.qid,10)); return; }
       if(a.dataset.act==='report'){ window.openContact({ qid: parseInt(a.dataset.qid,10), subj: SUBJ.id, page: 'question' }); return; }
     }
     var qm = e.target.closest('[data-qmark]');
     if(qm){
-      var qid = parseInt(qm.dataset.qmark,10);
-      if(!S.marks) S.marks = {};
-      if(S.marks[qid]) delete S.marks[qid]; else S.marks[qid] = 1;
-      save(); renderQuiz(); return;
+      openTagSheet('q', parseInt(qm.dataset.qmark,10), renderQuiz); return;
     }
     if(e.target.closest('[data-chicknext]')){
       if(s.open == null) s.open = 0;
@@ -3610,9 +3942,8 @@ function renderResult(){
   s.res.forEach(function(r){
     var q = QUESTIONS.filter(function(x){ return x.id===r.id; })[0];
     if(!q) return;
-    var mk = !!(S.marks && S.marks[q.id]);
     h += '<div class="resli'+(r.ok?'':' ng')+'">'
-       +   '<button class="resmk'+(mk?' on':'')+'" data-mark="'+q.id+'" title="あとで見返す">'+(mk?'★':'☆')+'</button>'
+       +   starBtn('q', q.id, 'resmk', 'data-mark="'+q.id+'"')
        +   '<button class="resopen" data-open="'+q.id+'">'
        +     '<span class="resj">'+(r.ok?'○':'✕')+'</span>'
        +     '<span class="resq">'+esc(q.stem.slice(0,30))+(q.stem.length>30?'…':'')+'</span>'
@@ -3624,18 +3955,15 @@ function renderResult(){
   h += '</div>';
   h += '<div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">';
   if(wrong.length) h += '<button class="cta" data-act="review">間違えた'+wrong.length+'問をいま復習する</button>';
-  var marked = s.res.filter(function(r){ return S.marks && S.marks[r.id]; });
-  if(marked.length) h += '<button class="ghost" data-act="reviewmark">★を付けた'+marked.length+'問を復習する</button>';
+  var marked = s.res.filter(function(r){ return tagsOf('q', r.id).length; });
+  if(marked.length) h += '<button class="ghost" data-act="reviewmark">マイリストに保存した'+marked.length+'問を復習する</button>';
   h += '<button class="ghost" data-act="again">'+(S.timeatk ? 'もう一度 '+(S.taMin||10)+'分' : '同じ条件でもう'+S.count+'問')+'</button><button class="ghost" data-act="home">'+(qaBack?'一問一答に戻る':'ホームへ')+'</button></div><div style="height:20px"></div>';
   main.innerHTML = h;
 
   main.onclick = function(e){
     var mk = e.target.closest('[data-mark]');
     if(mk){
-      var mid = parseInt(mk.dataset.mark,10);
-      if(!S.marks) S.marks = {};
-      if(S.marks[mid]) delete S.marks[mid]; else S.marks[mid] = 1;
-      save(); renderResult(); return;
+      openTagSheet('q', parseInt(mk.dataset.mark,10), renderResult); return;
     }
     var o = e.target.closest('[data-open]'); if(o){ startSession([parseInt(o.dataset.open,10)], true); return; }
     var a = e.target.closest('[data-act]'); if(!a) return;
@@ -3669,8 +3997,8 @@ function searchResultsHtml(){
   }).join('') : '<div class="li" style="color:var(--soft)">見つかりませんでした</div>') + '</div>';
 }
 function renderStats(){
-  var seen = 0, ok = 0, bm = 0;
-  QUESTIONS.forEach(function(q){ var p=S.prog[q.id]; if(p&&p.seen){ seen++; if(p.lastOk) ok++; } if(p&&p.bm) bm++; });
+  var seen = 0, ok = 0;
+  QUESTIONS.forEach(function(q){ var p=S.prog[q.id]; if(p&&p.seen){ seen++; if(p.lastOk) ok++; } });
   var acc = accByCat();
   var wrongs = QUESTIONS.filter(function(q){ var p=S.prog[q.id]; return p && p.seen && !p.lastOk; });
   var h = '';
@@ -3716,22 +4044,8 @@ function renderStats(){
   });
   h += '</div><div class="sub" style="margin-top:8px">タップするとその分野を出題します</div></details>';
 
-  if(bm){
-    var bmQs = QUESTIONS.filter(function(q){ var p=S.prog[q.id]; return p&&p.bm; });
-    var setColors = {1:'#E8A100', 2:'#E02418', 3:'#1B5FC1'};
-    h += '<details id="bmDetails"><summary>ブックマーク（'+bm+'）</summary><div class="sub" style="margin:8px 0 8px">問題画面の☆をタップすると黄→赤→青→解除の順で切り替わります。名前の右の✎で名前を変更できます。</div>';
-    [1,2,3].forEach(function(setId){
-      var list = bmQs.filter(function(q){ return S.prog[q.id].bm===setId; });
-      if(!list.length) return;
-      var nm = esc(S.bmNames[setId] || ('セット'+setId));
-      h += '<div class="bmgroup"><div class="bmhead"><b style="color:'+setColors[setId]+'">★ '+nm+'</b><span style="flex:1"></span><button class="bmrename" data-rename="'+setId+'" title="名前を変更">✎</button><span class="n">'+list.length+'問</span></div><div class="list">';
-      list.forEach(function(q){
-        h += '<div class="li" data-open="'+q.id+'"><span style="flex:1">'+esc(q.stem.slice(0,30))+(q.stem.length>30?'…':'')+'</span><span class="n">'+letterOf(q.category)+'</span><span class="n" style="color:var(--soft)">#'+q.id+'</span></div>';
-      });
-      h += '</div><div style="margin-top:8px"><button class="ghost" data-act="bmrun" data-set="'+setId+'">この'+list.length+'問をまとめて解く</button></div></div>';
-    });
-    h += '</details>';
-  }
+  var nMy = taggedIds('q').length + taggedIds('qa').length;
+  h += '<div class="list" style="margin:16px 0 9px"><div class="li" data-act="mylist"><span style="flex:1;font-weight:700">マイリスト</span><span class="n">'+nMy+'件</span><span class="mono" style="opacity:.6">›</span></div></div>';
 
   if(S.feedback && S.feedback.length){
     h += '<details id="fbDetails"><summary>問題のメモ（'+S.feedback.length+'）</summary>';
@@ -3779,19 +4093,13 @@ function renderStats(){
     var c = e.target.closest('[data-cat]');
     if(c){ var cat=c.dataset.cat; var ids = QUESTIONS.filter(function(q){ return q.category===cat; }).map(function(q){return q.id;}); startSession(shuffle(ids).slice(0,S.count), false); return; }
     var o = e.target.closest('[data-open]'); if(o){ startSession([parseInt(o.dataset.open,10)], true); return; }
-    var rn = e.target.closest('[data-rename]');
     var ef = e.target.closest('[data-editfb]');
     if(ef){ openMemo(S.feedback[parseInt(ef.dataset.editfb,10)].id, parseInt(ef.dataset.editfb,10)); return; }
-    if(rn){ var sid = parseInt(rn.dataset.rename,10); var cur = S.bmNames[sid] || ('セット'+sid); var nv = prompt('この色のブックマークの名前を入力してください', cur); if(nv!==null && nv.trim()){ S.bmNames[sid] = nv.trim().slice(0,20); save(); renderStats(); } return; }
     var delfb = e.target.closest('[data-delfb]');
     if(delfb){ var didx = parseInt(delfb.dataset.delfb,10); S.feedback.splice(didx,1); save(); renderStats(); return; }
     var a = e.target.closest('[data-act]'); if(!a) return;
     if(a.dataset.act==='wrongrun') startSession(shuffle(wrongs.map(function(q){return q.id;})).slice(0,50), true);
-    if(a.dataset.act==='bmrun'){
-      var setFilter = a.dataset.set ? parseInt(a.dataset.set,10) : null;
-      var ids = QUESTIONS.filter(function(q){ var p=S.prog[q.id]; return p && p.bm && (setFilter===null || p.bm===setFilter); }).map(function(q){return q.id;});
-      startSession(ids, true);
-    }
+    if(a.dataset.act==='mylist'){ mlOn = true; qaOn = false; go('home'); return; }
     if(a.dataset.act==='copyfb'){
       var txt = S.feedback.map(function(f){ return '#'+f.id+': '+f.text; }).join('\n');
       if(navigator.clipboard && navigator.clipboard.writeText){

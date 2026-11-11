@@ -4,7 +4,10 @@ import {
   initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, browserPopupRedirectResolver,
   GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut
 } from 'firebase/auth';
-import { initializeFirestore, doc, runTransaction, serverTimestamp, collection, addDoc } from 'firebase/firestore';
+import {
+  initializeFirestore, doc, runTransaction, serverTimestamp, collection, addDoc,
+  writeBatch, increment, query, where, getDocs
+} from 'firebase/firestore';
 
 var MAX_JSON = 900000;   /* Firestoreは1ドキュメント1MiBまで */
 
@@ -49,6 +52,21 @@ export function createFirebaseTransport(cfg) {
     sendInquiry: function (d) {
       var u = auth.currentUser;
       return addDoc(collection(db, 'inquiries'), Object.assign({}, d, { uid: u ? u.uid : '', createdAt: serverTimestamp() }));
+    },
+    /* 正答率の集計: 1人1問1回だけ。目印(qstatBy)と集計(qstats)を同時に書き、規則で整合性を確かめる */
+    reportStat: function (uid, subj, qid, ok) {
+      var id = subj + '_' + qid;
+      var b = writeBatch(db);
+      b.set(doc(db, 'qstatBy', id + '_' + uid), { ok: !!ok });
+      b.set(doc(db, 'qstats', id), { subj: subj, qid: qid, n: increment(1), c: increment(ok ? 1 : 0) }, { merge: true });
+      return b.commit();
+    },
+    /* 回答数が min 以上の問題の集計値を取得する（単一フィールドの範囲検索なので複合インデックスは不要） */
+    fetchStats: async function (min) {
+      var snap = await getDocs(query(collection(db, 'qstats'), where('n', '>=', min)));
+      var rows = [];
+      snap.forEach(function (d) { var x = d.data(); rows.push({ subj: x.subj, qid: x.qid, n: x.n, c: x.c }); });
+      return rows;
     },
     /* クラウドの1ドキュメントを読み、mergeFn(cloudData)の結果を（変化があれば）書き込む。競合時はトランザクションが自動で再試行する */
     syncDoc: function (uid, docId, mergeFn) {

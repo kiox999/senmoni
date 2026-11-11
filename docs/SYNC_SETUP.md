@@ -64,3 +64,9 @@ window.BOARD_FIREBASE = {
 - テスト: `npm test`(統合ロジックと2端末の同期フロー)。
 - `index.html` への追加は3か所だけです(`firebase-config.js` と同期バンドルの読み込み / ハブ画面の `<div id="syncMount">` / 起動処理 `boot()` の同期待ち)。
   `index.html` を別の場所で作り直す場合は、この3か所と、`sw.js` の `FILES` に `firebase-config.js` `sync.bundle.js` を含めることを引き継いでください。
+
+## 5. 問題ごとの正答率（難易度補正）
+
+- ログイン中のユーザーが初めて答えた問題の正誤を `qstats`（集計）と `qstatBy`（1人1回の目印）に記録します。詳細は `docs/DIFFICULTY.md`。
+- **このための新しいルールが `firestore.rules` に入っています。コンソールの「ルール」タブに貼り直して「公開」してください**（公開するまでは記録が拒否され、段位認定はラベルどおりの難易度で動きます）。
+- 集計は「回答数30以上」の問題だけを読むため、Firestoreが単一フィールドの索引（`qstats.n`）を自動で作ります。追加の設定は不要です。

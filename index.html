@@ -1564,9 +1564,31 @@ function startSession(ids, reviewing){
   save(); go('quiz');
 }
 var DIFF_LABEL = { easy:'易', medium:'中', hard:'難' };
-/* 難易度は主観による暫定値であり全問に付与されていないため、現在は非表示。
-   difficulty のデータ自体は保持しており、全問設定できた際に段位認定の出題制御へ転用できる。 */
-var SHOW_DIFF = false;  /* 難易度は裏設定。UIには一切表示しない */
+/* 難易度（easy/medium/hard）は段位認定の出題制御に使う裏設定。基準は docs/DIFFICULTY.md。
+   全科目で付与済み。回答数がたまった問題は下の effDiff() で実際の正答率により補正する。 */
+var SHOW_DIFF = false;
+/* ---- 正答率による難易度の補正 ----
+   クラウドの匿名集計（初回回答だけ・1人1回）で回答数が QSTAT_MIN 以上の問題は、
+   ラベルより実際の正答率を優先する。正答率 80%以上→easy、50%未満→hard、その間→medium */
+var QSTAT_MIN = 30, QSTAT_EASY = 0.80, QSTAT_HARD = 0.50;
+function reportFirstAnswer(qid, ok){
+  try{ if(window.BoardSync && window.BoardSync.reportFirst) window.BoardSync.reportFirst(SUBJ.id, qid, !!ok); }catch(e){}
+}
+var _qstatCache = null;
+function qstatsNow(){
+  if(_qstatCache) return _qstatCache;
+  try{ _qstatCache = (window.BoardSync && window.BoardSync.qstats) ? (window.BoardSync.qstats(SUBJ.id) || {}) : {}; }
+  catch(e){ _qstatCache = {}; }
+  return _qstatCache;
+}
+function effDiff(q){
+  var st = qstatsNow()[q.id];
+  if(st && st[0] >= QSTAT_MIN){
+    var rate = st[1] / st[0];
+    return rate >= QSTAT_EASY ? 'easy' : (rate < QSTAT_HARD ? 'hard' : 'medium');
+  }
+  return q.difficulty || 'medium';
+}  /* 難易度は裏設定。UIには一切表示しない */
 function diffBadge(q){
   if(!SHOW_DIFF) return '';
   var dv = q && q.difficulty;
@@ -1969,6 +1991,7 @@ function submitAnswer(bet){
   var mine = s.picked.slice().sort().join(',');
   var ok = cor===mine;
   var p = P(q.id);
+  if(!p.seen) reportFirstAnswer(q.id, ok);   /* 初回の正誤だけを正答率の集計に送る */
   p.seen++; p.lastOk = ok; p.last = Date.now();
   if(ok) p.ok++; else p.ng++;
   var hk = todayKey(); var h = S.hist[hk] || (S.hist[hk]={a:0,c:0}); h.a++; if(ok) h.c++;
@@ -2283,6 +2306,7 @@ function finishExam(timeUp){
     var mine = (s.ans && s.ans[idx]) ? s.ans[idx].slice().sort().join(',') : '';
     var okq = mine !== '' && mine === q.correct.slice().sort().join(',');
     var p = P(qid);
+    if(!p.seen && mine !== '') reportFirstAnswer(qid, okq);
     p.seen++; p.lastOk = okq; p.last = Date.now();
     if(okq) p.ok++; else p.ng++;
     hh.a++; if(okq) hh.c++;
@@ -2368,7 +2392,8 @@ function buildExam(r){
     for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; }
     return a;
   }
-  var hard = function(q){ return q.difficulty === 'hard'; };
+  _qstatCache = null;   /* 試験のたびに最新の集計を読み直す */
+  var hard = function(q){ return effDiff(q) === 'hard'; };
   var multi = function(q){ return q.correct.length > 1; };
   var HM=[], HS=[], EM=[], ES=[];
   QUESTIONS.forEach(function(q){
@@ -2376,6 +2401,15 @@ function buildExam(r){
     if(h && m) HM.push(q); else if(h) HS.push(q); else if(m) EM.push(q); else ES.push(q);
   });
   HM=shuffle(HM); HS=shuffle(HS); EM=shuffle(EM); ES=shuffle(ES);
+  /* 難問以外の群の中では、5級〜2級は easy を、六段以上は medium を優先して取る。
+     difficulty 未設定の問題は medium 扱い。該当する在庫がなければ自然にもう一方で埋まる。 */
+  var pref = r.id <= 4 ? 'easy' : (r.h >= 0.30 ? 'medium' : null);
+  if(pref){
+    var lvl = function(q){ return effDiff(q); };
+    var byPref = function(a){ return a.filter(function(q){ return lvl(q)===pref; })
+                                .concat(a.filter(function(q){ return lvl(q)!==pref; })); };
+    EM = byPref(EM); ES = byPref(ES);
+  }
 
   var n = r.n;
   var needM = Math.min(n, Math.round(n * (r.m || 0)));   /* 複数解答の目標数 */

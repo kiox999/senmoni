@@ -4,7 +4,7 @@
   "description": "クラウド同期(Googleログイン)のソースとビルド。アプリ本体は index.html",
   "scripts": {
     "build": "node sync-src/build.mjs",
-    "test": "node sync-src/test/merge.test.mjs && node sync-src/test/core.test.mjs"
+    "test": "node sync-src/test/merge.test.mjs && node sync-src/test/core.test.mjs && node sync-src/test/qstats.test.mjs"
   },
   "dependencies": {
     "firebase": "^11.0.0"

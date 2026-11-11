@@ -1062,6 +1062,50 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 </script>
 
 <script>
+/* 表・箇条書きの描画は、科目ごとの画面と全科目の事典検索（ホーム側）の両方で使うので全体で共有する */
+/* 本文中のブロック記法：[TABLE]〜[/TABLE]（表）と [LIST]〜[/LIST]（箇条書き）。1節に複数あってもよい */
+var BLOCK_RE = /\[(TABLE|LIST)\]([\s\S]*?)\[\/\1\]/g;
+function blockTableHtml(body, fmt){
+  var rows = body.trim().split('\n').map(function(r){ return r.split('|').map(function(c){ return c.trim(); }); }).filter(function(r){ return r.length && r.some(function(c){return c!=='';}); });
+  if(!rows.length) return '';
+  var html = '<div class="ddtwrap"><table class="ddtable"><tbody>';
+  rows.forEach(function(cells, ri){
+    var tag = ri===0 ? 'th' : 'td';
+    html += '<tr>' + cells.map(function(c){ return '<'+tag+'>'+fmt(c)+'</'+tag+'>'; }).join('') + '</tr>';
+  });
+  return html + '</tbody></table></div>';
+}
+/* 各行が1項目。「■」で始まる行は小見出しとして、その下の項目をまとめる */
+function blockListHtml(body, fmt){
+  var lines = body.split('\n').map(function(x){ return x.trim().replace(/^[・\-]\s*/, ''); }).filter(function(x){ return x; });
+  var html = '<div class="ddlist">', open = false;
+  lines.forEach(function(ln){
+    if(ln.charAt(0) === '■'){
+      if(open){ html += '</ul>'; open = false; }
+      html += '<div class="ddlh">'+fmt(ln.slice(1).trim())+'</div>';
+    } else {
+      if(!open){ html += '<ul>'; open = true; }
+      html += '<li>'+fmt(ln)+'</li>';
+    }
+  });
+  if(open) html += '</ul>';
+  return html + '</div>';
+}
+function renderBlocks(content, fmt){
+  var html = '', last = 0, m;
+  BLOCK_RE.lastIndex = 0;
+  while((m = BLOCK_RE.exec(content)) !== null){
+    var before = content.slice(last, m.index).trim();
+    if(before) html += '<p>'+fmt(before)+'</p>';
+    html += m[1] === 'TABLE' ? blockTableHtml(m[2], fmt) : blockListHtml(m[2], fmt);
+    last = BLOCK_RE.lastIndex;
+  }
+  var rest = content.slice(last).trim();
+  if(rest) html += '<p>'+fmt(rest)+'</p>';
+  return html;
+}
+</script>
+<script>
 function startEngine(SUBJ, DATA){
 "use strict";
 window.BOARD_ENGINE_ON = true;
@@ -1202,47 +1246,6 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ ret
    本文の表示では印を外すだけで、強調などの装飾は一切行わない。 */
 function mark(s){ return String(s).replace(/\{\{([^{}]{1,40})\}\}/g, '$1'); }
 function stripMark(s){ return String(s).replace(/\{\{([^{}]{1,40})\}\}/g, '$1'); }
-/* 本文中のブロック記法：[TABLE]〜[/TABLE]（表）と [LIST]〜[/LIST]（箇条書き）。1節に複数あってもよい */
-var BLOCK_RE = /\[(TABLE|LIST)\]([\s\S]*?)\[\/\1\]/g;
-function blockTableHtml(body, fmt){
-  var rows = body.trim().split('\n').map(function(r){ return r.split('|').map(function(c){ return c.trim(); }); }).filter(function(r){ return r.length && r.some(function(c){return c!=='';}); });
-  if(!rows.length) return '';
-  var html = '<div class="ddtwrap"><table class="ddtable"><tbody>';
-  rows.forEach(function(cells, ri){
-    var tag = ri===0 ? 'th' : 'td';
-    html += '<tr>' + cells.map(function(c){ return '<'+tag+'>'+fmt(c)+'</'+tag+'>'; }).join('') + '</tr>';
-  });
-  return html + '</tbody></table></div>';
-}
-/* 各行が1項目。「■」で始まる行は小見出しとして、その下の項目をまとめる */
-function blockListHtml(body, fmt){
-  var lines = body.split('\n').map(function(x){ return x.trim().replace(/^[・\-]\s*/, ''); }).filter(function(x){ return x; });
-  var html = '<div class="ddlist">', open = false;
-  lines.forEach(function(ln){
-    if(ln.charAt(0) === '■'){
-      if(open){ html += '</ul>'; open = false; }
-      html += '<div class="ddlh">'+fmt(ln.slice(1).trim())+'</div>';
-    } else {
-      if(!open){ html += '<ul>'; open = true; }
-      html += '<li>'+fmt(ln)+'</li>';
-    }
-  });
-  if(open) html += '</ul>';
-  return html + '</div>';
-}
-function renderBlocks(content, fmt){
-  var html = '', last = 0, m;
-  BLOCK_RE.lastIndex = 0;
-  while((m = BLOCK_RE.exec(content)) !== null){
-    var before = content.slice(last, m.index).trim();
-    if(before) html += '<p>'+fmt(before)+'</p>';
-    html += m[1] === 'TABLE' ? blockTableHtml(m[2], fmt) : blockListHtml(m[2], fmt);
-    last = BLOCK_RE.lastIndex;
-  }
-  var rest = content.slice(last).trim();
-  if(rest) html += '<p>'+fmt(rest)+'</p>';
-  return html;
-}
 function renderContentWithTable(content){
   return renderBlocks(content, function(t){ return mark(esc(t)); });
 }

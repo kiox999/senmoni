@@ -2295,6 +2295,7 @@ function examConfirmFinish(){
 function finishExam(timeUp){
   stopExamClock();
   var s=S.session; if(!s||!s.exam) return;
+  if(s.examResult){ go('result'); return; }   /* 採点済みの試験を二重に採点しない */
   examStash();
   /* ここで初めて全問を採点し、学習記録・復習間隔へ反映する */
   var sp = S.spacing, hk = todayKey();
@@ -2318,6 +2319,7 @@ function finishExam(timeUp){
   var ok = s.res.filter(function(x){ return x.ok; }).length;
   var rate = r.n ? (100*ok/r.n) : 0;
   var passed = !timeUp && rate >= r.pass;
+  s.i = s.ids.length;   /* 最後の問題以外で提出・時間切れでも、終わった試験として扱う */
   s.examResult = { rank:r.id, ok:ok, total:r.n, answered:s.res.filter(function(x){return x.answered;}).length,
                    rate:rate, passed:passed, timeUp:!!timeUp, ts:Date.now() };
   if(passed && r.id > (S.rank||0)) S.rank = r.id;
@@ -3452,7 +3454,8 @@ function renderHome(){
   var ranked = CATS.map(function(c){ return { c:c, d:acc[c] }; })
     .filter(function(x){ return x.d.seen>=1; })
     .sort(function(a,b){ return (a.d.ok/a.d.seen) - (b.d.ok/b.d.seen); }).slice(0,3);
-  var resume = S.session && S.session.i < S.session.ids.length;
+  /* 採点済みの段位試験（見直し用に残してあるだけ）は「途中のセット」として扱わない */
+  var resume = S.session && !S.session.examResult && S.session.i < S.session.ids.length;
 
   var h = '';
   h += '<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 16px">';
@@ -3700,6 +3703,7 @@ function quizJump(j){
 function renderQuiz(){
   var s = S.session, q = curQ();
   if(!s || !q){ go('home'); return; }
+  if(s.examResult){ go('result'); return; }
   var ex = s.exam ? rankById(s.exam) : null;
   if(ex && s.deadline && Date.now() > s.deadline){ finishExam(true); return; }
   /* 正解数不明（XX mode）の適用範囲。

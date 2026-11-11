@@ -1564,8 +1564,8 @@ function startSession(ids, reviewing){
   save(); go('quiz');
 }
 var DIFF_LABEL = { easy:'易', medium:'中', hard:'難' };
-/* 難易度は主観による暫定値であり全問に付与されていないため、現在は非表示。
-   difficulty のデータ自体は保持しており、全問設定できた際に段位認定の出題制御へ転用できる。 */
+/* 難易度（easy/medium/hard）は段位認定の出題制御に使う裏設定。基準は docs/DIFFICULTY.md。
+   科目ごとに全問へ付け直し中（救急科は完了）。将来は実際の正答率で補正する予定。 */
 var SHOW_DIFF = false;  /* 難易度は裏設定。UIには一切表示しない */
 function diffBadge(q){
   if(!SHOW_DIFF) return '';
@@ -2376,6 +2376,15 @@ function buildExam(r){
     if(h && m) HM.push(q); else if(h) HS.push(q); else if(m) EM.push(q); else ES.push(q);
   });
   HM=shuffle(HM); HS=shuffle(HS); EM=shuffle(EM); ES=shuffle(ES);
+  /* 難問以外の群の中では、5級〜2級は easy を、六段以上は medium を優先して取る。
+     difficulty 未設定の問題は medium 扱い。該当する在庫がなければ自然にもう一方で埋まる。 */
+  var pref = r.id <= 4 ? 'easy' : (r.h >= 0.30 ? 'medium' : null);
+  if(pref){
+    var lvl = function(q){ return q.difficulty || 'medium'; };
+    var byPref = function(a){ return a.filter(function(q){ return lvl(q)===pref; })
+                                .concat(a.filter(function(q){ return lvl(q)!==pref; })); };
+    EM = byPref(EM); ES = byPref(ES);
+  }
 
   var n = r.n;
   var needM = Math.min(n, Math.round(n * (r.m || 0)));   /* 複数解答の目標数 */

@@ -11,3 +11,12 @@
 - `data/naika.js` `data/shouni.js` `data/kyukyu.js` … 各科目の問題データ
 - `sw.js` `manifest.webmanifest` `icons/` … ホーム画面追加・オフライン用
 - `sync-src/` `sync.bundle.js` `firebase-config.js` `firestore.rules` … クラウド同期（任意）
+
+## データを直したとき
+```
+python3 tools/check_data.py   # 問題データの検査（誤りが0件になるまで直す）
+python3 tools/stamp.py        # 版番号を中身から決めて sw.js と index.html に書き込む
+```
+- プルリクエストごとに GitHub 上で同じ検査が走ります（`.github/workflows/check.yml`）
+- 検査の中身：問題番号の重複、選択肢の数、「Nつ選べ」と正解数、選択肢の「のみ」「だけ」、暗記ポイントの体言止め・「→」「＝」の誤用、関連知識と事典の対応 など
+- 関連知識は事典本文と同じ文章なので、問題側には項目名（`dd`）だけを置いています。事典にない独自の文章を出したい問題だけ `deepdive` に本文を書きます。`python3 tools/pack_deep.py` で写しを参照に置き換えられます

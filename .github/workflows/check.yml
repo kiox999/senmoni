@@ -1,0 +1,22 @@
+name: 検査
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 問題データの検査
+        run: python3 tools/check_data.py
+      - name: 版番号が中身と合っているか
+        run: python3 tools/stamp.py --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 同期部分のテスト
+        run: npm ci && npm test

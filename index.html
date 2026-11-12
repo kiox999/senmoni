@@ -4559,7 +4559,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "20261111-dz6";
+<script>window.BOARD_BUILD = "766f2035bbd9";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -4655,6 +4655,14 @@ function renderHub(){
   document.getElementById('app').classList.add('hide');
   document.getElementById('loading').classList.add('hide');
 }
+/* 関連知識は事典本文と同じ文章なので、データには項目名(dd)だけを置き、読み込み時に本文へ展開する */
+function expandDeep(data){
+  var en = (data && data.raw && data.raw.encyc) || [], map = {};
+  en.forEach(function(e){ map[e.n] = e.b || ''; });
+  ((data && data.raw && data.raw.questions) || []).forEach(function(q){
+    if(!q.deepdive && q.dd && map.hasOwnProperty(q.dd)) q.deepdive = '【' + q.dd + '】' + map[q.dd];
+  });
+}
 function loadSubject(id, start){
   var s = byId(id); if(!s){ renderHub(); return; }
   window.BOARD_START = start || {};
@@ -4668,7 +4676,7 @@ function loadSubject(id, start){
     document.getElementById('loading').classList.add('hide');
     document.getElementById('app').classList.remove('hide');
     try{ localStorage.setItem('board-count-'+s.id, String(data.raw.questions.length)); }catch(e){}
-    try{ startEngine(s, data); }catch(e){ alert('起動できませんでした：'+e.message); renderHub(); }
+    try{ expandDeep(data); startEngine(s, data); }catch(e){ alert('起動できませんでした：'+e.message); renderHub(); }
   };
   sc.onerror = function(){ alert('問題データを読み込めませんでした（'+s.name+'）。通信状況を確認して、もう一度お試しください。'); try{ localStorage.removeItem(SKEY); }catch(e){} renderHub(); };
   document.body.appendChild(sc);

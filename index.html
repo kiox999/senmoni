@@ -150,7 +150,7 @@ html[data-theme="dark"] .primary .badge{background:rgba(0,0,0,.22)}
 .pointcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px}
 .pointcard .tag{font:700 11px var(--mono);color:var(--accent);margin-bottom:6px}
 .pointcard p{font:500 14.5px/1.85 var(--sans);margin:0}
-.pointcard .pmore{margin-top:8px}.pointcard .pmore summary{font:600 12.5px var(--sans);color:var(--accent);cursor:pointer;list-style:none}.pointcard .pmore summary::-webkit-details-marker{display:none}.pointcard .pmore p{font:400 13.5px/1.8 var(--sans);color:var(--soft);margin-top:6px}
+.expcard .tag{color:var(--soft)}.expcard p{font:400 13.5px/1.85 var(--sans)}.pointcard .pmore{margin-top:8px}.pointcard .pmore summary{font:600 12.5px var(--sans);color:var(--accent);cursor:pointer;list-style:none}.pointcard .pmore summary::-webkit-details-marker{display:none}.pointcard .pmore p{font:400 13.5px/1.8 var(--sans);color:var(--soft);margin-top:6px}
 details.deep{margin-top:10px;border:1px solid var(--line);border-radius:11px;padding:12px 14px}
 details.deep summary{font:600 12.5px var(--sans);color:var(--accent);cursor:pointer;list-style:none}
 details.deep summary::-webkit-details-marker{display:none}
@@ -1499,7 +1499,7 @@ function stripMark(s){ return String(s).replace(/\{\{([^{}]{1,40})\}\}/g, '$1');
 function renderContentWithTable(content){
   return renderBlocks(content, function(t){ return mark(esc(t)); });
 }
-/* 暗記ポイントは要点（最初の1文）だけ見せ、残りは折りたたむ */
+/* 暗記ポイントは要点（最初の1文）だけにし、残りは解説の枠に回す */
 function splitPoint(t){
   t=String(t||'');
   if(t.length<=110) return [t,''];
@@ -1510,9 +1510,10 @@ function splitPoint(t){
 }
 function pointCard(t, more){
   var sp=more ? [t, more] : splitPoint(t);
-  var h='<div class="pointcard"><div class="tag">ここだけ暗記ポイント</div><p>'+esc(sp[0])+'</p>';
-  if(sp[1]) h+='<details class="pmore"><summary>'+(more?'詳しい解説 ＋':'解説の続き ＋')+'</summary><p>'+esc(sp[1])+'</p></details>';
-  return h+'</div>';
+  var h='<div class="pointcard"><div class="tag">ここだけ暗記ポイント</div><p>'+esc(sp[0])+'</p></div>';
+  /* 解説は暗記ポイントの中に畳まず、別の枠でそのまま見せる */
+  if(sp[1]) h+='<div class="pointcard expcard"><div class="tag">解説</div><p>'+esc(sp[1])+'</p></div>';
+  return h;
 }
 function formatDeepdive(text){
   if(!text) return '';

@@ -11,7 +11,8 @@ import { createQStats } from './qstats.js';
   if (!testTransport && !isConfigured(cfg)) {
     window.BoardSync = { configured: false, startup: function () { return Promise.resolve(); },
       sendInquiry: function () { return Promise.reject(new Error('送信機能が設定されていません')); },
-      reportFirst: function () {}, qstats: function () { return {}; } };
+      reportFirst: function () {}, qstats: function () { return {}; },
+      pins: function () { return {}; }, isAdmin: function () { return false; } };
     return;
   }
 
@@ -79,11 +80,14 @@ import { createQStats } from './qstats.js';
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flushStats(); });
   window.addEventListener('pagehide', flushStats);
   window.addEventListener('online', flushStats);
-  setTimeout(function () { qs.refresh(false); }, 4000);
+  setTimeout(function () { qs.refresh(false); qs.refreshPins(); }, 4000);
+  var admin = false;
 
   transport.init(function (user, interactive) {
     sync.onAuth(user, interactive);
     if (user) setTimeout(function () { qs.flush(user.uid); }, 3000);
+    admin = false;
+    if (user && transport.checkAdmin) transport.checkAdmin(user.uid).then(function (v) { admin = !!v; }, function () {});
   }, takeInteractive);
 
   /* 以前ログインしていない端末では待たない */
@@ -98,6 +102,11 @@ import { createQStats } from './qstats.js';
     reportFirst: function (subj, qid, ok) { qs.report(subj, qid, ok); scheduleStats(); },
     /* 回答数が十分な問題の集計 { qid: [回答数, 正答数] } */
     qstats: function (subj) { return qs.get(subj); },
+    /* 作者が固定した難易度 { qid: level }（誰でも読める） */
+    pins: function (subj) { return qs.pins(subj); },
+    /* 作者用（admins/<uid> がある人だけ） */
+    isAdmin: function () { return admin; },
+    setPin: function (subj, qid, level) { return qs.setPin(subj, qid, level); },
     _sync: sync
   };
 })();

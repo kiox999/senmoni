@@ -291,6 +291,11 @@ details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0
 .fbli{position:relative}
 /* ---- お問い合わせ ---- */
 .fbrow{display:flex;gap:18px;flex-wrap:wrap}
+.pinrow{margin-top:10px;padding:10px 12px;border:1px dashed var(--soft);border-radius:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pinhd{width:100%;font:700 11.5px var(--sans);color:var(--soft)}
+.pinb{min-width:44px;min-height:36px;padding:0 10px;border:1px solid var(--soft);border-radius:8px;background:none;font:600 13px var(--sans);color:var(--ink);cursor:pointer}
+.pinb.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.pininfo{width:100%;font:400 11px var(--sans);color:var(--soft)}
 .ctkinds{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
 .ctkind{padding:9px 6px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:600 12.5px var(--sans);cursor:pointer}
 .ctkind.on{border-color:var(--accent);background:var(--accentSoft);color:var(--accent)}
@@ -1635,8 +1640,30 @@ var DIFF_PIN = {
   shouni: {},
   naika:  {}
 };
+/* 作者がアプリの解説画面から固定した難易度（クラウドに保存され、全員に反映） */
+function cloudPin(qid){
+  try{ return (window.BoardSync && window.BoardSync.pins) ? (window.BoardSync.pins(SUBJ.id) || {})[qid] : null; }catch(e){ return null; }
+}
+function isAdmin(){ try{ return !!(window.BoardSync && window.BoardSync.isAdmin && window.BoardSync.isAdmin()); }catch(e){ return false; } }
+/* 作者だけに見える難易度の固定ボタン */
+function pinRow(q){
+  if(!isAdmin()) return '';
+  var cur = (DIFF_PIN[SUBJ.id] || {})[q.id] || cloudPin(q.id) || '';
+  var st = qstatsNow()[q.id];
+  var info = 'ラベル ' + (DIFF_LABEL[q.difficulty] || '—') + (st ? ' ／ 正答率 ' + Math.round(100*st[1]/st[0]) + '%（' + st[0] + '人）' : '') + ' ／ 現在 ' + DIFF_LABEL[effDiff(q)];
+  var b = function(v, t){ return '<button class="pinb' + (cur === v ? ' on' : '') + '" data-pin="' + v + '" data-qid="' + q.id + '">' + t + '</button>'; };
+  return '<div class="pinrow"><div class="pinhd">作者用：難易度を固定（#' + q.id + '）</div>'
+       + b('easy','易') + b('medium','中') + b('hard','難') + b('','自動')
+       + '<div class="pininfo">' + info + '</div></div>';
+}
+function setPinFromUI(btn, after){
+  var qid = parseInt(btn.dataset.qid, 10), lv = btn.dataset.pin || null;
+  btn.disabled = true;
+  window.BoardSync.setPin(SUBJ.id, qid, lv).then(function(){ _qstatCache = null; after(); },
+    function(e){ btn.disabled = false; alert('保存できませんでした（' + ((e && e.code) || (e && e.message) || '不明') + '）。Firebaseのルールを更新したか確認してください。'); });
+}
 function effDiff(q){
-  var pin = (DIFF_PIN[SUBJ.id] || {})[q.id];
+  var pin = (DIFF_PIN[SUBJ.id] || {})[q.id] || cloudPin(q.id);
   if(pin === 'easy' || pin === 'medium' || pin === 'hard') return pin;
   var st = qstatsNow()[q.id];
   if(st && st[0] >= QSTAT_MIN){
@@ -2255,7 +2282,7 @@ function renderExamReview(){
     if(q.deepdive) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
     h += saveBtn('q', q.id, 'data-rvmark="'+q.id+'"');
     h += '<div class="fbrow"><button class="fbbtn" data-rv="memo" data-qid="'+q.id+'">この問題にメモを残す</button>'
-       + '<button class="fbbtn" data-rv="report" data-qid="'+q.id+'">誤りを報告する</button></div>';
+       + '<button class="fbbtn" data-rv="report" data-qid="'+q.id+'">誤りを報告する</button></div>' + pinRow(q);
   }
   var last = EXR.i+1 >= L.length;
   h += '<div class="examnav"><button class="exprev" data-rvmove="-1"'+(EXR.i>0?'':' disabled')+'>← 前の問題</button>'
@@ -2269,6 +2296,8 @@ function renderExamReview(){
   h += '</div></details><div style="height:20px"></div>';
   main.innerHTML = h;
   main.onclick = function(e){
+    var pb = e.target.closest('[data-pin]');
+    if(pb && !pb.disabled){ setPinFromUI(pb, renderExamReview); return; }
     var a = e.target.closest('[data-rv]');
     if(a){
       var act = a.dataset.rv;
@@ -3881,6 +3910,7 @@ function renderQuiz(){
     h += saveBtn('q', q.id, 'data-qmark="'+q.id+'"');
     h += '<div class="fbrow"><button class="fbbtn" data-act="feedback" data-qid="'+q.id+'">この問題にメモを残す</button>'
        +  (s.tut ? '' : '<button class="fbbtn" data-act="report" data-qid="'+q.id+'">誤りを報告する</button>') + '</div>';
+    if(!s.tut) h += pinRow(q);
     var p2 = P(q.id);
     h += '<div class="nextwrap"><div class="nextnote">次にこの問題が出るのは <b>'+fmtIval(p2.ival)+'後</b></div>'
        + '<button class="cta" id="nextBtn">'+((s.i+1<s.ids.length)?'次の問題へ':'結果を見る')+'</button></div>';
@@ -3961,6 +3991,8 @@ function renderQuiz(){
       if(a.dataset.act==='feedback'){ openMemo(parseInt(a.dataset.qid,10)); return; }
       if(a.dataset.act==='report'){ window.openContact({ qid: parseInt(a.dataset.qid,10), subj: SUBJ.id, page: 'question' }); return; }
     }
+    var pb = e.target.closest('[data-pin]');
+    if(pb && !pb.disabled){ setPinFromUI(pb, renderQuiz); return; }
     var qm = e.target.closest('[data-qmark]');
     if(qm){
       openTagSheet('q', parseInt(qm.dataset.qmark,10), renderQuiz); return;

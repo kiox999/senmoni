@@ -6,6 +6,8 @@
 export var MIN_N = 30;                 /* この回答数に達した問題だけを補正に使う */
 var QUEUE_KEY = 'bstat-queue';         /* board- で始めない（学習データの同期の対象外にする） */
 var CACHE_KEY = 'bstat-cache';
+var PINS_KEY = 'bstat-pins';           /* 作者が手動で固定した難易度 */
+var LEVELS = ['easy', 'medium', 'hard'];
 var REFRESH_MS = 3 * 24 * 3600 * 1000;
 var MAX_QUEUE = 500;
 var SUBJECTS = ['naika', 'shouni', 'kyukyu'];
@@ -70,5 +72,21 @@ export function createQStats(opts) {
     return (c && c.data && c.data[subj]) || {};
   }
 
-  return { report: report, flush: flush, refresh: refresh, get: get };
+  /* 作者の固定は件数が少ないので起動ごとに取り直す */
+  async function refreshPins() {
+    if (!transport.fetchPins) return;
+    try { setJSON(ls, PINS_KEY, await transport.fetchPins()); } catch (e) { /* 前回の値を使う */ }
+  }
+  function pins(subj) { var all = getJSON(ls, PINS_KEY, {}); return (all && all[subj]) || {}; }
+  /* 作者用: 固定する（level=null で解除）。端末の表示はすぐ変え、クラウドへ書く */
+  async function setPin(subj, qid, level) {
+    if (SUBJECTS.indexOf(subj) < 0 || (level && LEVELS.indexOf(level) < 0)) throw new Error('bad pin');
+    await transport.setPin(subj, qid, level || null);
+    var all = getJSON(ls, PINS_KEY, {}) || {};
+    var m = all[subj] = all[subj] || {};
+    if (level) m[qid] = level; else delete m[qid];
+    setJSON(ls, PINS_KEY, all);
+  }
+
+  return { report: report, flush: flush, refresh: refresh, get: get, refreshPins: refreshPins, pins: pins, setPin: setPin };
 }

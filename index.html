@@ -144,9 +144,9 @@ html[data-theme="dark"] .primary .badge{background:rgba(0,0,0,.22)}
 .banner.ok{background:var(--goodTint)} .banner.ng{background:var(--badTint)}
 .banner .glyph{width:32px;height:32px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font:700 14px var(--mono)}
 .banner.ok .glyph,.banner.ok b{color:var(--good)} .banner.ng .glyph,.banner.ng b{color:var(--bad)}
-.banner b{font:700 15px var(--sans)}
-.banner .m{font:500 11px var(--mono);color:var(--soft);margin-top:3px}
-.xpbadge{display:inline-flex;align-items:center;gap:5px;background:var(--accentSoft);color:var(--accent);font:700 12px var(--mono);padding:5px 11px;border-radius:20px;flex:0 0 auto}
+.banner b{font:700 17px var(--sans)}
+.banner .m{font:500 13px var(--mono);color:var(--soft);margin-top:4px}
+.xpbadge{display:inline-flex;align-items:center;gap:5px;background:var(--accentSoft);color:var(--accent);font:700 13.5px var(--mono);padding:6px 12px;border-radius:20px;flex:0 0 auto}
 .pointcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px}
 .pointcard .tag{font:700 11px var(--mono);color:var(--accent);margin-bottom:6px}
 .pointcard p{font:500 14.5px/1.85 var(--sans);margin:0}
@@ -195,8 +195,8 @@ details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0
 .conf button div:first-child{font:700 12px var(--sans)}
 .conf button div:last-child{font:600 10px var(--mono);color:var(--soft);margin-top:2px}
 .conf .low div:first-child{color:var(--bad)} .conf .mid div:first-child{color:var(--warn)} .conf .high div:first-child{color:var(--good)}
-.qtop{display:flex;align-items:center;gap:10px;padding:4px 0 12px;font:600 11px var(--mono);color:var(--soft)}
-.qtop .xpmini{color:var(--accent);background:var(--accentSoft);font-weight:700;padding:3px 8px;border-radius:10px;font-size:10.5px;flex:0 0 auto}
+.qtop{display:flex;align-items:center;gap:10px;padding:4px 0 12px;font:600 13.5px var(--mono);color:var(--soft)}
+.qtop .xpmini{color:var(--accent);background:var(--accentSoft);font-weight:700;padding:4px 10px;border-radius:10px;font-size:13px;flex:0 0 auto}
 .qback{border:none;background:none;color:var(--soft);font:700 22px var(--sans);cursor:pointer;
   width:34px;height:44px;display:flex;align-items:center;justify-content:center;margin:-11px 0 -11px -8px;line-height:1}
 .qback:active{color:var(--accent)}
@@ -535,11 +535,11 @@ html[data-theme="dark"] .certstats b{color:#EBD79A} html[data-theme="dark"] .cer
 .examnav .cta.exfin{background:var(--good)}
 .exfin2{color:var(--soft)!important;font-weight:600!important;font-size:12px!important}
 .exmap{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:11px 13px}
-.exmap summary{font:700 12px var(--sans);color:var(--accent);cursor:pointer;list-style:none}
+.exmap summary{font:700 14px var(--sans);color:var(--accent);cursor:pointer;list-style:none}
 .exmap summary::-webkit-details-marker{display:none}
 .exgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:11px}
 .exdot{aspect-ratio:1;min-height:34px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);
-       font:700 11px var(--mono);color:var(--soft);cursor:pointer;padding:0}
+       font:700 13.5px var(--mono);color:var(--soft);cursor:pointer;padding:0}
 .exdot.done{background:var(--accentSoft);border-color:var(--accent);color:var(--accent)}
 .exdot.cur{border-width:2.5px;border-color:var(--ink);color:var(--ink)}
 .exdot:active{background:var(--deep)}
@@ -902,10 +902,10 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 
 /* 開示後の内訳表示 */
 .betrecap{display:flex;align-items:center;gap:9px;margin:-4px 0 12px;padding:0 2px}
-.chipbet{font:700 11px var(--sans);padding:3px 10px;border-radius:8px;background:var(--deep);color:var(--soft)}
+.chipbet{font:700 13px var(--sans);padding:4px 11px;border-radius:8px;background:var(--deep);color:var(--soft)}
 .chipbet.mid{background:var(--accentSoft);color:var(--accent)}
 .chipbet.high{background:var(--badTint);color:var(--bad)}
-.calc{font:600 11.5px var(--mono);color:var(--soft)}
+.calc{font:600 13px var(--mono);color:var(--soft)}
 .xpbadge.minus{background:var(--badTint);color:var(--bad)}
 .banner.hi{box-shadow:inset 0 0 0 1.5px currentColor}
 .nextwrap{margin-top:18px}
@@ -1025,9 +1025,10 @@ footer.tabs button{font-size:11px}
 
 /* ===== パソコン版（幅1180px以上・マウス操作）。スマホ版の見た目は変えない ===== */
 .pcside{display:block}
+.pcsubj{display:none}
 .pckey{display:none}
 @media (min-width:1180px) and (hover:hover) and (pointer:fine){
-  :root{--pcnav:236px;--pcl:clamp(440px, calc((100vw - 236px) * .46), 640px)}
+  :root{--pcnav:236px;--pcl:clamp(440px, calc((100vw - 236px) * .46), 760px);--pcr:min(980px, calc(100vw - 236px - 48px - var(--pcl) - 44px - 32px))}
   /* 左に縦のメニュー、右に本文 */
   #app{max-width:none;display:grid;grid-template-columns:var(--pcnav) minmax(0,1fr);grid-template-rows:auto 1fr}
   #app>header{grid-column:1;grid-row:1;position:sticky;top:0;flex-direction:column;align-items:flex-start;gap:14px;padding:30px 22px 16px;background:none}
@@ -1036,6 +1037,15 @@ footer.tabs button{font-size:11px}
   #app>footer.tabs button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;min-height:44px;padding:0 14px;border-radius:10px;font-size:14px}
   #app>footer.tabs button:hover{background:var(--deep)}
   #app>footer.tabs button.on{background:var(--accentSoft)}
+  #app>footer.tabs.hide.pcnavshow{display:flex!important}
+  #app>footer.tabs.hide.pcnavshow button.on{background:none;color:var(--soft);font-weight:500}
+  #app>footer.tabs .pcsubj{display:block;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+  #app>footer.tabs .pcsubjhd{font:700 11px var(--sans);color:var(--soft);padding:0 14px 6px;letter-spacing:.04em}
+  #app>footer.tabs .pcsubj button{width:100%}
+  #app>footer.tabs .pcsubj button::before{content:'›';font:700 16px var(--sans);width:21px;text-align:center;color:var(--soft)}
+  #app>main.pcq .qtop{font-size:14.5px}
+  #app>main.pcq>.pinrow{margin-top:16px}
+  #app>main.pcq .exgrid{grid-template-columns:repeat(auto-fill,46px)}
   body.tutTabs #tabs{position:sticky;left:auto;right:auto;bottom:auto}
   #app>main{grid-column:2;grid-row:1 / span 2;border-left:1px solid var(--line);min-height:100vh;padding:34px max(48px, calc((100vw - var(--pcnav) - 860px) / 2)) 56px}
   /* ホーム：左に今日の状況、右に出題設定 */
@@ -1046,9 +1056,9 @@ footer.tabs button{font-size:11px}
   #app>main.pcq{padding:30px 40px 64px 48px}
   #app>main.pcq>*{max-width:var(--pcl)}
   #app>main.pcq>button{display:block}
-  #app>main.pcq>.pcside{position:fixed;top:0;bottom:0;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:0;max-width:none;overflow-y:auto;padding:30px max(32px, calc(100vw - var(--pcnav) - 48px - var(--pcl) - 44px - 760px)) 48px 0}
+  #app>main.pcq>.pcside{position:fixed;top:0;bottom:0;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:auto;width:calc(var(--pcr) + 32px);max-width:none;overflow-y:auto;padding:30px 32px 48px 0}
   #app>main.pcq>.pcside>:first-child{margin-top:0}
-  #app>main.pcq:not(:has(>.pcside))::after{content:'解答すると、ここに暗記ポイントと関連知識が出ます';position:fixed;top:38px;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:32px;max-width:720px;padding:18px 20px;border:1px dashed var(--line);border-radius:12px;font:500 13px var(--sans);color:var(--soft)}
+  #app>main.pcq:not(:has(>.pcside))::after{content:'解答すると、ここに暗記ポイントと関連知識が出ます';position:fixed;top:38px;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:auto;width:var(--pcr);box-sizing:border-box;padding:18px 20px;border:1px dashed var(--line);border-radius:12px;font:500 13px var(--sans);color:var(--soft)}
   #app>main.pcq .choice:hover:not(.ok):not(.ng):not(.dim){border-color:var(--accent)}
   .pckey{display:inline-block;margin-left:8px;padding:1px 6px;border:1px solid var(--line);border-radius:5px;font:600 10.5px var(--mono);color:var(--soft);background:var(--bg);vertical-align:middle}
   .pchint{margin-top:14px;font:500 11.5px var(--sans);color:var(--soft)}
@@ -3860,7 +3870,6 @@ function renderQuiz(){
   if(s.taEnd && !s.revealed && Date.now() > s.taEnd){ finishTimeAttack(); return; }
   h += '<div class="qtop">'
      + (s.tut ? '' : '<button class="x" data-act="quit">✕</button>')
-     + ((!ex && s.i > 0 && !s.tut) ? '<button class="qback" data-act="back" title="前の問題を見直す">‹</button>' : '')
      + (s.taEnd ? '<span class="tatime" id="taTime">'+fmtLeft(s.taEnd)+'</span>' : '')
      + '<span class="track" style="flex:1"><i style="width:'+Math.round(100*s.i/s.ids.length)+'%"></i></span><span>'+(s.reviewing?'復習 ':'問 ')+(s.i+1)+' / '+s.ids.length+'</span>'
      + (ex ? (function(){ var L=examTimeLeft();
@@ -4603,7 +4612,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "97fad3ef90bf";
+<script>window.BOARD_BUILD = "9fe5e27ad2b6";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -4666,6 +4675,7 @@ var SUBJECTS = [
    catLetter:{"心肺蘇生・気道管理": "A", "ショック・循環管理": "B", "呼吸不全・人工呼吸管理": "C", "外傷": "D", "熱傷・電撃傷・化学損傷": "E", "中毒": "F", "環境障害": "G", "神経救急": "H", "感染症・敗血症": "I", "消化器・腎・代謝救急": "J", "小児・産科・高齢者救急": "K", "精神科救急・特殊病態": "L", "災害医療・救急医療体制・法規": "M", "救急検査・画像・手技": "N"}}
 ];
 var SKEY = 'board-subject';
+window.BOARD_SUBJECTS = SUBJECTS; window.BOARD_SKEY = SKEY;   /* パソコン版の左メニュー（ほかの科目）が使う */
 function byId(id){ for(var i=0;i<SUBJECTS.length;i++) if(SUBJECTS[i].id===id) return SUBJECTS[i]; return null; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function progressOf(id){
@@ -4961,7 +4971,7 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
       main.classList.toggle('pcq', quiz);
       if(quiz && !main.querySelector(':scope > .pcside')){
         var last = ch[ch.length-1], move = [], n = last.nextElementSibling;
-        while(n){ if(!n.matches('.betwrap,.nextwrap,.pcside,.pchint,.exnav,details.exmap') && (n.children.length || n.textContent.trim())) move.push(n); n = n.nextElementSibling; }
+        while(n){ if(!n.matches('.betwrap,.nextwrap,.pcside,.pchint,.exnav,details.exmap,.pinrow') && (n.children.length || n.textContent.trim())) move.push(n); n = n.nextElementSibling; }
         if(move.length){
           var side = document.createElement('div'); side.className = 'pcside';
           move.forEach(function(x){ side.appendChild(x); });
@@ -4969,6 +4979,14 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
           var d = side.querySelector('details.deep'); if(d) d.open = true;
         }
       }
+      /* 作者用の難易度固定は、すぐ押せるよう解答状況の上に置く */
+      if(quiz){
+        var pin = main.querySelector(':scope > .pinrow'), map = main.querySelector(':scope > details.exmap');
+        if(pin && map && pin.nextElementSibling !== map) main.insertBefore(pin, map);
+      }
+      /* 演習中も左メニューを出す（模擬試験と使い方の案内の間は出さない） */
+      var tabs = document.getElementById('tabs');
+      if(tabs) tabs.classList.toggle('pcnavshow', quiz && !!main.querySelector('.qtop [data-act="quit"]') && !main.querySelector('.qtop .exbadge'));
       if(quiz && !main.querySelector(':scope > .pchint')){
         var hint = document.createElement('div'); hint.className = 'pchint';
         hint.textContent = 'キー操作：1〜5で選択肢、Q・W・Eで自信度（低・中・高）、Enterで次の問題';
@@ -4976,6 +4994,32 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
       }
     } finally { busy = false; }
   }
+  /* 左メニューに「ほかの科目」を足す */
+  (function(){
+    var tabs = document.getElementById('tabs'); if(!tabs || !window.BOARD_SUBJECTS) return;
+    var SUBJECTS = window.BOARD_SUBJECTS, SKEY = window.BOARD_SKEY;
+    var cur = null; try{ cur = localStorage.getItem(SKEY); }catch(e){}
+    var h = '<div class="pcsubjhd">ほかの科目</div>';
+    SUBJECTS.forEach(function(s){ if(s.id !== cur) h += '<button type="button" data-pcsubj="'+s.id+'" data-pcname="'+s.short+'">'+s.short+'</button>'; });
+    var box = document.createElement('div'); box.className = 'pcsubj'; box.innerHTML = h; tabs.appendChild(box);
+    function inQuiz(){ return main.classList.contains('pcq') && tabs.classList.contains('pcnavshow'); }
+    function leaveQuiz(){ var q = main.querySelector('.qtop [data-act="quit"]'); if(q) q.click(); }
+    tabs.addEventListener('click', function(e){
+      var sb = e.target.closest('[data-pcsubj]');
+      if(sb){
+        e.stopPropagation();
+        if(!confirm((inQuiz() ? '演習を中断して、' : '') + sb.dataset.pcname + 'に移動しますか？')) return;
+        if(inQuiz()) leaveQuiz();
+        try{ localStorage.setItem(SKEY, sb.dataset.pcsubj); }catch(err){}
+        location.reload(); return;
+      }
+      var tb = e.target.closest('button[data-tab]');
+      if(tb && inQuiz()){
+        if(!confirm('演習を中断して、「' + tb.textContent.trim() + '」に移動しますか？（続きはホームから再開できます）')){ e.stopPropagation(); return; }
+        leaveQuiz();
+      }
+    }, true);
+  })();
   new MutationObserver(arrange).observe(main, { childList:true });
   if(mq.addEventListener) mq.addEventListener('change', arrange);
   arrange();

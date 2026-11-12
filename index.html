@@ -1026,9 +1026,10 @@ footer.tabs button{font-size:11px}
 /* ===== パソコン版（幅1180px以上・マウス操作）。スマホ版の見た目は変えない ===== */
 .pcside{display:block}
 .pcsubj{display:none}
+.pchome{display:none}
 .pckey{display:none}
 @media (min-width:1180px) and (hover:hover) and (pointer:fine){
-  :root{--pcnav:236px;--pcl:clamp(440px, calc((100vw - 236px) * .46), 760px);--pcr:min(980px, calc(100vw - 236px - 48px - var(--pcl) - 44px - 32px))}
+  :root{--pcnav:236px;--pcl:clamp(440px, calc((100vw - 236px) * .46), 760px)}
   /* 左に縦のメニュー、右に本文 */
   #app{max-width:none;display:grid;grid-template-columns:var(--pcnav) minmax(0,1fr);grid-template-rows:auto 1fr}
   #app>header{grid-column:1;grid-row:1;position:sticky;top:0;flex-direction:column;align-items:flex-start;gap:14px;padding:30px 22px 16px;background:none}
@@ -1049,16 +1050,26 @@ footer.tabs button{font-size:11px}
   body.tutTabs #tabs{position:sticky;left:auto;right:auto;bottom:auto}
   #app>main{grid-column:2;grid-row:1 / span 2;border-left:1px solid var(--line);min-height:100vh;padding:34px max(48px, calc((100vw - var(--pcnav) - 860px) / 2)) 56px}
   /* ホーム：左に今日の状況、右に出題設定 */
-  #app>main:has(#homeSetupCard){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:44px;align-content:start;padding-left:max(48px, calc((100vw - var(--pcnav) - 1080px) / 2));padding-right:max(48px, calc((100vw - var(--pcnav) - 1080px) / 2))}
-  #app>main:has(#homeSetupCard)>*{grid-column:1}
-  #app>main:has(#homeSetupCard)>div:has(>#homeSetupCard){grid-column:2;grid-row:1 / span 24;align-self:start}
+  #app>main:has(#homeSetupCard){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:44px;align-content:start;align-items:start;padding-left:max(48px, calc((100% - 1320px) / 2));padding-right:max(48px, calc((100% - 1320px) / 2))}
+  #app>main:has(#homeSetupCard)>.pcleft{grid-column:1;min-width:0}
+  #app>main:has(#homeSetupCard)>.pcright{grid-column:2;min-width:0}
+  #app>main:has(#homeSetupCard) .pchome{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-top:20px;align-items:start}
+  #app>main:has(#homeSetupCard) .pchome>.pcbox:last-child{grid-column:1 / -1}
+  .pcbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px 18px}
+  .pcbox h2{margin:0 0 12px;font-size:14px}
+  .pcsub{font:500 12px var(--sans);color:var(--soft);margin:12px 0 8px}
+  .pcbox .heat{grid-template-columns:repeat(3,1fr);gap:6px}
+  .pcbox .heat div{min-height:52px;font-size:12px}
+  .pcbox .heat div:hover{background:var(--deep)!important}
+  .pcbox .list .li{cursor:pointer}
   /* 演習：左に問題と選択肢、右に解説（右だけ別にスクロール） */
   #app>main.pcq{padding:30px 40px 64px 48px}
   #app>main.pcq>*{max-width:var(--pcl)}
   #app>main.pcq>button{display:block}
-  #app>main.pcq>.pcside{position:fixed;top:0;bottom:0;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:auto;width:calc(var(--pcr) + 32px);max-width:none;overflow-y:auto;padding:30px 32px 48px 0}
+  #app>main.pcq>.pcside{position:fixed;top:0;bottom:0;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:0;max-width:none;overflow-y:auto;overflow-x:hidden;padding:30px 32px 48px 0;overflow-wrap:anywhere}
+  #app>main.pcq>.pcside>*{max-width:980px}
   #app>main.pcq>.pcside>:first-child{margin-top:0}
-  #app>main.pcq:not(:has(>.pcside))::after{content:'解答すると、ここに暗記ポイントと関連知識が出ます';position:fixed;top:38px;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:auto;width:var(--pcr);box-sizing:border-box;padding:18px 20px;border:1px dashed var(--line);border-radius:12px;font:500 13px var(--sans);color:var(--soft)}
+  #app>main.pcq:not(:has(>.pcside))::after{content:'解答すると、ここに暗記ポイントと関連知識が出ます';position:fixed;top:38px;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:32px;max-width:980px;box-sizing:border-box;padding:18px 20px;border:1px dashed var(--line);border-radius:12px;font:500 13px var(--sans);color:var(--soft)}
   #app>main.pcq .choice:hover:not(.ok):not(.ng):not(.dim){border-color:var(--accent)}
   .pckey{display:inline-block;margin-left:8px;padding:1px 6px;border:1px solid var(--line);border-radius:5px;font:600 10.5px var(--mono);color:var(--soft);background:var(--bg);vertical-align:middle}
   .pchint{margin-top:14px;font:500 11.5px var(--sans);color:var(--soft)}
@@ -3719,7 +3730,8 @@ function renderHome(){
 
 
 
-  main.innerHTML = h;
+  h += pcHomeExtra();
+   main.innerHTML = h;
 
   var sq = document.getElementById('sq');
   if(sq){
@@ -3751,11 +3763,58 @@ function renderHome(){
     S.taMin = Math.min(180, v); S.timeatk = 1; amtOpen = true; save(); renderHome();
   };
 }
+/* パソコン版のホームだけに出す欄（成績のまとめ・分野別の正答率・最近解いた問題・段位）。スマホでは CSS で隠す */
+function pcHomeExtra(){
+  var seen = 0, ok = 0;
+  QUESTIONS.forEach(function(q){ var p=S.prog[q.id]; if(p&&p.seen){ seen++; if(p.lastOk) ok++; } });
+  var acc = accByCat(), cr = curRank(), nx = nextRank();
+  var h = '<div class="pchome">';
+  h += '<section class="pcbox"><h2>これまでの成績</h2>'
+     + '<div class="statrow"><div class="statbox"><b>'+seen+'</b><div class="label">解いた問題</div></div>'
+     + '<div class="statbox"><b style="color:var(--accent)">'+(seen?Math.round(100*ok/seen):0)+'%</b><div class="label">正答率</div></div>'
+     + '<div class="statbox"><b>'+QUESTIONS.length+'</b><div class="label">全問題</div></div></div>';
+  var max = 1, days = [];
+  for(var i=13;i>=0;i--){ var e = S.hist[todayKey(new Date(Date.now()-i*DAY))] || {a:0,c:0}; days.push(e); if(e.a>max) max=e.a; }
+  h += '<div class="pcsub">解いた問題数（直近14日）</div><div class="bars">';
+  days.forEach(function(e){
+    var col = e.a===0 ? 'var(--barIdle)' : (e.a>=max*0.8 ? 'var(--accent)' : 'var(--barMid)');
+    h += '<div class="barcol"><span class="barnum">'+(e.a>0?e.a:'')+'</span><i style="height:'+Math.max(4,Math.round(100*e.a/max))+'%;background:'+col+'"></i></div>';
+  });
+  h += '</div><div class="axis"><span>14日前</span><span>今日</span></div>'
+     + '<div class="ranknow'+(cr?' has':'')+'" style="margin-top:14px"><span class="rnlab">現在の段位</span><span class="rnval">'+(cr? rankName(cr) : '未取得')+'</span></div>'
+     + (nx ? '<div class="pcsub" style="margin-top:8px">次は '+nx.name+' 認定試験（'+nx.n+'問・合格 '+nx.pass+'%'+(nx.cost?'・'+nx.cost+' XP':'')+'）。左の「段位」から受けられます。</div>' : '')
+     + '</section>';
+  h += '<section class="pcbox"><h2>分野別の正答率</h2><div class="heat">';
+  CATS.forEach(function(c){
+    var d = acc[c], rate = d.seen ? Math.round(100*d.ok/d.seen) : null;
+    h += '<div data-pccat="'+esc(c)+'" style="background:var(--card);border:1.5px solid '+(heatColor(rate)||'var(--line)')+';color:var(--ink)">'+esc(c)+'<span style="color:var(--soft)">'+(rate===null?'—':rate+'%')+'</span></div>';
+  });
+  h += '</div><div class="pcsub">分野を押すと、その分野から'+(S.count||10)+'問を出題します</div></section>';
+  h += '<section class="pcbox"><h2>最近解いた問題</h2>';
+  if(S.log && S.log.length){
+    h += '<div class="list">';
+    S.log.slice(0,8).forEach(function(r){
+      var q = QUESTIONS.filter(function(x){ return x.id===r.id; })[0]; if(!q) return;
+      var t = new Date(r.ts);
+      h += '<div class="li" data-open="'+q.id+'"><span class="glyph" style="flex:0 0 auto;color:'+(r.ok?'var(--good)':'var(--bad)')+'">'+(r.ok?'○':'✕')+'</span>'
+         + '<span class="hlmain"><span class="hlt">'+esc(q.stem.slice(0,48))+'</span><span class="hlm">'+esc(catLabel(q.category))+'　'+(t.getMonth()+1)+'/'+t.getDate()+'</span></span></div>';
+    });
+    h += '</div>';
+  } else h += '<div class="pcsub">まだ解いた問題がありません。出題設定から始めてください。</div>';
+  h += '</section></div>';
+  return h;
+}
 function homeClick(e){
     /* 案内の表示中は実画面を操作させない。体験ステップだけは例外。 */
     if(document.getElementById('tutOverlay') && !(S.session && S.session.tut)) return;
     var t = e.target;
     var o = t.closest('[data-open]'); if(o){ startSession([parseInt(o.dataset.open,10)], true); return; }
+    var pcc = t.closest('[data-pccat]');
+    if(pcc){
+      var pool = shuffle(QUESTIONS.filter(function(q){ return q.category === pcc.dataset.pccat; }).map(function(q){ return q.id; })).slice(0, S.count||10);
+      if(pool.length) startSession(pool, false);
+      return;
+    }
     var exa = t.closest('[data-exam]');
     if(exa){ var rr = rankById(parseInt(exa.dataset.exam,10)); if(rr) startExam(rr); return; }
     var chip = t.closest('[data-count]'); if(chip){ S.count = parseInt(chip.dataset.count,10); S.timeatk = 0; save(); renderHome(); return; }
@@ -4612,7 +4671,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "9fe5e27ad2b6";
+<script>window.BOARD_BUILD = "0ff5ccdb13dc";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -4966,6 +5025,15 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
   function arrange(){
     if(busy) return; busy = true;
     try{
+      /* ホーム：左に今日の状況、右に出題設定と成績のまとめ */
+      var hs = document.getElementById('homeSetupCard');
+      if(mq.matches && hs && hs.parentElement && hs.parentElement.parentElement === main){
+        var L = document.createElement('div'), R = document.createElement('div');
+        L.className = 'pcleft'; R.className = 'pcright';
+        var setw = hs.parentElement;
+        Array.prototype.slice.call(main.children).forEach(function(c){ (c === setw || c.classList.contains('pchome') ? R : L).appendChild(c); });
+        main.appendChild(L); main.appendChild(R);
+      }
       var ch = kids('button.choice');
       var quiz = mq.matches && ch.length > 0;
       main.classList.toggle('pcq', quiz);

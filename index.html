@@ -188,6 +188,7 @@ details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0
 .ddtable tr:first-child th{white-space:nowrap}
 .fbbtn{display:inline-flex;align-items:center;min-height:40px;margin-top:6px;padding:2px 0;border:none;background:none;font:500 12px var(--sans);color:var(--soft);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .fbbtn:active{color:var(--accent)}
+.chkline{margin-top:10px;font:500 11.5px var(--sans);color:var(--soft)}
 .fbdel{background:none;border:none;color:var(--soft);font:600 15px var(--mono);cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;margin:-10px -8px -10px 0;flex:0 0 auto}
 .conf{display:flex;gap:7px;margin:8px 0 10px}
 .conf button{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 0;text-align:center;font-family:var(--sans);cursor:pointer}
@@ -1515,6 +1516,11 @@ function pointCard(t, more){
   if(sp[1]) h+='<div class="pointcard expcard"><div class="tag">解説</div><p>'+esc(sp[1])+'</p></div>';
   return h;
 }
+/* 制度やガイドラインに左右される問題で、内容を出典に当たって確かめた年月(chk)があれば解説の下に出す */
+function chkLine(q){
+  var m = /^(\d{4})-(\d{2})$/.exec(q.chk || '');
+  return m ? '<div class="chkline">内容を確認した時期：'+m[1]+'年'+parseInt(m[2],10)+'月</div>' : '';
+}
 function formatDeepdive(text){
   if(!text) return '';
   var title = '';
@@ -2284,6 +2290,7 @@ function renderExamReview(){
     });
     h += pointCard(q.explanation, q.exl);
     if(q.deepdive) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
+    h += chkLine(q);
     h += saveBtn('q', q.id, 'data-rvmark="'+q.id+'"');
     h += '<div class="fbrow"><button class="fbbtn" data-rv="memo" data-qid="'+q.id+'">この問題にメモを残す</button>'
        + '<button class="fbbtn" data-rv="report" data-qid="'+q.id+'">誤りを報告する</button></div>' + pinRow(q);
@@ -3917,6 +3924,7 @@ function renderQuiz(){
     h += pointCard(q.explanation, q.exl);
     if(q.deepdive && !s.tut) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
     /* 正解した問題でも「自信がなかった」ものを後で見返せるようにする */
+    h += chkLine(q);
     h += saveBtn('q', q.id, 'data-qmark="'+q.id+'"');
     h += '<div class="fbrow"><button class="fbbtn" data-act="feedback" data-qid="'+q.id+'">この問題にメモを残す</button>'
        +  (s.tut ? '' : '<button class="fbbtn" data-act="report" data-qid="'+q.id+'">誤りを報告する</button>') + '</div>';
@@ -4559,7 +4567,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "20261111-dz6";
+<script>window.BOARD_BUILD = "9401b7881af6";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -4655,6 +4663,14 @@ function renderHub(){
   document.getElementById('app').classList.add('hide');
   document.getElementById('loading').classList.add('hide');
 }
+/* 関連知識は事典本文と同じ文章なので、データには項目名(dd)だけを置き、読み込み時に本文へ展開する */
+function expandDeep(data){
+  var en = (data && data.raw && data.raw.encyc) || [], map = {};
+  en.forEach(function(e){ map[e.n] = e.b || ''; });
+  ((data && data.raw && data.raw.questions) || []).forEach(function(q){
+    if(!q.deepdive && q.dd && map.hasOwnProperty(q.dd)) q.deepdive = '【' + q.dd + '】' + map[q.dd];
+  });
+}
 function loadSubject(id, start){
   var s = byId(id); if(!s){ renderHub(); return; }
   window.BOARD_START = start || {};
@@ -4668,7 +4684,7 @@ function loadSubject(id, start){
     document.getElementById('loading').classList.add('hide');
     document.getElementById('app').classList.remove('hide');
     try{ localStorage.setItem('board-count-'+s.id, String(data.raw.questions.length)); }catch(e){}
-    try{ startEngine(s, data); }catch(e){ alert('起動できませんでした：'+e.message); renderHub(); }
+    try{ expandDeep(data); startEngine(s, data); }catch(e){ alert('起動できませんでした：'+e.message); renderHub(); }
   };
   sc.onerror = function(){ alert('問題データを読み込めませんでした（'+s.name+'）。通信状況を確認して、もう一度お試しください。'); try{ localStorage.removeItem(SKEY); }catch(e){} renderHub(); };
   document.body.appendChild(sc);

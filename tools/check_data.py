@@ -54,6 +54,8 @@ def check_question(q, emap):
         err.append('暗記ポイントで「＝」を「は」「である」の代わりに使っている')
     if any(noun_ended(s) for s in sents):
         err.append('暗記ポイントに体言止めの文がある')
+    if 'chk' in q and not re.fullmatch(r'20\d\d-(0[1-9]|1[0-2])', str(q['chk'])):
+        err.append('確認時期(chk)の書き方がおかしい（例 2026-11）')
     if q.get('dd') and q.get('deepdive'):
         err.append('dd と deepdive の両方がある')
     name = deep_name(q)

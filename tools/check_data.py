@@ -84,6 +84,9 @@ def check_question(q, emap):
 
 
 def main():
+    import os
+    from datalib import ROOT
+    HTML = open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
     verbose = '-v' in sys.argv
     E, W = [], collections.Counter()
     WL = []
@@ -101,6 +104,11 @@ def main():
             for x in warn:
                 W[x] += 1
                 WL.append((s, q.get('id'), x))
+        per = collections.Counter(deep_name(q) for q in qs)
+        for e in d['raw']['encyc']:
+            if per.get(e['n'], 0) < 5:
+                W['事典項目の問題が5問未満'] += 1
+                WL.append((s, '-', '事典「%s」の問題が%d問' % (e['n'], per.get(e['n'], 0))))
         names = collections.Counter(e['n'] for e in d['raw']['encyc'])
         for n, c in names.items():
             if c > 1:
@@ -114,6 +122,9 @@ def main():
                 elif deep_name(byid[i]) != e['n']:
                     W['事典の関連問題と、問題側の関連知識が食い違う'] += 1
                     WL.append((s, i, '事典「%s」の関連問題だが、関連知識は別項目' % e['n']))
+        m = re.search(r"id:'%s'[\s\S]{0,400}?total:(\d+)" % s, HTML)
+        if m and int(m.group(1)) != len(qs):
+            E.append((s, '-', 'index.html の問題数(total:%s)が実際の%d問と合わない' % (m.group(1), len(qs))))
         print('%s: %d問 / 事典 %d項目' % (s, len(qs), len(d['raw']['encyc'])))
     if W:
         print('注意:')

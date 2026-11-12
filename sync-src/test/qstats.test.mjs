@@ -34,4 +34,17 @@ await t('集計の取得は科目ごとに保存され、期限内は再取得�
   assert.deepEqual(qs.get('kyukyu'), { 7: [40, 10] });
   assert.deepEqual(qs.get('naika'), {});
 });
+await t('作者の固定: 取得・設定・解除が端末にも反映される', async () => {
+  const ls = fakeLS(); const calls = [];
+  const qs = createQStats({ ls, transport: {
+    fetchPins: async () => ({ kyukyu: { 3: 'hard' } }),
+    setPin: async (s, q, l) => { calls.push([s, q, l]); } } });
+  await qs.refreshPins();
+  assert.deepEqual(qs.pins('kyukyu'), { 3: 'hard' });
+  await qs.setPin('kyukyu', 9, 'hard');
+  await qs.setPin('kyukyu', 3, null);
+  assert.deepEqual(qs.pins('kyukyu'), { 9: 'hard' });
+  assert.deepEqual(calls, [['kyukyu', 9, 'hard'], ['kyukyu', 3, null]]);
+  await assert.rejects(() => qs.setPin('kyukyu', 1, 'super'));
+});
 console.log(pass + ' tests passed');

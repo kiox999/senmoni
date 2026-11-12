@@ -6,7 +6,7 @@ import {
 } from 'firebase/auth';
 import {
   initializeFirestore, doc, runTransaction, serverTimestamp, collection, addDoc,
-  writeBatch, increment, query, where, getDocs
+  writeBatch, increment, query, where, getDocs, getDoc, setDoc, updateDoc, deleteField, FieldPath
 } from 'firebase/firestore';
 
 var MAX_JSON = 900000;   /* Firestoreは1ドキュメント1MiBまで */
@@ -67,6 +67,24 @@ export function createFirebaseTransport(cfg) {
       var rows = [];
       snap.forEach(function (d) { var x = d.data(); rows.push({ subj: x.subj, qid: x.qid, n: x.n, c: x.c }); });
       return rows;
+    },
+    /* 作者かどうか: Firebaseコンソールで admins/<uid> を作った人だけ true */
+    checkAdmin: async function (uid) {
+      var snap = await getDoc(doc(db, 'admins', uid));
+      return snap.exists();
+    },
+    /* 作者が固定した難易度 { subj: { qid: level } } */
+    fetchPins: async function () {
+      var snap = await getDocs(collection(db, 'diffPins'));
+      var out = {};
+      snap.forEach(function (d) { var x = d.data(); out[d.id] = (x && x.p) || {}; });
+      return out;
+    },
+    /* level が null なら固定を外す */
+    setPin: function (subj, qid, level) {
+      var ref = doc(db, 'diffPins', subj);
+      if (level) { var p = {}; p[String(qid)] = level; return setDoc(ref, { p: p }, { merge: true }); }
+      return updateDoc(ref, new FieldPath('p', String(qid)), deleteField());
     },
     /* クラウドの1ドキュメントを読み、mergeFn(cloudData)の結果を（変化があれば）書き込む。競合時はトランザクションが自動で再試行する */
     syncDoc: function (uid, docId, mergeFn) {

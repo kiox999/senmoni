@@ -50,6 +50,20 @@ service cloud.firestore {
         && existsAfter(/databases/$(database)/documents/qstatBy/$(id + '_' + request.auth.uid));
     }
 
+    // 作者の目印。Firebaseコンソールで admins/<作者のuid> を手で作る（中身は空でよい）。アプリからは本人が存在を確かめるだけ
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+    // 作者が手動で固定した難易度 diffPins/<科目> = { p: { "<問題ID>": "easy"|"medium"|"hard" } }。読み取りは誰でも可
+    match /diffPins/{subj} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && subj in ['naika', 'shouni', 'kyukyu']
+        && request.resource.data.keys().hasOnly(['p']);
+    }
+
     // お問い合わせ: ログインなしでも1件ずつ「追加」だけできる。
     // 読み取り・変更・削除はアプリからは不可（届いた内容は Firebaseコンソール → Firestore の inquiries で確認する）
     match /inquiries/{id} {

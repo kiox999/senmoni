@@ -65,7 +65,7 @@ export function createUI(api) {
       if (kind === 'other-account') {
         title = '別のアカウントでログインします';
         body = '<p>この端末の学習データは、<b>別のアカウント</b>で同期したものです。<br>ログインするアカウント: <b>' + email + '</b></p>'
-          + '<p class="bs-soft">「統合する」…この端末のデータを、このアカウントのデータに合算します。<br>「端末のデータを消して復元」…この端末のデータを消し、このアカウントのデータだけにします。</p>';
+          + '<p class="bs-soft">「統合する」：この端末のデータを、このアカウントのデータに合算します。<br>「端末のデータを消して復元」：この端末のデータを消して、このアカウントのデータに置き換えます。</p>';
         buttons = [['cancel', 'キャンセル', ''], ['discard', '端末のデータを消して復元', 'danger'], ['merge', '統合する', 'pri']];
       } else {
         title = 'この端末のデータをアカウントに保存します';
@@ -84,8 +84,8 @@ export function createUI(api) {
   }
 
   function statusText() {
-    if (!st.user) return { main: 'クラウド同期', sub: 'Googleでログインして学習データを保存', cls: '' };
-    var sub = st.status === 'syncing' ? '同期中…' : st.status === 'error' ? '同期できませんでした(オフラインの可能性)' : '同期済み ' + fmtTime(st.last);
+    if (!st.user) return { main: 'クラウド同期', sub: 'Googleでログインして学習データを引き継ぐ', cls: '' };
+    var sub = st.status === 'syncing' ? '同期中…' : st.status === 'error' ? '同期できませんでした（オフラインの可能性があります）' : '同期済み ' + fmtTime(st.last);
     return { main: st.user.email || 'ログイン中', sub: sub, cls: st.status === 'syncing' ? 'busy' : st.status === 'error' ? 'err' : 'ok' };
   }
 
@@ -99,18 +99,18 @@ export function createUI(api) {
     var signedIn = !!st.user;
     var h = '<h2>クラウド同期</h2>';
     if (!signedIn) {
-      h += '<p>Googleアカウントでログインすると、XP・購入した色や音色・成績・復習予定が、スマホやPCなど別の端末でも引き継がれます。</p>'
-        + '<p class="bs-soft">ログインしなくても、これまで通りこの端末の中だけで使えます。保存されるのは学習データだけで、問題文や個人の診療情報は含まれません。</p>'
+      h += '<p>Googleアカウントでログインすると、XP・解放した配色や音色・成績・復習予定を、スマホやPCなど別の端末でも使えます。</p>'
+        + '<p class="bs-soft">ログインしなくても、この端末だけでこれまでどおり使えます。クラウドに保存されるのは学習データだけです。</p>'
         + '<div class="bs-row"><button type="button" class="bs-b pri" data-a="signin">Googleでログイン</button><button type="button" class="bs-b" data-a="close">閉じる</button></div>';
     } else {
       h += '<p>ログイン中: <b>' + esc(st.user.email) + '</b><br><span class="bs-soft" id="bs-stat"></span></p>'
         + '<div class="bs-row"><button type="button" class="bs-b pri" data-a="sync">今すぐ同期</button><button type="button" class="bs-b" data-a="signout">ログアウト</button><button type="button" class="bs-b" data-a="close">閉じる</button></div>'
-        + '<p class="bs-soft" style="margin-top:10px">ログアウトしても、この端末のデータは消えません。写真付きメモの画像は端末内のみで、同期されません。</p>';
+        + '<p class="bs-soft" style="margin-top:10px">ログアウトしても、この端末のデータは消えません。メモの写真はこの端末にだけ保存され、同期されません。</p>';
     }
-    h += '<details><summary>引き継ぎコード(手動バックアップ)</summary>'
-      + '<p class="bs-soft" style="margin-top:8px">ログインできない環境向けの予備手段です。「作る」で出た文字列を別の端末に貼り付けて「復元」すると、<b>その端末のデータはコードの内容に置き換わります</b>。</p>'
+    h += '<details><summary>引き継ぎコード（手動バックアップ）</summary>'
+      + '<p class="bs-soft" style="margin-top:8px">ログインできないときの予備の方法です。「コードを作る」で表示された文字列を別の端末に貼り付けて「コードから復元」を押すと、<b>その端末のデータはコードの内容に置き換わります</b>。</p>'
       + '<div class="bs-row"><button type="button" class="bs-b" data-a="export">コードを作る</button><button type="button" class="bs-b" data-a="import">コードから復元</button></div>'
-      + '<textarea class="bs-ta" id="bs-code" spellcheck="false" placeholder="ここにコードが表示されます／貼り付けます"></textarea></details>'
+      + '<textarea class="bs-ta" id="bs-code" spellcheck="false" placeholder="コードがここに表示されます。復元するときは、ここに貼り付けてください"></textarea></details>'
       + '<div class="bs-err" id="bs-err"></div>';
     var box = openOverlay(h);
     var statEl = box.querySelector('#bs-stat');
@@ -130,14 +130,14 @@ export function createUI(api) {
           b.disabled = true;
           var r = await api.syncNow();
           b.disabled = false;
-          if (r && r.error) showErr('同期に失敗しました: ' + ((r.error && r.error.message) || r.error));
+          if (r && r.error) showErr('同期できませんでした：' + ((r.error && r.error.message) || r.error));
           else if (r && r.applied) location.reload();
           else if (r && r.pending) api.reloadApply();
         }
         else if (a === 'export') {
           var code = JSON.stringify(api.exportCode());
           var ta = box.querySelector('#bs-code'); ta.value = code; ta.focus(); ta.select();
-          try { if (navigator.clipboard) await navigator.clipboard.writeText(code); showErr('コピーしました。'); } catch (x) { showErr('上の文字列を全選択してコピーしてください。'); }
+          try { if (navigator.clipboard) await navigator.clipboard.writeText(code); showErr('コピーしました。'); } catch (x) { showErr('上の文字列をすべて選択して、コピーしてください。'); }
         }
         else if (a === 'import') {
           var txt = box.querySelector('#bs-code').value.trim();
@@ -147,7 +147,7 @@ export function createUI(api) {
           if (!ok) return;
           api.importCode(data); location.reload();
         }
-      } catch (err) { b.disabled = false; showErr('失敗しました: ' + ((err && err.message) || err)); }
+      } catch (err) { b.disabled = false; showErr('処理できませんでした：' + ((err && err.message) || err)); }
     });
   }
 

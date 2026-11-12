@@ -985,6 +985,35 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 .dlgbtn{font:600 13.5px var(--sans);padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}
 .dlgbtn.ok{background:var(--accent);color:var(--accentInk);border-color:var(--accent)}
 .dlgbtn:focus-visible,.dlginput:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* ---- スマホでの読みやすさの調整（小さすぎる文字・折り返し・押しにくい箇所） ---- */
+.label{font-size:11px}
+.sub{font-size:12.5px;line-height:1.6}
+h2{font-size:13px}
+footer.tabs button{font-size:11px}
+.setlab{font:600 12px var(--sans);color:var(--soft);margin-bottom:8px}
+.hxsub{font:500 11px var(--sans);color:var(--soft);margin-top:3px}
+.betlead{font:600 12px var(--sans);letter-spacing:0;flex-wrap:wrap;row-gap:4px}
+.hardnote,.rankrow .rspec,.sknote{font-size:11.5px}
+.nextnote{font-size:12.5px}
+.fbbtn{font-size:12.5px;min-height:44px}
+#heatDetails summary,#histDetails summary,#wrongDetails summary,#bmDetails summary,#fbDetails summary,.mledit summary,.exmap summary{font-size:13px;padding:6px 0}
+.subjcard .sp{font:600 12px var(--sans)}
+#hub .hubnote{font-size:12px}
+/* 名前と説明を左にそろえる（配色・コンボ演出・音色の一覧） */
+.skrow > span:nth-child(2){flex:1;min-width:0;text-align:left}
+.palrow .pname{text-align:left}
+/* 事典：全科目検索への入口は説明文の下に独立して置く */
+.xencgo{float:none;display:inline-flex;align-items:center;min-height:36px;margin:0 0 10px;font-size:12.5px}
+/* 分野の選択：狭い画面では1列にして、長い分野名が3〜4行に折れないようにする */
+.catgrid label span:nth-of-type(2){flex:1;min-width:0;text-align:left;line-height:1.4}
+.catgrid label{font-size:13px}
+.catgrid .c{font-size:11px}
+@media (max-width:480px){ .catgrid{grid-template-columns:1fr} .catgrid label{min-height:44px;padding:10px 12px} }
+/* 成績：最近解いた問題は、問題文の下に分野と日時を置く */
+.hlmain{flex:1;min-width:0}
+.hlt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5}
+.hlm{display:block;font:500 11px var(--sans);color:var(--soft);margin-top:3px}
+.ghost.danger{color:var(--bad);border-color:var(--bad);background:var(--badSoft)}
 </style>
 </head>
 <body>
@@ -992,16 +1021,16 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 <div id="hub" class="hide">
   <div class="hubk">BOARD PREP</div>
   <h1>専門医試験 演習</h1>
-  <div class="hubsub">科目を選んでください。学習履歴・段位・復習予定は科目ごとに別々に保存されます。</div>
+  <div class="hubsub">科目を選んでください。学習の記録と段位は科目ごと、XPは全科目共通です。</div>
   <div id="hubTotal"></div>
   <div id="hubCards"></div>
-  <button class="hubxenc" type="button" id="hubXenc"><span class="xi">📖</span><span>全科目の事典をまとめて検索<small>内科・小児科・救急科の疾患事典を一度に探せます</small></span></button>
+  <button class="hubxenc" type="button" id="hubXenc"><span class="xi">📖</span><span>全科目の事典を検索<small>内科・小児科・救急科の事典をまとめて調べられます</small></span></button>
   <div class="hubtools">
     <button class="hubtool" type="button" data-hubact="settings">見た目・音の設定</button>
     <button class="hubtool" type="button" data-hubact="tut">使い方を見る</button>
   </div>
   <div id="syncMount"></div>
-  <div class="hubnote">ヘッダー右上の「科目切替」からいつでも他の科目へ移動できます。</div>
+  <div class="hubnote">科目は、画面右上の「科目切替」からいつでも変えられます。</div>
   <button class="hubcontact" type="button" id="hubContact">✉ お問い合わせ・不具合の報告</button>
 </div>
 <div id="xenc" class="hide"></div>
@@ -1019,7 +1048,7 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
   <footer class="tabs" id="tabs">
     <button data-tab="home" class="on"><svg class="g" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1v-9"/></svg>ホーム</button>
     <button data-tab="rank"><svg class="g" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14.5" r="5.5"/><path d="M9.6 9.3 7 2.8h4l2 4.2M14.4 9.3 17 2.8h-4"/><path d="m12 12 .9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2L9.1 14.2l2-.3Z"/></svg>段位</button>
-    <button data-tab="study"><svg class="g" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5Z"/></svg>勉強</button>
+    <button data-tab="study"><svg class="g" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5Z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5Z"/></svg>事典</button>
     <button data-tab="stats"><svg class="g" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M12 20V4"/><path d="M20 20v-6"/></svg>成績</button>
     <button data-tab="settings"><svg class="g" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2.2" fill="currentColor" stroke="none"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="11" cy="17" r="2.2" fill="currentColor" stroke="none"/></svg>設定</button>
   </footer>
@@ -1074,10 +1103,10 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
         + '<div class="memohead"><span class="memot">'+(qid ? (h(SUBJ_NAME[subj]||'')+' 問題 #'+qid+' について') : 'お問い合わせ')+'</span>'
         + '<button class="ctx" data-ct="close" aria-label="閉じる">✕</button></div>'
         + '<div class="ctkinds">'+KINDS.map(function(k){ return '<button class="ctkind'+(k[0]===kind?' on':'')+'" data-ctkind="'+k[0]+'">'+k[1]+'</button>'; }).join('')+'</div>'
-        + '<textarea id="ctMsg" class="memoarea" maxlength="4000" placeholder="'+(qid ? '例：正解は「〇〇」では？（根拠のガイドラインなど）／解説の〇〇が古い など' : 'お気づきの点、不具合が起きた操作、ほしい機能など')+'"></textarea>'
-        + '<label class="ctlab" for="ctContact">返信先（任意・メールアドレスなど）</label>'
-        + '<input id="ctContact" class="ctin" type="text" maxlength="200" autocomplete="email" placeholder="返信が不要なら空欄でかまいません">'
-        + '<div class="ctmeta">'+(qid ? '問題番号と科目は自動で添付されます。' : '')+'個別の返信はお約束できません。医療相談にはお答えできません。</div>'
+        + '<textarea id="ctMsg" class="memoarea" maxlength="4000" placeholder="'+(qid ? '例：正解は「〇〇」ではないか（根拠となるガイドラインなど）、解説の〇〇が古い、など' : '気づいた点、不具合が起きたときの操作、ほしい機能など')+'"></textarea>'
+        + '<label class="ctlab" for="ctContact">返信先のメールアドレス（任意）</label>'
+        + '<input id="ctContact" class="ctin" type="text" maxlength="200" autocomplete="email" placeholder="返信が不要なら空欄のままで">'
+        + '<div class="ctmeta">'+(qid ? '問題番号と科目は自動で添付されます。' : '')+'すべてに返信できるとは限りません。医療相談にはお答えできません。</div>'
         + '<div class="memobtns"><button class="cta" data-ct="send">送信する</button></div>'
         + '</div>';
     }
@@ -1094,7 +1123,7 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
       var contact = (document.getElementById('ctContact').value || '').trim().slice(0,200);
       if(!msg){ alert('内容を入力してください。'); return; }
       var last = 0; try{ last = parseInt(localStorage.getItem(LAST_KEY)||'0',10); }catch(err){}
-      if(Date.now() - last < 30000){ alert('続けて送信するには少し時間をおいてください。'); return; }
+      if(Date.now() - last < 30000){ alert('少し時間をおいてから、もう一度送信してください。'); return; }
       a.disabled = true; a.textContent = '送信中…';
       var data = { kind: kind, message: msg.slice(0,4000), contact: contact, subj: String(subj||'').slice(0,20), qid: qid,
                    page: String(opt.page || (qid ? 'question' : 'hub')).slice(0,40), ua: String(navigator.userAgent||'').slice(0,400), ver: ver() };
@@ -1322,7 +1351,7 @@ function openTagSheet(kind, id, onDone){
     var cur = tagsOf(kind, id), L = tagList();
     var h = '<div class="tsbox" role="dialog" aria-label="マイリストに保存">'
           + '<div class="tshead"><b>マイリストに保存</b><span class="n">'+(kind==='qa' ? '一問一答 Q'+id : '問題 #'+id)+'</span></div>'
-          + '<div class="tssub">タグを選んでください（いくつでも付けられます）</div><div class="tslist">';
+          + '<div class="tssub">付けるタグを選んでください（複数選べます）</div><div class="tslist">';
     L.forEach(function(t){
       var on = cur.indexOf(t.id) >= 0;
       h += '<button class="tsrow'+(on?' on':'')+'" data-ts="'+esc(t.id)+'">'
@@ -1392,10 +1421,10 @@ var PALETTES = [
 var SKINS = [
   { id:'default', name:'スタンダード', cost:0,    icon:'◆', note:'炎のようなグラデーション' },
   { id:'ice',     name:'アイス',       cost:1400, icon:'❄', note:'青く澄んだ冷たい光' },
-  { id:'thunder', name:'サンダー',     cost:2700, icon:'⚡', note:'黄と紫の帯電' },
+  { id:'thunder', name:'サンダー',     cost:2700, icon:'⚡', note:'黄色と紫の稲妻' },
   { id:'sakura',  name:'桜吹雪',       cost:3900, icon:'✿', note:'淡く舞う桜色' },
   { id:'toxic',   name:'バイオ',       cost:5400, icon:'☣', note:'毒々しい蛍光グリーン' },
-  { id:'rainbow', name:'レインボー',   cost:9000, icon:'✦', note:'七色に流れ続ける' }
+  { id:'rainbow', name:'レインボー',   cost:9000, icon:'✦', note:'七色が流れ続ける' }
 ];
 function skinById(id){ for(var i=0;i<SKINS.length;i++) if(SKINS[i].id===id) return SKINS[i]; return SKINS[0]; }
 function ownsSkin(id){ return (S.ownedSkins||[]).indexOf(id) >= 0; }
@@ -1762,10 +1791,10 @@ function pt(i){ return PENTA[Math.min(PENTA.length-1, Math.max(0, i))]; }
    ping/noise の共通エンジンを使うため、追加は定義を足すだけで済む。 */
 var SOUNDPACKS = [
   { id:'bell',   name:'ベル',        cost:0,    icon:'🔔', note:'木琴のような澄んだ音' },
-  { id:'marimba',name:'マリンバ',    cost:800,  icon:'🪵', note:'木の温かみのある低め' },
+  { id:'marimba',name:'マリンバ',    cost:800,  icon:'🪵', note:'木の温かみがある低めの音' },
   { id:'crystal',name:'クリスタル',  cost:1600, icon:'💎', note:'高く伸びる硬質な響き' },
-  { id:'retro',  name:'レトロ',      cost:2400, icon:'🕹', note:'矩形波のゲーム機風' },
-  { id:'harp',   name:'ハープ',      cost:3200, icon:'🎼', note:'柔らかく余韻の長い弦' }
+  { id:'retro',  name:'レトロ',      cost:2400, icon:'🕹', note:'昔のゲーム機のような音' },
+  { id:'harp',   name:'ハープ',      cost:3200, icon:'🎼', note:'やわらかく余韻の長い弦の音' }
 ];
 function packById(id){ for(var i=0;i<SOUNDPACKS.length;i++) if(SOUNDPACKS[i].id===id) return SOUNDPACKS[i]; return SOUNDPACKS[0]; }
 function ownsPack(id){ return (S.ownedPacks||[]).indexOf(id) >= 0; }
@@ -1985,7 +2014,7 @@ function comboHtml(gain){
         + '<span class="cnum">'+n+'</span><span class="clab">COMBO</span>';
   if(t) h += '<span class="cmult">×'+t.mult.toFixed(1)+'</span>';
   h += '</div>';
-  if(justHit) h += '<div class="comboannounce sk-'+curSkin()+' '+t.cls+'">獲得ポイント ×'+t.mult.toFixed(1)+' に上昇！</div>';
+  if(justHit) h += '<div class="comboannounce sk-'+curSkin()+' '+t.cls+'">獲得XP ×'+t.mult.toFixed(1)+' にアップ</div>';
   return h;
 }
 
@@ -2112,14 +2141,14 @@ function renderExamResult(s){
   h += '<div class="track" style="margin:12px 0 4px;height:8px"><i style="width:'+Math.min(100,er.rate)+'%;background:'+(er.passed?'var(--good)':'var(--bad)')+'"></i></div>';
   var diff = er.ok - need;
   h += '<div class="sub" style="text-align:right">'
-     + (er.passed ? (diff>0 ? '合格ラインを'+diff+'問上回りました' : 'ぎりぎり合格ラインでした')
+     + (er.passed ? (diff>0 ? '合格ラインを'+diff+'問上回りました' : '合格ラインちょうどでした')
                   : 'あと'+(-diff)+'問で合格でした')
      + '</div>';
 
   var wrong = s.res.filter(function(x){ return !x.ok; });
   h += '<div class="exrevbtns">'
      + '<button class="cta'+(wrong.length?'':' wide')+'" data-rev="all">全問を見直す</button>'
-     + (wrong.length ? '<button class="cta" data-rev="wrong">誤答を見直す</button>'
+     + (wrong.length ? '<button class="cta" data-rev="wrong">不正解を見直す</button>'
                      + '<button class="ghost wide" data-act="redo">間違えた'+wrong.length+'問を解き直す</button>' : '')
      + '</div>';
   /* 全問の番号一覧。正解は緑、不正解は赤。押すとその問題の見直しを開く */
@@ -2133,13 +2162,13 @@ function renderExamResult(s){
     h += certHtml({ rank:er.rank, ok:er.ok, total:er.total, ts:er.ts||Date.now() });
     var nx = rankById(er.rank+1);
     h += '<div class="soft" style="margin-top:14px"><b>'+esc(r.name)+'</b> を取得しました。'
-       + (nx ? '次は <b>'+esc(nx.name)+'</b>（受験料 '+nx.cost+' XP・正答率 '+nx.pass+'%）に挑戦できます。' : 'すべての段位を制覇しました。')
+       + (nx ? '次は <b>'+esc(nx.name)+'</b>（受験料 '+nx.cost+' XP・合格ライン '+nx.pass+'%）に挑戦できます。' : 'これで、すべての段位を取得しました。')
        + '</div>';
   } else {
-    h += '<div class="soft" style="margin-top:14px">'+(er.timeUp?'制限時間を過ぎました。':'惜しくも届きませんでした。')
-       + ' 間違えた問題は復習リストに入っています。ポイントを貯めて再挑戦できます。</div>';
+    h += '<div class="soft" style="margin-top:14px">'+(er.timeUp?'制限時間を過ぎました。':'合格ラインに届きませんでした。')
+       + '間違えた問題は復習に追加しました。XPを貯めると再挑戦できます。</div>';
   }
-  h += '<div style="margin-top:16px"><button class="ghost" data-act="toRank">ホームへ戻る</button></div>';
+  h += '<div style="margin-top:16px"><button class="ghost" data-act="toRank">段位の画面に戻る</button></div>';
   h += '<div style="height:20px"></div>';
   main.innerHTML = h;
   main.onclick = function(e){
@@ -2200,7 +2229,7 @@ function renderExamReview(){
     function toDisp(arr){ return arr.map(function(v){ return ol2dl[v] || v; }).sort().join(', '); }
     var mine = x.ans || [];
     h += '<div class="banner '+(x.ok?'ok':'ng')+'"><div class="glyph">'+(x.ok?'○':'✕')+'</div><div style="flex:1"><b>'+(x.ok?'正解':(mine.length?'不正解':(x.ans?'未解答':'不正解')))+'</b>'
-       + '<div class="m">あなた: '+(mine.length?toDisp(mine):(x.ans?'—':'記録なし'))+' ／ 正解: '+toDisp(q.correct)+' ／ '+esc(catLabel(q.category))+' ／ #'+q.id+'</div></div></div>';
+       + '<div class="m">あなたの解答: '+(mine.length?toDisp(mine):(x.ans?'—':'記録なし'))+' ／ 正解: '+toDisp(q.correct)+' ／ '+esc(catLabel(q.category))+' ／ #'+q.id+'</div></div></div>';
     h += '<div style="font:700 16px/1.75 var(--sans);margin-bottom:14px">'+esc(q.stem)+'</div>';
     var img = q.img || q.image;
     if(img && IMAGES[img]) h += '<img class="qimg" src="data:image/png;base64,'+IMAGES[img]+'" alt="別冊画像" data-rv="zoom">';
@@ -2456,16 +2485,16 @@ function buildExam(r){
 }
 function startExam(r, retry){
   var cost = retry ? 0 : r.cost;
-  if(S.xp < cost){ alert('ポイントが足りません。\n\n受験料 '+cost+' XP ／ 所持 '+S.xp+' XP'); return; }
+  if(S.xp < cost){ alert('XPが足りません。\n\n受験料 '+cost+' XP ／ 手持ち '+S.xp+' XP'); return; }
   var msg = '【'+r.name+' 認定試験'+(retry?'（再受験）':'')+'】\n\n'
     + '受験料　'+(cost? cost+' XP（不合格でも返還されません）':'無料')+'\n'
     + '問題数　'+r.n+'問\n'
     + '合格　　正答率 '+r.pass+'%以上（'+Math.ceil(r.n*r.pass/100)+'問以上）\n'
-    + (r.m>0 ? '複数解答　「'+SUBJ.multi+'」を約'+Math.round(r.m*100)+'%含む\n' : '')
-    + (r.sh ? (r.shMulti ? '正解数　　複数解答の問題のみ何個選ぶか示されません\n' : '正解数　　何個選ぶかは示されません\n') : '')
+    + (r.m>0 ? '複数解答　「'+SUBJ.multi+'」の問題が約'+Math.round(r.m*100)+'%\n' : '')
+    + (r.sh ? (r.shMulti ? '選ぶ数　　複数解答の問題では表示されません\n' : '選ぶ数　　どの問題でも表示されません\n') : '')
     + (r.t ? '制限時間　'+r.t+'分\n' : '')
-    + '\n試験中は解説・自信度ベットはありません。\n中断しても再開できます。\n'
-    + (retry ? '再受験のため受験料はかかりません。結果によって段位が下がることはありません。\n' : '')
+    + '\n試験中は正誤と解説が表示されず、自信度も選びません。\n中断しても、続きから再開できます。\n'
+    + (retry ? '再受験なので受験料はかかりません。不合格でも段位は下がりません。\n' : '')
     + '\n受験しますか？';
   if(!confirm(msg)) return;
   S.xp -= cost; 
@@ -2489,7 +2518,7 @@ function fmtClock(ms){
 function renderRank(){
   var h = '';
   h += '<h1 style="margin:8px 0 4px">段位認定</h1>';
-  h += '<div class="sub" style="margin-bottom:14px">ポイントを使って腕試しをします。合格すると段位と認定証が手に入ります。</div>';
+  h += '<div class="sub" style="margin-bottom:14px">XPを使って認定試験を受けます。合格すると段位が上がり、認定証がもらえます。</div>';
   /* ---- 段位認定 ---- */
   var cr = curRank(), nx = nextRank();
   
@@ -2504,7 +2533,7 @@ function renderRank(){
        + '<div class="rnspec">'
        +   '<span>'+nx.n+'問</span><span>合格 '+nx.pass+'%</span>'
        +   (nx.m>0? '<span>複数解答 '+Math.round(nx.m*100)+'%</span>' : '')
-       +   (nx.sh? '<span class="rtag sh">'+(nx.shMulti?'複数解答のみ正解数不明':'正解数不明')+'</span>' : '')
+       +   (nx.sh? '<span class="rtag sh">'+(nx.shMulti?'複数解答は選ぶ数が非表示':'選ぶ数が非表示')+'</span>' : '')
        +   (nx.t?  '<span class="rtag tm">'+nx.t+'分</span>' : '')
        + '</div>'
        + (afford? '' : '<div class="rnshort">あと '+(nx.cost-S.xp)+' XP</div>')
@@ -2520,18 +2549,18 @@ function renderRank(){
               + '<span class="rname">'+r.name+'</span>'
               + '<span class="rspec">'+r.n+'問 ／ 合格'+r.pass+'%'
               +   (r.m>0?'<br>複数解答 '+Math.round(r.m*100)+'%':'')
-              +   (r.sh?(r.m>0?'・':'<br>')+(r.shMulti?'複数解答のみ正解数不明':'正解数不明'):'')
+              +   (r.sh?(r.m>0?'・':'<br>')+(r.shMulti?'選ぶ数は一部非表示':'選ぶ数は非表示'):'')
               +   (r.t?((r.m>0||r.sh)?'・':'<br>')+r.t+'分':'')
               + '</span>'
               + '<span class="rcost">'+(got?'再受験 ›':(r.cost? r.cost+' XP':'無料'))+'</span>'
               + '</'+(got?'button':'div')+'>';
        }).join('')
      + '</div>'
-          + '<div class="sub" style="margin:8px 2px 0">複数解答…「'+SUBJ.multi+'」の出題割合／正解数不明…選ぶ数が示されません（初段〜五段は複数解答の問題のみ）。<br>取得済みの段位は<b>無料で何度でも再受験</b>できます（結果によって段位が下がることはありません）。</div>'
+          + '<div class="sub" style="margin:8px 2px 0"><b>複数解答</b>：「'+SUBJ.multi+'」の問題が出る割合です。<br><b>選ぶ数は非表示</b>：いくつ選ぶかが問題に表示されません（「一部非表示」の初段〜五段は、複数解答の問題だけが対象です）。<br>取得済みの段位は、無料で何度でも再受験できます。不合格でも段位は下がりません。</div>'
      + '</details>';
   if((S.examLog||[]).length){
     h += '<h2>受験履歴</h2>';
-    h += '<div class="sub" style="margin:-4px 2px 8px">直近10回分は「見直す」から問題・自分の解答・解説を確認できます。</div>';
+    h += '<div class="sub" style="margin:-4px 2px 8px">直近10回分は、「見直す」から問題・自分の解答・解説を確認できます。</div>';
     h += '<details'+(certOpen?' open':'')+' style="margin:0 0 16px" id="examHist"><summary style="font:600 12px var(--sans);color:var(--accent);cursor:pointer">過去の受験履歴（'+S.examLog.length+'件）</summary>'
        + '<div class="exhist">'
        + S.examLog.slice(0,30).map(function(e,i){
@@ -2659,8 +2688,8 @@ function bindChipScroll(el){
 }
 function renderStudy(){
   var h = '';
-  h += '<h1 style="margin:8px 0 4px">勉強</h1>';
-  h += '<div class="sub" style="margin-bottom:12px">問題の関連知識をまとめた疾患事典です。全'+ENCYC.length+'項目。<button class="xencgo" type="button" id="xencGo">全科目で探す</button></div>';
+  h += '<h1 style="margin:8px 0 4px">事典</h1>';
+  h += '<div class="sub" style="margin-bottom:12px">問題の関連知識を疾患ごとにまとめています（全'+ENCYC.length+'項目）。</div><button class="xencgo" type="button" id="xencGo">全科目の事典を検索 ›</button>';
   h += '<input class="search" id="stq" type="search" inputmode="text" lang="ja" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="疾患名・キーワードで探す（例：'+SUBJ.phStudy+'）" value="'+esc(studyQ)+'">';
   h += '<div class="scrollwrap"><div class="chiprow chipscroll" id="stcat"><button class="chip'+(studyCat?'':' on')+'" data-scat="">すべて</button>'
      + CATS.map(function(cc){
@@ -2947,7 +2976,7 @@ function renderMemoPhotos(){
 }
 function saveMemo(){
   var txt = (document.getElementById('memoText').value || '').trim();
-  if(!txt && !memoPhotos.length){ alert('文章か写真を入力してください。'); return; }
+  if(!txt && !memoPhotos.length){ alert('メモの文章か写真を入れてください。'); return; }
   if(memoIdx != null){
     S.feedback[memoIdx].text = txt;
     S.feedback[memoIdx].photos = memoPhotos.slice();
@@ -2989,26 +3018,26 @@ var tutStep = 0, tutDemo = null, tutDemoId = null;
 /* sel: 実画面で光らせる要素 / tab: 表示するタブ / demo: 体験モード */
 var TUTORIAL = [
   { tab:'home', sel:null, t:'はじめまして',
-    b:'このアプリの使い方を、実際の画面を見ながら案内します。'
-     +'途中でやめたいときは「スキップ」を押してください。設定タブからいつでも見直せます。' },
+    b:'このアプリの使い方を、実際の画面で順に案内します。'
+     +'途中でやめるときは「スキップ」を押してください。案内は設定タブからいつでも見直せます。' },
   { tab:'home', sel:'main > .card', t:'今日の進み具合',
-    b:'解いた問題数がリングで表示されます。1日の目標問題数は設定タブで変えられます。' },
+    b:'今日解いた問題数がリングで表示されます。1日の目標は設定タブで変えられます。' },
   { tab:'home', sel:'[data-act="due"]', t:'今日の復習',
-    b:'一度解いた問題は、理解度に応じた間隔をあけて戻ってきます。'
-     +'間違えた問題ほど早く再出題されます。' },
+    b:'一度解いた問題は、自信度に応じた間隔をあけて、もう一度出題されます。'
+     +'間違えた問題ほど早く出てきます。' },
   { tab:'home', sel:'[data-act="qa"]', t:'一問一答',
-    b:'○×と2択の短い問題です。すきま時間にサッと確認できます。'
-     +'解答後、その場で関連知識を開いて確認できます。' },
+    b:'○×と2択の短い問題です。すきま時間に手早く確認できます。'
+     +'解答したあと、その場で関連知識も読めます。' },
   { tab:'home', sel:'#homeSetup', t:'出題設定',
     b:'演習量・出題順・問題タイプ・分野をここで選びます。'
-     +'演習量は問題数と時間のどちらでも指定でき、'
-     +'「難易度を上げる」から XX mode と Chicken mode も選べます。' },
+     +'演習量は問題数でも時間でも指定できます。'
+     +'「難易度を上げる」では XX mode と Chicken mode を選べます。' },
   { demo:1, t:'実際に1問解いてみましょう',
     b:'まず、正しいと思う選択肢を選んでください。' },
   { tab:'quiz-explain', sel:'.star', t:'マイリストに保存する',
     b:'画面右上の☆を押すとタグの一覧が開き、選んだタグでマイリストに保存できます。'
      +'1問に複数のタグを付けられます（たとえば「苦手」と「直前に見る」の両方）。'
-     +'☆を押しただけでは保存されないので、押し間違えても閉じれば元のままです。' },
+     +'☆を押しただけでは保存されません。押し間違えたときは、そのまま閉じてください。' },
   { tab:'quiz-explain', t:'解説を読む',
     b:'解答すると正誤と解説が出ます。選んだ選択肢だけでなく、'
      +'ほかの選択肢が「なぜ違うか」もその場で確認できます。' },
@@ -3019,16 +3048,16 @@ var TUTORIAL = [
     b:'覚えにくい点や、自分なりの語呂などを問題ごとに書き留められます。'
      +'教科書の図などを撮って添付することもできます（1件につき4枚まで）。'
      +'残したメモは成績タブから一覧で読み返せます。' },
-  { tab:'study', sel:null, tabfree:1, t:'勉強タブ',
+  { tab:'study', sel:null, tabfree:1, t:'事典タブ',
     b:'問題の関連知識を疾患ごとにまとめた事典です。'
-     +'関連する項目は親の中に入れ子で表示され、各項目からその疾患の問題だけを解けます。' },
+    +'関連する項目は親の項目の中にまとめてあります。各項目から、その疾患の問題だけを解くこともできます。' },
   { tab:'rank', sel:null, tabfree:1, t:'段位に挑戦',
     b:'貯めたXPで認定試験を受けられます。5級から十段まであり、'
-     +'上位ほど問題数・合格ライン・複数解答の割合が上がります。'
-     +'初段からは複数解答の問題で「何個選ぶか」が示されなくなります。' },
+     +'段位が上がるほど問題数が増え、合格ラインと複数解答の割合が高くなります。'
+     +'初段からは、複数解答の問題で「いくつ選ぶか」が表示されなくなります。' },
   { tab:'home', sel:null, t:'準備ができました',
-    b:'困ったら設定タブの「使い方を見る」から、この案内をもう一度読めます。'
-     +'それでは、はじめましょう。' }
+    b:'この案内は、設定タブの「使い方を見る」からいつでも見直せます。'
+     +'それでは、始めましょう。' }
 ];
 function tutClose(){
   document.body.classList.remove('tutTabs');
@@ -3186,7 +3215,7 @@ function tutBody(s){
   if(tutStep > 0 && !s.demo) h += '<button class="ghost tutprev" data-tut="prev">戻る</button>';
   if(!s.demo){
     h += '<button class="cta" data-tut="'+(tutStep < TUTORIAL.length-1 ? 'next' : 'close')+'">'
-       + (tutStep < TUTORIAL.length-1 ? '次へ' : 'はじめる') + '</button>';
+       + (tutStep < TUTORIAL.length-1 ? '次へ' : '始める') + '</button>';
   }
   h += '</div>';
   if(tutStep < TUTORIAL.length-1) h += '<button class="tutskip" data-tut="close">スキップ</button>';
@@ -3211,7 +3240,7 @@ function tutDemoTick(){
   if(tutDemo === 'pick' && s.picked.length){
     tutDemo = 'bet';
     card.querySelector('.tutb').textContent =
-      '次に、どれくらい自信があるかを選びます。自信があるほど正解時のXPは大きく、外したときの減点も大きくなります。';
+      '次に、自信度を選びます。自信があるほど正解したときのXPが増え、間違えたときに減るXPも大きくなります。';
     tutPlaceDemo();
   } else if(tutDemo === 'bet' && s.revealed){
     tutDemo = 'done';
@@ -3265,8 +3294,8 @@ function qaHtml(){
   var h = '<div class="qahead">'
      + '<button class="x" data-qaclose="1">✕</button>'
      + '<span class="qatitle">'+(qaTagPool ? '一問一答（マイリスト）' : '一問一答')+'</span>'
-     + (qaStat.streak>1 ? '<span class="qastreak">'+qaStat.streak+'連続</span>' : '')
-     + '<span class="qascore">'+qaStat.ok+' / '+(qaStat.ok+qaStat.ng)+'</span>'
+     + (qaStat.streak>1 ? '<span class="qastreak">'+qaStat.streak+'連続正解</span>' : '')
+     + '<span class="qascore">正解 '+qaStat.ok+' / '+(qaStat.ok+qaStat.ng)+'</span>'
      + (qaQ ? starBtn('qa', qaQ.id, 'qastar', 'data-qastar="'+qaQ.id+'"') : '')
      + '</div>';
   h += '<div class="qabox">';
@@ -3351,7 +3380,7 @@ function mlHtml(){
        + '<i style="background:'+(on?'#fff':t.c)+'"></i>'+esc(t.n)+'<span>'+tagCount(mlKind, t.id)+'</span></button>';
   });
   h += '</div>';
-  if(mlFilter.length > 1) h += '<div class="sub" style="margin:-4px 0 8px">選んだタグのどれかが付いているものを表示しています</div>';
+  if(mlFilter.length > 1) h += '<div class="sub" style="margin:-4px 0 8px">選んだタグのどれかが付いたものを表示しています</div>';
 
   var ids = taggedIds(mlKind, mlFilter);
   if(!ids.length){
@@ -3393,7 +3422,7 @@ function mlHtml(){
   }
 
   /* タグの管理 */
-  h += '<details class="mledit" data-mledit="1"'+(mlEditOpen?' open':'')+'><summary>タグを編集（'+L.length+' / '+TAG_MAX+'）</summary><div class="sub" style="margin:8px 0">色の丸を押すと色が変わります。タグを消しても問題そのものは消えません。</div><div class="list">';
+  h += '<details class="mledit" data-mledit="1"'+(mlEditOpen?' open':'')+'><summary>タグを編集（'+L.length+' / '+TAG_MAX+'）</summary><div class="sub" style="margin:8px 0">色の丸を押すと色が変わります。タグを削除しても、問題は消えません。</div><div class="list">';
   L.forEach(function(t){
     h += '<div class="li mltag"><button class="mlcol" data-mlcol="'+esc(t.id)+'" style="background:'+t.c+'" title="色を変える"></button>'
        + '<span style="flex:1">'+esc(t.n)+'</span><span class="n">'+(tagCount('q',t.id)+tagCount('qa',t.id))+'</span>'
@@ -3447,7 +3476,7 @@ function mlClick(e){
   var dl = t.closest('[data-mldel]');
   if(dl){
     var did = dl.dataset.mldel, d3 = S.tagDefs[did], n = tagCount('q',did) + tagCount('qa',did);
-    if(confirm('タグ「'+d3.n+'」を削除しますか？' + (n ? '\nこのタグを付けた'+n+'件からタグが外れます（問題そのものは消えません）。' : ''))){ tagDelete(did); renderHome(); }
+    if(confirm('タグ「'+d3.n+'」を削除しますか？' + (n ? '\nこのタグを付けた'+n+'件からタグが外れます（問題は消えません）。' : ''))){ tagDelete(did); renderHome(); }
     return;
   }
   if(t.closest('[data-mladd]')){ var nm = prompt('新しいタグの名前（20文字まで）', ''); if(nm && nm.trim()){ tagCreate(nm); renderHome(); } return; }
@@ -3477,31 +3506,31 @@ function renderHome(){
 
   var h = '';
   h += '<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 16px">';
-  h += '<h1>今日の演習</h1><div style="text-align:right"><div class="mono" style="font-weight:800;font-size:17px;color:var(--accent)">'+S.xp+' XP</div><div class="mono" style="font-size:10px;color:var(--soft);margin-top:3px">累計 '+(S.xpTotal||0)+' XP</div><div class="mono" style="font-size:10px;color:var(--soft);margin-top:2px">連続 '+st+'日'+(curRank()?' ／ '+esc(rankName(curRank())):'')+'</div></div></div>';
+  h += '<h1>今日の演習</h1><div style="text-align:right"><div class="mono" style="font-weight:800;font-size:17px;color:var(--accent)">'+S.xp+' XP</div><div class="hxsub">累計 '+(S.xpTotal||0)+' XP</div><div class="hxsub">連続 '+st+'日'+(curRank()?' ／ '+esc(rankName(curRank())):'')+'</div></div></div>';
 
   if(resume){
     var s=S.session;
-    h += '<div class="resume" data-act="resume"><div style="flex:1"><div style="font:700 13.5px var(--sans)">'+(s.exam? esc(rankName(s.exam))+' 認定試験（中断中）' : '途中の'+s.ids.length+'問セット')+'</div><div class="sub">残り'+(s.ids.length-s.i)+'問・中断したところから</div></div><div class="mono" style="font-weight:700;font-size:12px;color:var(--accent)">再開 ›</div></div>';
+    h += '<div class="resume" data-act="resume"><div style="flex:1"><div style="font:700 13.5px var(--sans)">'+(s.exam? esc(rankName(s.exam))+' 認定試験（中断中）' : '中断中の演習（'+s.ids.length+'問）')+'</div><div class="sub">残り'+(s.ids.length-s.i)+'問。続きから再開します</div></div><div class="mono" style="font-weight:700;font-size:12px;color:var(--accent)">再開 ›</div></div>';
   }
 
   h += '<div class="card" style="display:flex;gap:18px;align-items:center;margin-bottom:12px">';
-  h += '<div style="width:86px;height:86px;border-radius:50%;flex:none;background:conic-gradient(var(--accent) 0deg '+(ringPct*3.6)+'deg,var(--accentSoft) '+(ringPct*3.6)+'deg 360deg);display:flex;align-items:center;justify-content:center"><div style="width:64px;height:64px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="mono" style="font-weight:700;font-size:19px;line-height:1">'+today.a+'</div><div style="font:500 9px var(--sans);color:var(--soft)">/'+goal+'問</div></div></div>';
+  h += '<div style="width:86px;height:86px;border-radius:50%;flex:none;background:conic-gradient(var(--accent) 0deg '+(ringPct*3.6)+'deg,var(--accentSoft) '+(ringPct*3.6)+'deg 360deg);display:flex;align-items:center;justify-content:center"><div style="width:64px;height:64px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="mono" style="font-weight:700;font-size:19px;line-height:1">'+today.a+'</div><div style="font:500 10.5px var(--sans);color:var(--soft);margin-top:2px">/ '+goal+'問</div></div></div>';
   var goalMet = today.a >= goal;
-  h += '<div style="flex:1"><div style="font:700 13px var(--sans);margin-bottom:9px;color:'+(goalMet?'var(--good)':'var(--ink)')+'">'+(goalMet?'今日の目標を達成しました！':'今日も頑張りましょう！')+'</div><div style="display:flex;gap:16px"><div><div class="mono" style="font-weight:700;font-size:16px">'+(today.a?Math.round(100*today.c/today.a):0)+'%</div><div class="label">本日正答率</div></div><div><div class="mono" style="font-weight:700;font-size:16px;color:var(--bad)">'+due+'</div><div class="label">復習期限</div></div></div></div></div>';
+  h += '<div style="flex:1"><div style="font:700 13px var(--sans);margin-bottom:9px;color:'+(goalMet?'var(--good)':'var(--ink)')+'">'+(goalMet?'今日の目標を達成しました':'今日の目標まで あと'+(goal-today.a)+'問')+'</div><div style="display:flex;gap:16px"><div><div class="mono" style="font-weight:700;font-size:16px">'+(today.a?Math.round(100*today.c/today.a):0)+'%</div><div class="label">今日の正答率</div></div><div><div class="mono" style="font-weight:700;font-size:16px;color:var(--bad)">'+due+'</div><div class="label">復習待ち</div></div></div></div></div>';
 
-  h += '<button class="primary" data-act="due" style="margin-bottom:9px"><span class="badge">'+due+'</span><span style="flex:1"><span style="display:block;font:700 14px var(--sans)">今日の復習</span><span style="display:block;font:400 11px var(--sans);opacity:.75;margin-top:2px">忘れる前に戻ってくる'+due+'問</span></span><span class="mono" style="opacity:.7">›</span></button>';
+  h += '<button class="primary" data-act="due" style="margin-bottom:9px"><span class="badge">'+due+'</span><span style="flex:1"><span style="display:block;font:700 14px var(--sans)">今日の復習</span><span style="display:block;font:400 11px var(--sans);opacity:.75;margin-top:2px">'+(due ? '復習の時期が来た問題が'+due+'問あります' : 'いま復習する問題はありません')+'</span></span><span class="mono" style="opacity:.7">›</span></button>';
 
   var nMq = taggedIds('q').length, nMqa = taggedIds('qa').length;
   h += '<button class="ghost markbtn" data-act="mylist" style="margin-bottom:9px">'
      + '<span class="badge mk">'+(nMq+nMqa)+'</span>'
      + '<span style="flex:1;text-align:left"><span style="display:block;font:700 14px var(--sans)">マイリスト</span>'
      + '<span style="display:block;font:400 11px var(--sans);color:var(--soft);margin-top:2px">'
-     +   ((nMq+nMqa) ? '問題 '+nMq+'問・一問一答 '+nMqa+'問をタグ別に解き直す' : '☆を押した問題がタグごとにここに集まります')
+     +   ((nMq+nMqa) ? '問題 '+nMq+'問・一問一答 '+nMqa+'問をタグ別に解き直す' : '☆で保存した問題をタグ別に解き直せます')
      + '</span></span><span class="mono" style="opacity:.6">›</span></button>';
 
   h += '<button class="ghost qabtn" data-act="qa" style="margin-bottom:9px">'
      + '<span style="flex:1;text-align:left"><span style="display:block;font:700 14px var(--sans)">一問一答</span>'
-     + '<span style="display:block;font:400 11px var(--sans);color:var(--soft);margin-top:2px">○×と2択でサッと確認（正解で+1XP）</span></span>'
+     + '<span style="display:block;font:400 11px var(--sans);color:var(--soft);margin-top:2px">○×と2択で手早く確認（正解で +1 XP）</span></span>'
      + '<span class="mono" style="opacity:.6">›</span></button>';
 
   h += '<h2>問題を検索</h2><input class="search" id="sq" type="search" inputmode="text" lang="ja" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="キーワードまたは問題番号（例：'+SUBJ.phSearch+'、#123）" value="'+esc(searchQ)+'"><div id="searchResults">'+searchResultsHtml()+'</div>';
@@ -3515,7 +3544,7 @@ function renderHome(){
   var amtUnit = S.timeatk ? '分' : '問';
   h += '<details class="amtbox"'+(amtOpen?' open':'')+'><summary><span class="amtt">演習量</span>'
      + '<span class="amtnow"><b>'+amtNum+'</b>'+amtUnit+'</span>'
-     + (S.timeatk ? '<span class="amttag">Time attack</span>' : '')
+     + (S.timeatk ? '<span class="amttag">タイムアタック</span>' : '')
      + '</summary><div class="amtbody">'
      + '<div class="amtsec">問題数で選ぶ</div><div class="chiprow">';
   [5,10,20,50].forEach(function(n){
@@ -3533,9 +3562,9 @@ function renderHome(){
      + ((S.timeatk && [3,5,10].indexOf(S.taMin)<0) ? S.taMin : '') + '" placeholder="—"><span>分</span></span>';
   h += '</div></div></details>';
   h += '<div style="height:12px"></div>';
-  h += '<div style="font:600 11px var(--mono);color:var(--soft);margin-bottom:8px">出題順</div><div class="chiprow" style="margin-bottom:14px">';
-  h += '<button class="chip'+(S.mode==='random'?' on':'')+'" data-mode="random">ランダム</button><button class="chip'+(S.mode==='sequential'?' on':'')+'" data-mode="sequential">順番に</button>';
-  h += '</div><div style="font:600 11px var(--mono);color:var(--soft);margin-bottom:8px">問題タイプ</div><div class="chiprow" style="margin-bottom:14px">';
+  h += '<div class="setlab">出題順</div><div class="chiprow" style="margin-bottom:14px">';
+  h += '<button class="chip'+(S.mode==='random'?' on':'')+'" data-mode="random">ランダム</button><button class="chip'+(S.mode==='sequential'?' on':'')+'" data-mode="sequential">番号順</button>';
+  h += '</div><div class="setlab">問題の種類</div><div class="chiprow" style="margin-bottom:14px">';
   [['all','すべて'],['general','一般問題'],['clinical','臨床問題']].forEach(function(t){
     h += '<button class="chip'+(S.qtype===t[0]?' on':'')+'" data-qtype="'+t[0]+'">'+t[1]+'</button>';
   });
@@ -3551,15 +3580,15 @@ function renderHome(){
      + '</summary>'
      + '<div class="hardbody">'
      + '<button class="shadowtog'+(S.shadow?' on':'')+'" data-shadow="1">'
-     +   '<span class="stg"><b>XX mode<span class="shtag">XP ×1.5</span></b><span>「◯つ選べ」を表示せず、全問で複数選択できるようになります</span></span>'
+     +   '<span class="stg"><b>XX mode<span class="shtag">XP ×1.5</span></b><span>「○つ選べ」の表示が消え、どの問題でも複数の選択肢を選べるようになります</span></span>'
      +   '<span class="sw"><i></i></span>'
      + '</button>'
      + '<button class="shadowtog'+(S.chicken?' on':'')+'" data-chicken="1" style="margin-top:8px">'
-     +   '<span class="stg"><b>Chicken mode<span class="shtag">XP ×2.0</span></b><span>選択肢が1つずつ現れます。これだと思った時点で選んでください。前の選択肢には戻れません</span></span>'
+     +   '<span class="stg"><b>Chicken mode<span class="shtag">XP ×2.0</span></b><span>選択肢が1つずつ表示されます。正解だと思ったところで選んでください。見送った選択肢には戻れません</span></span>'
      +   '<span class="sw"><i></i></span>'
      + '</button>'
 
-     + '<div class="hardnote">2つを同時に使うことはできません。</div>'
+     + '<div class="hardnote">XX mode と Chicken mode は同時には使えません。</div>'
      + '</div></details>';
   h += '<details style="margin-top:14px"><summary style="font:600 12px var(--sans);color:var(--accent);cursor:pointer">分野を選ぶ（'+S.cats.length+'/'+CATS.length+'）</summary>'
      + '<div style="display:flex;gap:8px;margin-top:10px"><button class="catbtn catbtn-all" data-catall="1">すべて選択</button><button class="catbtn catbtn-none" data-catall="0">すべて解除</button></div>'
@@ -3573,15 +3602,15 @@ function renderHome(){
   h += '</div>';   /* #homeSetup を閉じる */
 
   h += '<div style="margin-top:16px"><button class="cta" data-act="start">'
-     + (S.timeatk ? (S.taMin||10)+'分のTime attackを始める' : S.count+'問セットを始める')
+     + (S.timeatk ? (S.taMin||10)+'分のタイムアタックを始める' : S.count+'問の演習を始める')
      + '</button></div>';
   h += '<div style="height:8px"></div>';
 
   if(ranked.length){
-    h += '<h2>弱点の分野</h2><div style="display:flex;flex-direction:column;gap:8px">';
+    h += '<h2>苦手な分野</h2><div style="display:flex;flex-direction:column;gap:8px">';
     ranked.forEach(function(x){
       var r = Math.round(100*x.d.ok/x.d.seen);
-      h += '<div class="card row" style="padding:12px 14px"><span class="mono" style="font-weight:700;font-size:12px;color:'+(r<60?'var(--bad)':'var(--warn)')+';width:14px">'+letterOf(x.c)+'</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font:500 13px var(--sans)">'+esc(x.c)+'</span><span class="sub">直近 '+x.d.ok+'/'+x.d.seen+'問</span></span><span class="mono" style="font-weight:700;font-size:12px;color:'+(r<60?'var(--bad)':'var(--warn)')+'">'+r+'%</span><button class="chip" data-train="'+esc(x.c)+'">鍛える</button></div>';
+      h += '<div class="card row" style="padding:12px 14px"><span class="mono" style="font-weight:700;font-size:12px;color:'+(r<60?'var(--bad)':'var(--warn)')+';width:14px">'+letterOf(x.c)+'</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font:500 13px var(--sans)">'+esc(x.c)+'</span><span class="sub">'+x.d.seen+'問中 '+x.d.ok+'問正解</span></span><span class="mono" style="font-weight:700;font-size:12px;color:'+(r<60?'var(--bad)':'var(--warn)')+'">'+r+'%</span><button class="chip" data-train="'+esc(x.c)+'">鍛える</button></div>';
     });
     h += '</div>';
   }
@@ -3688,7 +3717,7 @@ if(e.target.closest('[data-act="qa"]')){ qaOn = true; qaNext(); renderHome(); wi
     if(a.dataset.act==='start'){ startSession(buildQueue(), false); }
     if(a.dataset.act==='resume'){ go('quiz'); }
     if(a.dataset.act==='mylist'){ mlOn = true; qaOn = false; renderHome(); window.scrollTo(0,0); return; }
-if(a.dataset.act==='due'){ var d = dueList().map(function(q){return q.id;}); if(!d.length){ alert('いま期限が来ている復習はありません。'); return; } startSession(d.slice(0,50), true); }
+if(a.dataset.act==='due'){ var d = dueList().map(function(q){return q.id;}); if(!d.length){ alert('いま復習する問題はありません。'); return; } startSession(d.slice(0,50), true); }
   };
   main.onchange = function(e){
     var cb = e.target.closest('input[data-cat]'); if(!cb) return;
@@ -3757,18 +3786,18 @@ function renderQuiz(){
   if(pastView){
     var px = s.res[s.i];
     h += '<div class="banner '+(px.ok?'ok':'ng')+'"><div class="glyph">'+(px.ok?'○':'✕')+'</div><div style="flex:1"><b>'+(px.ok?'正解':'不正解')+'<span class="pastlab">見直し中</span></b><div class="m">'
-       + (px.ok?('正解: '+toDisp(q.correct)):('あなた: '+toDisp(s.picked)+' ／ 正解: '+toDisp(q.correct)))+' ／ '+esc(catLabel(q.category))+' ／ #'+q.id+'</div></div></div>';
+       + (px.ok?('正解: '+toDisp(q.correct)):('あなたの解答: '+toDisp(s.picked)+' ／ 正解: '+toDisp(q.correct)))+' ／ '+esc(catLabel(q.category))+' ／ #'+q.id+'</div></div></div>';
   } else if(s.revealed){
     var ok = s.res[s.res.length-1] && s.res[s.res.length-1].ok;
     var gain = s.lastGain || {xp:0};
     var bl = BETS[gain.bet] ? BETS[gain.bet].label : '';
     var head = ok ? '正解' : '不正解';
-    if(ok && gain.bet==='high') head = 'ズバリ正解';
-    if(ok && gain.bet==='low')  head = 'まぐれ正解';
-    if(!ok && gain.bet==='high') head = '思い込みでした';
-    h += '<div class="banner '+(ok?'ok':'ng')+(gain.bet==='high'?' hi':'')+'"><div class="glyph">'+(ok?'○':'✕')+'</div><div style="flex:1"><b>'+head+'</b><div class="m">'+(ok?('正解: '+toDisp(q.correct)+' ／ '+esc(catLabel(q.category))+' ／ #'+q.id):('あなた: '+toDisp(s.picked)+' ／ 正解: '+toDisp(q.correct)+' ／ #'+q.id))+'</div></div>'
+    if(ok && gain.bet==='high') head = '正解（自信あり）';
+    if(ok && gain.bet==='low')  head = '正解（自信なし）';
+    if(!ok && gain.bet==='high') head = '不正解（自信あり）';
+    h += '<div class="banner '+(ok?'ok':'ng')+(gain.bet==='high'?' hi':'')+'"><div class="glyph">'+(ok?'○':'✕')+'</div><div style="flex:1"><b>'+head+'</b><div class="m">'+(ok?('正解: '+toDisp(q.correct)+' ／ '+esc(catLabel(q.category))+' ／ #'+q.id):('あなたの解答: '+toDisp(s.picked)+' ／ 正解: '+toDisp(q.correct)+' ／ #'+q.id))+'</div></div>'
        + '<div class="xpbadge'+(gain.xp<0?' minus':'')+'">'+(gain.xp>=0?'+':'')+gain.xp+' XP</div></div>';
-    if(gain.capped) h += '<div class="sub" style="margin:-6px 0 10px">ポイントは0より減りません</div>';
+    if(gain.capped) h += '<div class="sub" style="margin:-6px 0 10px">XPは0より下がりません</div>';
     h += '<div class="betrecap"><span class="chipbet '+(BETS[gain.bet]?BETS[gain.bet].cls:'')+'">'+esc(bl)+'</span>'
        + '<span class="calc">'+(gain.base>=0?'+':'')+gain.base+(gain.mult>1?' × '+gain.mult.toFixed(1):'')+(gain.shadow?' <b class="shx">× 1.5</b>':'')+'</span></div>';
     h += comboHtml(gain);
@@ -3780,7 +3809,7 @@ function renderQuiz(){
   h += '<div style="font:700 16px/1.75 var(--sans);margin-bottom:14px">'+esc(sh && !s.revealed ? stripCount(q.stem) : q.stem)+'</div>';
   var img = q.img || q.image;
   if(img && IMAGES[img]) h += '<img class="qimg" src="data:image/png;base64,'+IMAGES[img]+'" alt="別冊画像" data-act="zoom">';
-  if(multi && !s.revealed) h += '<div class="sub" style="margin:-6px 0 10px">'+(sh ? '※ 正しいものをすべて選べ（数は示されません）' : '※ '+q.correct.length+'つ選べ')+'</div>';
+  if(multi && !s.revealed) h += '<div class="sub" style="margin:-6px 0 10px">'+(sh ? '※ 正しいものをすべて選べ（選ぶ数は非表示）' : '※ '+q.correct.length+'つ選べ')+'</div>';
 
   /* Chicken mode：選択肢を上から1つずつ開いていく。
      一度見送った肢には戻れないので、迷いを断って決める練習になる。 */
@@ -3821,13 +3850,13 @@ function renderQuiz(){
     var rest = total - (s.open + 1);              /* まだ開いていない肢の数 */
     if(needN > 1){
       h += '<div class="chickneed">'
-         + (left > 0 ? 'あと <b>'+left+'</b> つ選びます' : '選び終えました')
+         + (left > 0 ? 'あと <b>'+left+'</b>つ選んでください' : '必要な数を選びました')
          + '<span class="chicksub">（'+got+' / '+needN+'）</span></div>';
     }
     if(left <= 0){
       h += '<div class="chicklast">'
-         + (s.autoPick ? '残りは自動で選ばれました。' : '')
-         + '下の「自信」を選んで解答してください。</div>';
+         + (s.autoPick ? '残りの選択肢は自動で選ばれました。' : '')
+         + '下の自信度を選ぶと解答が確定します。</div>';
     } else if(rest > 0){
       h += '<button class="cta chicknext" data-chicknext="1">次の選択肢を見る（'+(s.open+2)+' / '+total+'）</button>';
     } else {
@@ -3855,7 +3884,7 @@ function renderQuiz(){
                  : '<button class="cta" data-exmove="1">次の問題 →</button>')
          + '</div>';
       if(!last) h += '<button class="ghost exfin2" data-exfin="1" style="margin-top:8px">ここで解答を終える</button>';
-      h += '<div class="sub" style="text-align:center;margin-top:10px">'+(ready?'解答を選択済み':'未解答のまま次へ進めます')+'／ 試験中は正誤・解説は表示されません</div>';
+      h += '<div class="sub" style="text-align:center;margin-top:10px">'+(ready?'解答を選択済み':'未解答のまま次へ進めます')+' ／ 試験中は正誤・解説は表示されません</div>';
       /* 解答状況の一覧（タップでその問題へ移動） */
       h += '<details class="exmap"><summary>解答状況（'+examAnsweredCount()+' / '+s.ids.length+'問）</summary><div class="exgrid">';
       for(var mi=0; mi<s.ids.length; mi++){
@@ -3866,7 +3895,7 @@ function renderQuiz(){
     } else {
     var cm = comboMult(s.combo||0) * (s.shadow ? 1.5 : 1);
     h += '<div class="betwrap'+(ready?'':' off')+'">'
-       + '<div class="betlead">どれくらい自信がある？'+(s.shadow?'<span class="shbadge">XX ×1.5</span>':'')+(s.chicken?'<span class="shbadge mb">CHICKEN ×2.0</span>':'')+'<span class="betlead2">'+(ready?'選んで解答':'まず選択肢を選ぶ')+'</span></div>'
+       + '<div class="betlead">自信度を選んで解答'+(s.shadow?'<span class="shbadge">XX ×1.5</span>':'')+(s.chicken?'<span class="shbadge mb">CHICKEN ×2.0</span>':'')+'<span class="betlead2">'+(ready?'押すと解答が確定します':'先に選択肢を選んでください')+'</span></div>'
        + '<div class="bets">'
        + ['low','mid','high'].map(function(k){
            var b = BETS[k];
@@ -3985,18 +4014,18 @@ function renderResult(){
   var avg = s.res.length ? Math.round(secs/s.res.length) : 0;
   var h = '';
   h += '<div class="kicker" style="margin-top:10px">'+(s.reviewing?'REVIEW COMPLETE':'SESSION COMPLETE')+'</div>';
-  h += '<h1 style="margin:6px 0 10px">'+(s.reviewing?'復習おつかれさまでした':'セッション完了')+'</h1>';
+  h += '<h1 style="margin:6px 0 10px">'+(s.reviewing?'復習が終わりました':'演習が終わりました')+'</h1>';
   h += '<div style="display:flex;align-items:baseline;gap:10px"><span class="big">'+ok+'/'+s.res.length+'</span><span class="mono" style="margin-left:auto;font-weight:700;font-size:20px;color:var(--accent)">'+(s.res.length?Math.round(100*ok/s.res.length):0)+'%</span></div>';
-  h += '<div class="sub">平均解答時間 '+avg+'秒 ／ 所要 '+Math.floor(secs/60)+'分'+(secs%60)+'秒</div>';
+  h += '<div class="sub">1問あたり平均 '+avg+'秒 ／ 合計 '+Math.floor(secs/60)+'分'+(secs%60)+'秒</div>';
   var bc = s.bestCombo||0, bt = comboTier(bc);
   h += '<div class="statrow" style="margin:16px 0 12px"><div class="statbox"><b>+'+(s.gained||0)+'</b><div class="label">獲得XP</div></div>'
      + '<div class="statbox sk-'+curSkin()+(bt?' bcbox '+bt.cls:'')+'"><b>'+bc+'</b><div class="label">最高コンボ'+(bt?' ×'+bt.mult.toFixed(1):'')+'</div></div>'
      + '<div class="statbox"><b>'+S.xp+'</b><div class="label">使えるXP</div></div></div>';
-  h += '<div class="soft">'+(s.reviewing ? (wrong.length ? '残り'+wrong.length+'問はまた出題されます。' : 'すべて正解。復習リストから外れました。') : (wrong.length ? '誤答'+wrong.length+'問。続けて復習すると定着しやすくなります。' : '全問正解。次は新しい分野に進みましょう。'))+'</div>';
+  h += '<div class="soft">'+(s.reviewing ? (wrong.length ? '間違えた'+wrong.length+'問は、あとでもう一度出題されます。' : 'すべて正解です。今回の問題は復習待ちから外れました。') : (wrong.length ? wrong.length+'問間違えました。いま復習しておくと定着しやすくなります。' : '全問正解です。'))+'</div>';
   /* 出題した全問を一覧表示する。正解した問題でも自信がなければ見返せるように、
      結果画面から個別に開けて、★でマークもできる。 */
-  if(s.taOver) h += '<div class="tanote">Time attack 終了。'+(s.taMin||10)+'分で <b>'+s.res.length+'問</b> 解答しました。</div>';
-  h += '<h2>この'+s.res.length+'問</h2>';
+  if(s.taOver) h += '<div class="tanote">タイムアタック終了。'+(s.taMin||10)+'分で <b>'+s.res.length+'問</b> 解きました。</div>';
+  h += '<h2>解いた問題（'+s.res.length+'問）</h2>';
   h += '<div class="reslist">';
   s.res.forEach(function(r){
     var q = QUESTIONS.filter(function(x){ return x.id===r.id; })[0];
@@ -4016,7 +4045,7 @@ function renderResult(){
   if(wrong.length) h += '<button class="cta" data-act="review">間違えた'+wrong.length+'問をいま復習する</button>';
   var marked = s.res.filter(function(r){ return tagsOf('q', r.id).length; });
   if(marked.length) h += '<button class="ghost" data-act="reviewmark">マイリストに保存した'+marked.length+'問を復習する</button>';
-  h += '<button class="ghost" data-act="again">'+(S.timeatk ? 'もう一度 '+(S.taMin||10)+'分' : '同じ条件でもう'+S.count+'問')+'</button><button class="ghost" data-act="home">'+(qaBack?'一問一答に戻る':'ホームへ')+'</button></div><div style="height:20px"></div>';
+  h += '<button class="ghost" data-act="again">'+(S.timeatk ? 'もう一度 '+(S.taMin||10)+'分のタイムアタック' : '同じ条件でもう'+S.count+'問')+'</button><button class="ghost" data-act="home">'+(qaBack?'一問一答に戻る':'ホームに戻る')+'</button></div><div style="height:20px"></div>';
   main.innerHTML = h;
 
   main.onclick = function(e){
@@ -4062,9 +4091,9 @@ function renderStats(){
   var wrongs = QUESTIONS.filter(function(q){ var p=S.prog[q.id]; return p && p.seen && !p.lastOk; });
   var h = '';
   h += '<h1 style="margin:8px 0 14px">成績</h1>';
-  h += '<div class="statrow" style="margin-bottom:16px"><div class="statbox"><b>'+seen+'</b><div class="label">解答済み</div></div><div class="statbox"><b style="color:var(--accent)">'+(seen?Math.round(100*ok/seen):0)+'%</b><div class="label">正答率</div></div><div class="statbox"><b>'+wrongs.length+'</b><div class="label">要復習</div></div></div>';
+  h += '<div class="statrow" style="margin-bottom:16px"><div class="statbox"><b>'+seen+'</b><div class="label">解いた問題</div></div><div class="statbox"><b style="color:var(--accent)">'+(seen?Math.round(100*ok/seen):0)+'%</b><div class="label">正答率</div></div><div class="statbox"><b>'+wrongs.length+'</b><div class="label">要復習</div></div></div>';
 
-  h += '<h2>学習履歴（14日）</h2><div class="card" style="margin-bottom:4px">';
+  h += '<h2>解いた問題数（直近14日）</h2><div class="card" style="margin-bottom:4px">';
   var max = 1, days = [], total7 = 0, todayCount = 0;
   for(var i=13;i>=0;i--){ var d = new Date(Date.now()-i*DAY); var e = S.hist[todayKey(d)] || {a:0,c:0}; days.push(e); if(e.a>max) max=e.a; if(i<7) total7+=e.a; if(i===0) todayCount=e.a; }
   h += '<div class="statrow" style="margin-bottom:12px"><div class="statbox"><b>'+todayCount+'</b><div class="label">今日</div></div><div class="statbox"><b>'+total7+'</b><div class="label">直近7日</div></div></div>';
@@ -4077,7 +4106,7 @@ function renderStats(){
   h += '</div><div class="axis"><span>14日前</span><span>今日</span></div></div>';
 
   if(S.log && S.log.length){
-    h += '<details id="histDetails"><summary>直近の解答履歴（'+Math.min(20,S.log.length)+'）</summary><div class="list">';
+    h += '<details id="histDetails"><summary>最近解いた問題（'+Math.min(20,S.log.length)+'）</summary><div class="list">';
     S.log.slice(0,20).forEach(function(r){
       var q = QUESTIONS.filter(function(x){ return x.id===r.id; })[0];
       if(!q) return;
@@ -4085,30 +4114,29 @@ function renderStats(){
       var tstr = (t.getMonth()+1)+'/'+t.getDate()+' '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2);
       h += '<div class="li" data-open="'+q.id+'">'
          + '<span class="glyph" style="flex:0 0 auto;color:'+(r.ok?'var(--good)':'var(--bad)')+'">'+(r.ok?'○':'✕')+'</span>'
-         + '<span style="flex:1">'+esc(q.stem.slice(0,30))+(q.stem.length>30?'…':'')+'</span>'
-         + '<span class="n">'+letterOf(q.category)+'</span>'
-         + '<span class="n" style="color:var(--soft)">'+tstr+'</span>'
+         + '<span class="hlmain"><span class="hlt">'+esc(q.stem.slice(0,60))+'</span>'
+         + '<span class="hlm">'+esc(catLabel(q.category))+'　'+tstr+'</span></span>'
          + '</div>';
     });
     h += '</div></details>';
   }
 
   var touched = CATS.filter(function(c){ return acc[c].seen>0; }).length;
-  h += '<details id="heatDetails"'+(heatOpen?' open':'')+'><summary>分野別の到達度（'+touched+' / '+CATS.length+'分野）</summary>';
+  h += '<details id="heatDetails"'+(heatOpen?' open':'')+'><summary>分野別の正答率（'+touched+' / '+CATS.length+'分野）</summary>';
   h += '<div class="heat" style="margin-top:10px">';
   CATS.forEach(function(c){
     var d = acc[c], rate = d.seen ? Math.round(100*d.ok/d.seen) : null;
     var col = heatColor(rate) || 'var(--line)';
     h += '<div data-cat="'+esc(c)+'" style="background:var(--card);border:1.5px solid '+col+';color:var(--ink)">'+esc(c)+'<span style="color:var(--soft)">'+(rate===null?'—':rate+'%')+'</span></div>';
   });
-  h += '</div><div class="sub" style="margin-top:8px">タップするとその分野を出題します</div></details>';
+  h += '</div><div class="sub" style="margin-top:8px">分野をタップすると、その分野から出題します</div></details>';
 
   var nMy = taggedIds('q').length + taggedIds('qa').length;
   h += '<div class="list" style="margin:16px 0 9px"><div class="li" data-act="mylist"><span style="flex:1;font-weight:700">マイリスト</span><span class="n">'+nMy+'件</span><span class="mono" style="opacity:.6">›</span></div></div>';
 
   if(S.feedback && S.feedback.length){
     h += '<details id="fbDetails"><summary>問題のメモ（'+S.feedback.length+'）</summary>';
-    h += '<div class="sub" style="margin:8px 0 8px">メモと写真はこの端末に保存されています。行をタップするとその問題を解き直せます。✎で編集、「全部コピー」で文章をまとめて書き出せます。</div>';
+    h += '<div class="sub" style="margin:8px 0 8px">行をタップすると、その問題を解き直せます。✎ で編集できます。写真はこの端末にだけ保存されます。</div>';
     h += '<div class="list" style="margin-bottom:10px">';
     S.feedback.slice().reverse().forEach(function(f, ridx){
       var idx = S.feedback.length - 1 - ridx;
@@ -4126,7 +4154,7 @@ function renderStats(){
          + '<button class="fbedit" data-editfb="'+idx+'" title="編集">✎</button>'
          + '<button class="fbdel" data-delfb="'+idx+'" title="削除">✕</button></div>';
     });
-    h += '</div><button class="ghost" data-act="copyfb">全部コピー</button></details>';
+    h += '</div><button class="ghost" data-act="copyfb">メモの文章をすべてコピー</button></details>';
     setTimeout(loadFbThumbs, 0);   /* 描画後に写真を読み込む */
   }
 
@@ -4180,17 +4208,17 @@ function renderSettings(){
   if(window.BoardSync && window.BoardSync.configured){
     var cst = window.BoardSync.summary ? window.BoardSync.summary() : {main:'クラウド同期', sub:''};
     h += '<h2>クラウド同期</h2><div class="card" style="margin-bottom:16px">'
-       + '<div class="sub" style="margin-bottom:10px">Googleログインで、XP・成績・復習予定を他の端末へ引き継げます。</div>'
+       + '<div class="sub" style="margin-bottom:10px">Googleアカウントでログインすると、XP・成績・復習予定を別の端末でも使えます。</div>'
        + '<button class="ghost" data-cloudsync="1" style="width:100%;text-align:left;padding:12px 14px">'
        + '<b>☁ '+esc(cst.main)+'</b><div id="csStat" class="sub" style="margin-top:3px">'+esc(cst.sub)+'</div></button></div>';
   }
 
   h += '<h2>お問い合わせ</h2><div class="card" style="margin-bottom:16px">'
-     + '<div class="sub" style="margin-bottom:10px">問題・解説の誤り、不具合、要望などをお送りいただけます。問題ごとの報告は、解説画面の「誤りを報告する」からどうぞ。</div>'
+     + '<div class="sub" style="margin-bottom:10px">問題・解説の誤り、不具合、要望などを送れます。特定の問題についての報告は、その問題の解説の下にある「誤りを報告する」が便利です。</div>'
      + '<button class="ghost" data-contact="1" style="width:100%;text-align:left;padding:12px 14px"><b>✉ お問い合わせフォームを開く</b></button></div>';
 
   h += '<h2>テーマ</h2><div class="card" style="margin-bottom:16px">'
-     + '<div class="sub" style="margin-bottom:10px">画面の色合いを選べます。</div>'
+     + '<div class="sub" style="margin-bottom:10px">画面の明るさを選べます。「自動」は端末の設定に合わせます。</div>'
      + '<div style="display:flex;gap:6px">'
      + [['auto','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18Z" fill="currentColor" stroke="none"/></svg>','自動'],
         ['light','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>','ライト'],
@@ -4209,7 +4237,7 @@ function renderSettings(){
      + (nBuy? '<span class="sbadge">'+nBuy+'</span>' : '')
      + '<span class="schev">▾</span></summary>'
      + '<div class="shopbody">'
-     + '<div class="walletbar"><div class="wlab">使えるポイント</div><div class="wval">'+S.xp+' XP</div></div>'
+     + '<div class="walletbar"><div class="wlab">使えるXP</div><div class="wval">'+S.xp+' XP</div></div>'
      + '<div class="palgrid">'
      + PALETTES.map(function(pl){
          var own = owns(pl.id), cur = (S.palette||'default')===pl.id;
@@ -4218,11 +4246,11 @@ function renderSettings(){
          return '<button class="'+cls+'" data-pal="'+pl.id+'">'
               + '<span class="swatch" style="background:'+pl.sw+'"></span>'
               + '<span class="pname">'+pl.name+'</span>'
-              + '<span class="pcost">'+(own?(cur?'使用中':'適用'):(canBuy?pl.cost+' XP':'🔒 '+pl.cost))+'</span>'
+              + '<span class="pcost">'+(own?(cur?'使用中':'使う'):(canBuy?pl.cost+' XP':'🔒 '+pl.cost))+'</span>'
               + '</button>';
        }).join('')
      + '</div>'
-     + '<div class="sub" style="margin:8px 2px 0">解放に使ったポイントは戻りませんが、解放後は何度でも切り替えられます。</div>'
+     + '<div class="sub" style="margin:8px 2px 0">一度解放した配色は、何度でも切り替えられます（解放に使ったXPは戻りません）。</div>'
      + '</div></details>';
 
   var cs = skinById(curSkin());
@@ -4234,7 +4262,7 @@ function renderSettings(){
      + (nSkBuy? '<span class="sbadge">'+nSkBuy+'</span>' : '')
      + '<span class="schev">▾</span></summary>'
      + '<div class="shopbody">'
-     + '<div class="walletbar"><div class="wlab">使えるポイント</div><div class="wval">'+S.xp+' XP</div></div>'
+     + '<div class="walletbar"><div class="wlab">使えるXP</div><div class="wval">'+S.xp+' XP</div></div>'
      + '<div class="skgrid">'
      + SKINS.map(function(sk){
          var own = ownsSkin(sk.id), cur = curSkin()===sk.id;
@@ -4243,11 +4271,11 @@ function renderSettings(){
          return '<button class="'+cls+'" data-skin="'+sk.id+'">'
               + '<span class="skprev sk-'+sk.id+'">'+sk.icon+'</span>'
               + '<span><span class="pname">'+sk.name+'</span><span class="sknote">'+sk.note+'</span></span>'
-              + '<span class="pcost">'+(own?(cur?'使用中':'適用'):(canBuy?sk.cost+' XP':'🔒 '+sk.cost))+'</span>'
+              + '<span class="pcost">'+(own?(cur?'使用中':'使う'):(canBuy?sk.cost+' XP':'🔒 '+sk.cost))+'</span>'
               + '</button>';
        }).join('')
      + '</div>'
-     + '<div class="sub" style="margin:8px 2px 0">3連以上の連続正解で出る演出の色が変わります。</div>'
+     + '<div class="sub" style="margin:8px 2px 0">3問以上続けて正解したときに出る演出の色が変わります。</div>'
      + '</div></details>';
 
   var volLabel = S.sound ? ({0.4:'小',0.7:'中',1:'大'}[S.soundVol] || '中') : 'オフ';
@@ -4258,7 +4286,7 @@ function renderSettings(){
      + '<span class="schev">▾</span></summary>'
      + '<div class="shopbody">'
      + '<button class="shadowtog'+(S.sound?' on':'')+'" data-sound="1" style="margin-top:12px">'
-     +   '<span class="stg"><b>効果音を鳴らす</b><span>正解・不正解・コンボ到達などで短い音が鳴ります。マナーが必要な場所ではオフのままご利用ください。</span></span>'
+     +   '<span class="stg"><b>効果音を鳴らす</b><span>正解・不正解・コンボなどのときに短い音が鳴ります。音を出せない場所ではオフにしてください。</span></span>'
      +   '<span class="sw"><i></i></span>'
      + '</button>'
      + (S.sound ? ('<div class="spacingRow" style="margin-top:12px"><span>音量</span><span></span></div>'
@@ -4277,7 +4305,7 @@ function renderSettings(){
             return '<button class="'+cls+'" data-pack="'+pk.id+'">'
                  + '<span class="pkicon">'+pk.icon+'</span>'
                  + '<span><span class="pname">'+pk.name+'</span><span class="sknote">'+pk.note+'</span></span>'
-                 + '<span class="pcost">'+(own?(cur?'使用中':'適用'):(canBuy?pk.cost+' XP':'🔒 '+pk.cost))+'</span>'
+                 + '<span class="pcost">'+(own?(cur?'使用中':'使う'):(canBuy?pk.cost+' XP':'🔒 '+pk.cost))+'</span>'
                  + '</button>';
           }).join('')
         + '</div>'
@@ -4291,13 +4319,13 @@ function renderSettings(){
      + '</div></details>';
 
   h += '<h2>1日の目標</h2><div class="card" style="margin-bottom:16px">'
-     + '<div class="sub" style="margin-bottom:10px">ホーム画面の達成状況の判定に使う、1日あたりの目標問題数です。</div>'
+     + '<div class="sub" style="margin-bottom:10px">1日に解く問題数の目標です。ホームのリングに反映されます。</div>'
      + '<div class="chiprow" style="flex-wrap:wrap">'
      + [5,10,15,20,30,40,50,75,100,150,200].map(function(n){ return '<button class="chip'+(S.dailyGoal===n?' on':'')+'" data-goal="'+n+'">'+n+'問</button>'; }).join('')
      + '</div></div>';
 
   h += '<h2>復習間隔の設定</h2><div class="card" style="margin-bottom:16px">'
-     + '<div class="sub" style="margin-bottom:10px">解答後の「どれくらい自信があった？」で選ぶボタンごとに、次にその問題が出てくるまでの間隔です。試験が近いときは短く、普段は長めがおすすめです。</div>'
+     + '<div class="sub" style="margin-bottom:10px">解答するときに選ぶ自信度ごとに、次にその問題が出るまでの間隔を決めます。試験が近いときは短め、普段は長めがおすすめです。</div>'
      + '<div class="spacingRow"><span>自信なし</span><span><input type="number" id="spLow" min="1" max="1440" value="'+S.spacing.lowMin+'">分後</span></div>'
      + '<div class="spacingRow"><span>まあまあ（初回）</span><span><input type="number" id="spMid" min="0.1" max="60" step="0.1" value="'+S.spacing.mid+'">日後</span></div>'
      + '<div class="spacingRow"><span>自信あり（初回）</span><span><input type="number" id="spHigh" min="0.1" max="180" step="0.1" value="'+S.spacing.high+'">日後</span></div>'
@@ -4315,7 +4343,7 @@ function renderSettings(){
      + '</div>'
      + '<div class="spacingRow"><span>フォント</span><span></span></div>'
      + '<div style="display:flex;gap:6px">'
-     + [['default','あア','Noto Sans JP\n（読みやすい標準書体）'],['rounded','あア','丸ゴシック\n（まるい書体）'],['mincho','あア','明朝\n（線に強弱）']].map(function(f){
+     + [['default','あア','標準\nゴシック体'],['rounded','あア','丸ゴシック\nやわらかい'],['mincho','あア','明朝\n読み物向き']].map(function(f){
          var on = (S.fontfamily||'default')===f[0];
          var fam = FONT_FAMILIES[f[0]];
          return '<button class="ghost'+(on?' on':'')+'" data-fontfamily="'+f[0]+'" style="flex:1;font-family:'+fam+(on?';background:var(--accentSoft);border-color:var(--accent);color:var(--accent)':'')+'">'
@@ -4326,7 +4354,7 @@ function renderSettings(){
      + '</div></div>';
 
   h += '<h2>使い方</h2><div class="card" style="padding:12px 14px;margin-bottom:16px">'
-     + '<div class="sub" style="margin-bottom:10px">このアプリの使い方をひと通り確認できます。</div>'
+     + '<div class="sub" style="margin-bottom:10px">アプリの使い方を、実際の画面で順に案内します。</div>'
      + '<button class="ghost" data-act="tut">使い方を見る</button></div>';
 
   h += '<details class="shop discbox"'+(discOpen?' open':'')+' id="discBox">'
@@ -4334,12 +4362,12 @@ function renderSettings(){
      + '<div class="shopbody"><div class="disc">'
      + '<p><b>学習目的の教材です。</b>本アプリは'+SUBJ.exam+'の受験準備を目的とした自己学習用の演習ツールであり、医療機器ではありません。実際の診断・治療・投薬の判断に用いないでください。</p>'
      + '<p><b>個々の患者への適用はできません。</b>収載する問題・解説は試験対策として一般化された内容です。実臨床では、最新のガイドライン、添付文書、および患者ごとの状態にもとづき、資格を有する医療者がご自身の責任で判断してください。</p>'
-     + '<p><b>内容の正確性について。</b>作成にあたっては正確を期していますが、内容の完全性・最新性を保証するものではありません。ガイドラインや診療報酬・法制度は改訂されることがあります。誤りにお気づきの際は、各問題の「この問題にメモを残す」からご記録ください。</p>'
-     + '<p><b>データの取り扱い。</b>学習履歴・成績・記録した内容はすべてお使いの端末内にのみ保存され、外部への送信は行いません。アプリの削除や「学習データを消去」の実行により失われます。</p>'
+     + '<p><b>内容の正確性について。</b>作成にあたっては正確を期していますが、内容の完全性・最新性を保証するものではありません。ガイドラインや診療報酬・法制度は改訂されることがあります。誤りに気づいたときは、解説の下にある「誤りを報告する」からお知らせください。</p>'
+     + '<p><b>データの取り扱い。</b>学習履歴・成績・メモは、お使いの端末に保存されます。クラウド同期を使う場合は、学習データがログインしたGoogleアカウントにひもづけてクラウド（Google Firebase）にも保存され、各問題に初めて答えたときの正誤が、問題ごとの正答率の集計に匿名で使われます（メモの写真は同期されません）。お問い合わせフォームに入力した内容は作成者に送信されます。アプリの削除や「学習データを消去」を行うと、端末内のデータは失われます。</p>'
      + '<p><b>免責。</b>本アプリの利用または利用できなかったことにより生じたいかなる損害についても、作成者は責任を負いません。ご利用をもって本内容に同意いただいたものとみなします。</p>'
      + '</div></div></details>';
 
-  h += '<div style="margin-top:16px"><button class="ghost" data-act="reset">学習データを消去</button></div><div style="height:20px"></div>';
+  h += '<div style="margin-top:16px"><button class="ghost danger" data-act="reset">この科目の学習データを消去</button></div><div style="height:20px"></div>';
   main.innerHTML = h;
 
   var sq = document.getElementById('sq');
@@ -4387,8 +4415,8 @@ function renderSettings(){
     if(pk){
       var pid = pk.dataset.pack, pkg = packById(pid);
       if(ownsPack(pid)){ S.pack = pid; save(); soundOpen = true; renderSettings(); playSnd('correct'); return; }
-      if(S.xp < pkg.cost){ alert('ポイントが足りません。\n\n必要 '+pkg.cost+' XP ／ 所持 '+S.xp+' XP\nあと '+(pkg.cost-S.xp)+' XP です。'); return; }
-      if(!confirm('音色「'+pkg.name+'」を '+pkg.cost+' XP で解放しますか？\n\n所持 '+S.xp+' XP → '+(S.xp-pkg.cost)+' XP')) return;
+      if(S.xp < pkg.cost){ alert('XPが足りません。\n\n必要 '+pkg.cost+' XP ／ 手持ち '+S.xp+' XP\nあと '+(pkg.cost-S.xp)+' XP 必要です。'); return; }
+      if(!confirm('音色「'+pkg.name+'」を '+pkg.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-pkg.cost)+' XP')) return;
       S.xp -= pkg.cost; S.ownedPacks.push(pid); S.pack = pid;
       save(); soundOpen = true; renderSettings(); playSnd('buy');
       return;
@@ -4397,8 +4425,8 @@ function renderSettings(){
     if(sb){
       var sid = sb.dataset.skin, sk = skinById(sid);
       if(ownsSkin(sid)){ S.skin = sid; save(); skinOpen = true; renderSettings(); return; }
-      if(S.xp < sk.cost){ alert('ポイントが足りません。\n\n必要 '+sk.cost+' XP ／ 所持 '+S.xp+' XP\nあと '+(sk.cost-S.xp)+' XP です。'); return; }
-      if(!confirm('コンボ演出「'+sk.name+'」を '+sk.cost+' XP で解放しますか？\n\n所持 '+S.xp+' XP → '+(S.xp-sk.cost)+' XP')) return;
+      if(S.xp < sk.cost){ alert('XPが足りません。\n\n必要 '+sk.cost+' XP ／ 手持ち '+S.xp+' XP\nあと '+(sk.cost-S.xp)+' XP 必要です。'); return; }
+      if(!confirm('コンボ演出「'+sk.name+'」を '+sk.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-sk.cost)+' XP')) return;
       S.xp -= sk.cost; S.ownedSkins.push(sid); S.skin = sid; playSnd('buy');
       save(); skinOpen = true; renderSettings();
       return;
@@ -4424,8 +4452,8 @@ function renderSettings(){
     if(pb){
       var pid = pb.dataset.pal, pl = paletteById(pid);
       if(owns(pid)){ S.palette = pid; save(); applyTheme(); shopOpen = true; renderSettings(); return; }
-      if(S.xp < pl.cost){ alert('ポイントが足りません。\n\n必要 '+pl.cost+' XP ／ 所持 '+S.xp+' XP\nあと '+(pl.cost-S.xp)+' XP です。'); return; }
-      if(!confirm('「'+pl.name+'」を '+pl.cost+' XP で解放しますか？\n\n所持 '+S.xp+' XP → '+(S.xp-pl.cost)+' XP\n（レベルは下がりません）')) return;
+      if(S.xp < pl.cost){ alert('XPが足りません。\n\n必要 '+pl.cost+' XP ／ 手持ち '+S.xp+' XP\nあと '+(pl.cost-S.xp)+' XP 必要です。'); return; }
+      if(!confirm('「'+pl.name+'」を '+pl.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-pl.cost)+' XP\n（累計XPは減りません）')) return;
       S.xp -= pl.cost; S.owned.push(pid); S.palette = pid; playSnd('buy');
       save(); applyTheme(); shopOpen = true; renderSettings();
       return;
@@ -4448,7 +4476,7 @@ function renderSettings(){
     var ff = e.target.closest('[data-fontfamily]');
     if(ff){ S.fontfamily = ff.dataset.fontfamily; applyFont(); save(); renderSettings(); return; }
     var a = e.target.closest('[data-act]'); if(!a) return;
-    if(a.dataset.act==='reset'){ if(confirm('学習データ（成績・復習予定）をすべて消去します。よろしいですか？')){ S.prog={}; S.hist={}; S.log=[]; S.xp=0; S.session=null; save(); renderSettings(); } }
+    if(a.dataset.act==='reset'){ if(confirm('この科目の学習データ（成績・復習予定・解答履歴）を消去します。全科目共通の「使えるXP」も0になります。\n\n元に戻せません。よろしいですか？')){ S.prog={}; S.hist={}; S.log=[]; S.xp=0; S.session=null; save(); renderSettings(); } }
   };
 }
 
@@ -4565,7 +4593,7 @@ function renderHub(){
     var p = progressOf(s.id);
     h += '<button class="subjcard'+(s.isNew?' new':'')+'" type="button" data-subj="'+s.id+'">'
        + '<div class="sk">'+esc(s.kicker)+'</div><div class="sn">'+esc(s.name)+'</div><div class="sd">'+esc(s.desc)+'</div>'
-       + '<div class="sp">' + (p ? '<span>解答済 <b>'+p.seen+'</b> 問</span><span>段位 <b>'+esc(RANKNAME[p.rank]||p.rank)+'</b></span>' : '<span>まだ学習データはありません</span>') + '</div>'
+       + '<div class="sp">' + (p ? '<span>解答済 <b>'+p.seen+'</b> 問</span><span>段位 <b>'+esc(RANKNAME[p.rank]||p.rank)+'</b></span>' : '<span>まだ解いていません</span>') + '</div>'
        + '<div class="sarrow">›</div></button>';
   });
   document.getElementById('hubCards').innerHTML = h;
@@ -4585,9 +4613,9 @@ function loadSubject(id, start){
     var data = window.BOARD_DATA; window.BOARD_DATA = null;
     document.getElementById('loading').classList.add('hide');
     document.getElementById('app').classList.remove('hide');
-    try{ startEngine(s, data); }catch(e){ alert('起動に失敗しました: '+e.message); renderHub(); }
+    try{ startEngine(s, data); }catch(e){ alert('起動できませんでした：'+e.message); renderHub(); }
   };
-  sc.onerror = function(){ alert('問題データの読み込みに失敗しました（'+s.name+'）。通信状況を確認して再度お試しください。'); try{ localStorage.removeItem(SKEY); }catch(e){} renderHub(); };
+  sc.onerror = function(){ alert('問題データを読み込めませんでした（'+s.name+'）。通信状況を確認して、もう一度お試しください。'); try{ localStorage.removeItem(SKEY); }catch(e){} renderHub(); };
   document.body.appendChild(sc);
 }
 document.querySelector('.hubtools').addEventListener('click', function(e){

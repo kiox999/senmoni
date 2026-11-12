@@ -150,7 +150,7 @@ html[data-theme="dark"] .primary .badge{background:rgba(0,0,0,.22)}
 .pointcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px}
 .pointcard .tag{font:700 11px var(--mono);color:var(--accent);margin-bottom:6px}
 .pointcard p{font:500 14.5px/1.85 var(--sans);margin:0}
-.pointcard .pmore{margin-top:8px}.pointcard .pmore summary{font:600 12.5px var(--sans);color:var(--accent);cursor:pointer;list-style:none}.pointcard .pmore summary::-webkit-details-marker{display:none}.pointcard .pmore p{font:400 13.5px/1.8 var(--sans);color:var(--soft);margin-top:6px}
+.expcard .tag{color:var(--soft)}.expcard p{font:400 13.5px/1.85 var(--sans)}.pointcard .pmore{margin-top:8px}.pointcard .pmore summary{font:600 12.5px var(--sans);color:var(--accent);cursor:pointer;list-style:none}.pointcard .pmore summary::-webkit-details-marker{display:none}.pointcard .pmore p{font:400 13.5px/1.8 var(--sans);color:var(--soft);margin-top:6px}
 details.deep{margin-top:10px;border:1px solid var(--line);border-radius:11px;padding:12px 14px}
 details.deep summary{font:600 12.5px var(--sans);color:var(--accent);cursor:pointer;list-style:none}
 details.deep summary::-webkit-details-marker{display:none}
@@ -1499,7 +1499,7 @@ function stripMark(s){ return String(s).replace(/\{\{([^{}]{1,40})\}\}/g, '$1');
 function renderContentWithTable(content){
   return renderBlocks(content, function(t){ return mark(esc(t)); });
 }
-/* 暗記ポイントは要点（最初の1文）だけ見せ、残りは折りたたむ */
+/* 暗記ポイントは要点（最初の1文）だけにし、残りは解説の枠に回す */
 function splitPoint(t){
   t=String(t||'');
   if(t.length<=110) return [t,''];
@@ -1510,9 +1510,10 @@ function splitPoint(t){
 }
 function pointCard(t, more){
   var sp=more ? [t, more] : splitPoint(t);
-  var h='<div class="pointcard"><div class="tag">ここだけ暗記ポイント</div><p>'+esc(sp[0])+'</p>';
-  if(sp[1]) h+='<details class="pmore"><summary>'+(more?'詳しい解説 ＋':'解説の続き ＋')+'</summary><p>'+esc(sp[1])+'</p></details>';
-  return h+'</div>';
+  var h='<div class="pointcard"><div class="tag">ここだけ暗記ポイント</div><p>'+esc(sp[0])+'</p></div>';
+  /* 解説は暗記ポイントの中に畳まず、別の枠でそのまま見せる */
+  if(sp[1]) h+='<div class="pointcard expcard"><div class="tag">解説</div><p>'+esc(sp[1])+'</p></div>';
+  return h;
 }
 function formatDeepdive(text){
   if(!text) return '';
@@ -4609,15 +4610,15 @@ if("serviceWorker" in navigator && (location.protocol === "https:" || location.h
 var SUBJECTS = [
   {id:'naika',  short:'内科',   name:'内科専門医試験',   kicker:'INTERNAL MED BOARD PREP', title:'内科 演習',
    exam:'内科専門医試験', multi:'2つ選べ', phStudy:'心不全、ネフローゼ', phSearch:'心不全', sound:'a',
-   desc:'消化管・循環器・神経・感染症など13分野。画像問題あり。',
+   desc:'消化管・循環器・神経・感染症など13分野。', total:4195,
    catLetter:{"消化管":"A","肝・胆・膵":"B","循環器":"C","代謝・内分泌":"D","腎・泌尿器":"E","免疫・膠原病":"F","血液":"G","感染症":"H","呼吸器":"I","神経":"J","中毒":"K","救急":"L","総論":"M"}},
   {id:'shouni', short:'小児科', name:'小児科専門医試験', kicker:'PED BOARD PREP', title:'小児科 演習',
    exam:'小児科専門医試験', multi:'2つ選べ・3つ選べ', phStudy:'川崎病、紫斑', phSearch:'川崎病', sound:'b',
-   desc:'周産期・内分泌・感染症・遺伝など18分野。画像問題あり。',
+   desc:'周産期・内分泌・感染症・遺伝など18分野。', total:4235,
    catLetter:{"消化管":"A","肝・胆・膵":"B","循環器":"C","内分泌・代謝":"D","腎・体液":"E","アレルギー・免疫":"F","血液・腫瘍":"G","感染症・予防接種":"H","呼吸器":"I","神経":"J","中毒・救急":"K","総論":"L","遺伝・発達":"M","周産期・新生児":"N","皮膚科":"O","精神科":"P","泌尿器":"Q","公衆衛生":"R"}},
   {id:'kyukyu', short:'救急科', name:'救急科専門医試験', kicker:'EMERGENCY MED BOARD PREP', title:'救急科 演習',
    exam:'救急科専門医試験', multi:'2つ選べ', phStudy:'敗血症、熱中症', phSearch:'心停止', sound:'c', isNew:true,
-   desc:'蘇生・外傷・中毒・環境障害・災害医療・法規など14分野。画像問題あり。',
+   desc:'蘇生・外傷・中毒・環境障害・災害医療・法規など14分野。', total:3027,
    catLetter:{"心肺蘇生・気道管理": "A", "ショック・循環管理": "B", "呼吸不全・人工呼吸管理": "C", "外傷": "D", "熱傷・電撃傷・化学損傷": "E", "中毒": "F", "環境障害": "G", "神経救急": "H", "感染症・敗血症": "I", "消化器・腎・代謝救急": "J", "小児・産科・高齢者救急": "K", "精神科救急・特殊病態": "L", "災害医療・救急医療体制・法規": "M", "救急検査・画像・手技": "N"}}
 ];
 var SKEY = 'board-subject';
@@ -4628,6 +4629,8 @@ function progressOf(id){
        var seen = 0; for(var k in (S.prog||{})) if(S.prog[k] && S.prog[k].seen) seen++;
        return {seen:seen, rank:S.rank||0}; }catch(e){ return null; }
 }
+/* 問題数は、その科目を一度開いたときの実数を覚えておき、なければ組み込みの値を使う */
+function countOf(s){ var n = 0; try{ n = parseInt(localStorage.getItem('board-count-'+s.id), 10) || 0; }catch(e){} return n || s.total; }
 var RANKNAME = ['なし','5級','4級','3級','2級','1級','初段','二段','三段','四段','五段','六段','七段','八段','九段','十段'];
 function renderHub(){
   /* XPは全科目で共通の財布なので、科目カードではなく一覧の上部に1回だけ表示する */
@@ -4643,7 +4646,7 @@ function renderHub(){
   SUBJECTS.forEach(function(s){
     var p = progressOf(s.id);
     h += '<button class="subjcard'+(s.isNew?' new':'')+'" type="button" data-subj="'+s.id+'">'
-       + '<div class="sk">'+esc(s.kicker)+'</div><div class="sn">'+esc(s.name)+'</div><div class="sd">'+esc(s.desc)+'</div>'
+       + '<div class="sk">'+esc(s.kicker)+'</div><div class="sn">'+esc(s.name)+'</div><div class="sd">'+esc(s.desc)+'全'+countOf(s).toLocaleString('ja-JP')+'問。</div>'
        + '<div class="sp">' + (p ? '<span>解答済 <b>'+p.seen+'</b> 問</span><span>段位 <b>'+esc(RANKNAME[p.rank]||p.rank)+'</b></span>' : '<span>まだ解いていません</span>') + '</div>'
        + '<div class="sarrow">›</div></button>';
   });
@@ -4664,6 +4667,7 @@ function loadSubject(id, start){
     var data = window.BOARD_DATA; window.BOARD_DATA = null;
     document.getElementById('loading').classList.add('hide');
     document.getElementById('app').classList.remove('hide');
+    try{ localStorage.setItem('board-count-'+s.id, String(data.raw.questions.length)); }catch(e){}
     try{ startEngine(s, data); }catch(e){ alert('起動できませんでした：'+e.message); renderHub(); }
   };
   sc.onerror = function(){ alert('問題データを読み込めませんでした（'+s.name+'）。通信状況を確認して、もう一度お試しください。'); try{ localStorage.removeItem(SKEY); }catch(e){} renderHub(); };

@@ -61,6 +61,10 @@ def check_question(q, emap):
         err.append('関連知識がない')
     elif q.get('dd') and name not in emap:
         err.append('関連知識の項目「%s」が事典にない' % name)
+    ci0 = [LETTERS.index(c) for c in cor]
+    solo = [bool(re.search(r'単剤|単独', c)) for c in ch]
+    if sum(solo[j] for j in range(len(ch)) if j not in ci0) >= 3 and not any(solo[i] for i in ci0):
+        err.append('誤答だけに「単剤」「単独」が並び、正解が浮いている')
     # ここから注意
     if any(re.search(r'のみ|(?<!できる)だけ(?!で)', c) for c in ch):
         err.append('選択肢に「のみ」「だけ」がある')

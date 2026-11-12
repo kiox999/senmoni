@@ -1,5 +1,5 @@
 /* オフライン用キャッシュ。ビルドごとに CACHE 名が変わり、古いキャッシュは削除される */
-var CACHE = 'board-521dc9db3099';
+var CACHE = 'board-9fe5e27ad2b6';
 var FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
              'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
              'data/naika.js', 'data/shouni.js', 'data/kyukyu.js', 'firebase-config.js', 'sync.bundle.js'];

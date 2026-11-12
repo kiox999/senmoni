@@ -125,6 +125,8 @@ html[data-theme="dark"] .primary .badge{background:rgba(0,0,0,.22)}
 .chip{white-space:nowrap;font:600 12.5px var(--sans);color:var(--soft);border:1px solid var(--line);background:var(--card);border-radius:9px;padding:11px 14px;min-height:44px;display:inline-flex;align-items:center;cursor:pointer}
 .chip.on{background:var(--accentSoft);border-color:var(--accent);color:var(--accent);font-weight:700}
 .choice{width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:7px;font-family:var(--sans);cursor:pointer;color:var(--ink)}
+.kinki{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:6px;background:var(--bad);color:#fff;font:700 11px/1.6 var(--sans);vertical-align:2px}
+.kinkiwarn{margin:-4px 0 12px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--bad);color:var(--bad);font:700 13px/1.6 var(--sans)}
 .cnote{display:block;font:500 12.5px/1.65 var(--sans);color:var(--soft);margin:7px 0 2px 32px}
 .choice.ok .cnote{color:var(--good)}
 .choice.ng .cnote{color:var(--bad)}
@@ -2267,6 +2269,7 @@ function renderExamReview(){
     var mine = x.ans || [];
     h += '<div class="banner '+(x.ok?'ok':'ng')+'"><div class="glyph">'+(x.ok?'○':'✕')+'</div><div style="flex:1"><b>'+(x.ok?'正解':(mine.length?'不正解':(x.ans?'未解答':'不正解')))+'</b>'
        + '<div class="m">あなたの解答: '+(mine.length?toDisp(mine):(x.ans?'—':'記録なし'))+' ／ 正解: '+toDisp(q.correct)+' ／ '+esc(catLabel(q.category))+' ／ #'+q.id+'</div></div></div>';
+    h += kinkiWarn(q, mine);
     h += '<div style="font:700 16px/1.75 var(--sans);margin-bottom:14px">'+esc(q.stem)+'</div>';
     var img = q.img || q.image;
     if(img && IMAGES[img]) h += '<img class="qimg" src="data:image/png;base64,'+IMAGES[img]+'" alt="別冊画像" data-rv="zoom">';
@@ -2275,7 +2278,7 @@ function renderExamReview(){
       if(q.correct.indexOf(Lt)>=0) cls += ' ok';
       else if(mine.indexOf(Lt)>=0) cls += ' ng';
       else cls += ' dim';
-      h += '<div class="'+cls+'"><span class="head"><span class="mk">'+LS[j]+'</span><span class="tx">'+esc(q.choices[oi])+'</span></span>'
+      h += '<div class="'+cls+'"><span class="head"><span class="mk">'+LS[j]+'</span><span class="tx">'+esc(q.choices[oi])+(isKinki(q,Lt)?'<span class="kinki">禁忌</span>':'')+'</span></span>'
          + (q.notes && q.notes[Lt] ? '<span class="cnote">'+esc(q.notes[Lt])+'</span>' : '') + '</div>';
     });
     h += pointCard(q.explanation, q.exl);
@@ -2634,6 +2637,11 @@ function renderRank(){
 
 /* ---------- 勉強（疾患事典） ---------- */
 var studyQ = '', studyCat = '', studyOpen = null, studyChildOpen = null, studyChipLeft = 0;
+function isKinki(q,L){ return !!(q.kinki && q.kinki.indexOf(L)>=0); }
+function kinkiWarn(q,picked){
+  var hit=(q.kinki||[]).filter(function(L){ return picked.indexOf(L)>=0; });
+  return hit.length ? '<div class="kinkiwarn">⚠ 禁忌肢を選びました。実際の診療では患者に重大な害を及ぼしうる選択です（本番の試験では禁忌肢の選択が合否に響くことがあります）。</div>' : '';
+}
 function encycSecs(body){
   /* [TABLE]〜[/TABLE] の内部は見出しとして分割しない（表内の「検査|…」等を誤検出しないため） */
   var guard = [];
@@ -3837,6 +3845,7 @@ function renderQuiz(){
     h += '<div class="banner '+(ok?'ok':'ng')+(gain.bet==='high'?' hi':'')+'"><div class="glyph">'+(ok?'○':'✕')+'</div><div style="flex:1"><b>'+head+'</b><div class="m">'+(ok?('正解: '+toDisp(q.correct)+' ／ '+esc(catLabel(q.category))+' ／ #'+q.id):('あなたの解答: '+toDisp(s.picked)+' ／ 正解: '+toDisp(q.correct)+' ／ #'+q.id))+'</div></div>'
        + '<div class="xpbadge'+(gain.xp<0?' minus':'')+'">'+(gain.xp>=0?'+':'')+gain.xp+' XP</div></div>';
     if(gain.capped) h += '<div class="sub" style="margin:-6px 0 10px">XPは0より下がりません</div>';
+    h += kinkiWarn(q, s.picked);
     h += '<div class="betrecap"><span class="chipbet '+(BETS[gain.bet]?BETS[gain.bet].cls:'')+'">'+esc(bl)+'</span>'
        + '<span class="calc">'+(gain.base>=0?'+':'')+gain.base+(gain.mult>1?' × '+gain.mult.toFixed(1):'')+(gain.shadow?' <b class="shx">× 1.5</b>':'')+'</span></div>';
     h += comboHtml(gain);
@@ -3878,7 +3887,7 @@ function renderQuiz(){
       else if(s.picked.indexOf(L)>=0) cls += ' ng';
       else cls += ' dim';
     } else if(s.picked.indexOf(L)>=0) cls += ' sel';
-    h += '<button class="'+cls+'" data-l="'+L+'"><span class="head"><span class="mk">'+DL+'</span><span class="tx">'+esc(q.choices[oi])+'</span></span>';
+    h += '<button class="'+cls+'" data-l="'+L+'"><span class="head"><span class="mk">'+DL+'</span><span class="tx">'+esc(q.choices[oi])+(s.revealed&&isKinki(q,L)?'<span class="kinki">禁忌</span>':'')+'</span></span>';
     if(s.revealed && q.notes && q.notes[L]) h += '<span class="cnote">'+esc(q.notes[L])+'</span>';
     h += '</button>';
   });

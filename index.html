@@ -1627,7 +1627,17 @@ function qstatsNow(){
   catch(e){ _qstatCache = {}; }
   return _qstatCache;
 }
+/* ---- 手動で難易度を固定するスイッチ ----
+   ここに問題番号を書いた問題は、正答率の集計より優先してこの難易度で扱う。
+   例: kyukyu: { 123:'hard', 456:'hard' }   （'easy' / 'medium' も指定できる） */
+var DIFF_PIN = {
+  kyukyu: {},
+  shouni: {},
+  naika:  {}
+};
 function effDiff(q){
+  var pin = (DIFF_PIN[SUBJ.id] || {})[q.id];
+  if(pin === 'easy' || pin === 'medium' || pin === 'hard') return pin;
   var st = qstatsNow()[q.id];
   if(st && st[0] >= QSTAT_MIN){
     var rate = st[1] / st[0];

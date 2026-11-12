@@ -1516,6 +1516,11 @@ function pointCard(t, more){
   if(sp[1]) h+='<div class="pointcard expcard"><div class="tag">解説</div><p>'+esc(sp[1])+'</p></div>';
   return h;
 }
+/* 制度やガイドラインに左右される問題で、内容を出典に当たって確かめた年月(chk)があれば解説の下に出す */
+function chkLine(q){
+  var m = /^(\d{4})-(\d{2})$/.exec(q.chk || '');
+  return m ? '<div class="chkline">内容を確認した時期：'+m[1]+'年'+parseInt(m[2],10)+'月</div>' : '';
+}
 function formatDeepdive(text){
   if(!text) return '';
   var title = '';
@@ -4562,7 +4567,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "bd159871180b";
+<script>window.BOARD_BUILD = "9401b7881af6";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -4659,11 +4664,6 @@ function renderHub(){
   document.getElementById('loading').classList.add('hide');
 }
 /* 関連知識は事典本文と同じ文章なので、データには項目名(dd)だけを置き、読み込み時に本文へ展開する */
-/* 制度やガイドラインに左右される問題で、内容を出典に当たって確かめた年月(chk)があれば解説の下に出す */
-function chkLine(q){
-  var m = /^(\d{4})-(\d{2})$/.exec(q.chk || '');
-  return m ? '<div class="chkline">内容を確認した時期：'+m[1]+'年'+parseInt(m[2],10)+'月</div>' : '';
-}
 function expandDeep(data){
   var en = (data && data.raw && data.raw.encyc) || [], map = {};
   en.forEach(function(e){ map[e.n] = e.b || ''; });

@@ -1062,6 +1062,22 @@ footer.tabs button{font-size:11px}
   .pcbox .heat div{min-height:52px;font-size:12px}
   .pcbox .heat div:hover{background:var(--deep)!important}
   .pcbox .list .li{cursor:pointer}
+  /* 事典：左に項目の一覧、右に開いた項目の本文 */
+  #app>main:has(>#studyResults){padding:30px 40px 64px 48px}
+  #app>main:has(>#studyResults)>*{max-width:var(--pcl)}
+  #app>main:has(>#studyResults)>#stq{display:block;width:100%;margin-top:10px}
+  #studyResults .encard.open{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  #studyResults .encard.open>.enbody{position:fixed;top:0;bottom:0;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:0;overflow-y:auto;overflow-x:hidden;overflow-wrap:anywhere;border-top:none;padding:30px 32px 56px 0;background:var(--bg)}
+  #studyResults .encard.open>.enbody>*{max-width:980px}
+  #studyResults .encard.open>.enbody::before{content:attr(data-n);display:block;font:700 22px var(--sans);color:var(--ink);margin:0 0 16px;padding-bottom:12px;border-bottom:1px solid var(--line);max-width:980px}
+  #app>main:has(>#studyResults):not(:has(.encard.open))::after{content:'左の一覧から項目を選ぶと、ここに内容が出ます';position:fixed;top:38px;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:32px;max-width:980px;box-sizing:border-box;padding:18px 20px;border:1px dashed var(--line);border-radius:12px;font:500 13px var(--sans);color:var(--soft)}
+  /* 成績・設定・段位：見出しごとのまとまりを2列に並べる */
+  #app>main:has(>.pccols){padding-left:max(48px, calc((100% - 1320px) / 2));padding-right:max(48px, calc((100% - 1320px) / 2))}
+  .pccols{column-count:2;column-gap:44px}
+  .pccols.pcgrid{column-count:auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 44px;align-items:start}
+  .pcsec{break-inside:avoid;margin:0 0 22px;display:inline-block;width:100%}
+  .pcsec>h2:first-child{margin-top:0}
+  .pcsec>details:first-child,.pcsec>div:first-child,.pcsec>button:first-child{margin-top:0}
   /* 演習：左に問題と選択肢、右に解説（右だけ別にスクロール） */
   #app>main.pcq{padding:30px 40px 64px 48px}
   #app>main.pcq>*{max-width:var(--pcl)}
@@ -2860,7 +2876,7 @@ function studyResultsHtml(){
        +   '<span class="enchev">'+(op?'▴':'▾')+'</span>'
        + '</button>';
     if(op){
-      h += '<div class="enbody">' + encBodyHtml(e);
+      h += '<div class="enbody" data-n="'+esc(e.n)+'">' + encBodyHtml(e);
       kids.forEach(function(k){
         var kop = studyChildOpen === k.n;
         h += '<div class="enchild'+(kop?' open':'')+'">'
@@ -4671,7 +4687,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "0ff5ccdb13dc";
+<script>window.BOARD_BUILD = "1d32e603a666";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5033,6 +5049,25 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
         var setw = hs.parentElement;
         Array.prototype.slice.call(main.children).forEach(function(c){ (c === setw || c.classList.contains('pchome') ? R : L).appendChild(c); });
         main.appendChild(L); main.appendChild(R);
+      }
+      /* 成績・設定・段位：見出し(h2)ごとにまとめて2列に並べる */
+      var h1 = main.querySelector(':scope > h1'), ttl = h1 ? h1.textContent.trim() : '';
+      if(mq.matches && (ttl === '成績' || ttl === '設定' || ttl === '段位認定') && !main.querySelector(':scope > .pccols')){
+        var cols = document.createElement('div'); cols.className = 'pccols' + (ttl === '段位認定' ? ' pcgrid' : '');
+        var sec = null, n2 = h1.nextElementSibling, list = [];
+        while(n2){ list.push(n2); n2 = n2.nextElementSibling; }
+        list.forEach(function(c){
+          var empty = !c.children.length && !c.textContent.trim();
+          if(empty) return;
+          if(c.classList.contains('sub') && !sec){ return; }           /* 見出し直下の説明文はそのまま上に残す */
+          var startNew = c.tagName === 'H2' || !sec || (sec.dataset.kind !== 'h2' ) ;
+          if(ttl === '段位認定') startNew = !sec || c.tagName === 'DETAILS';
+          if(startNew){ sec = document.createElement('section'); sec.className = 'pcsec'; sec.dataset.kind = c.tagName === 'H2' ? 'h2' : 'solo'; cols.appendChild(sec); }
+          else if(sec.dataset.kind === 'h2' && c.tagName === 'DETAILS'){ sec = document.createElement('section'); sec.className = 'pcsec'; sec.dataset.kind = 'solo'; cols.appendChild(sec); }
+          sec.appendChild(c);
+          if(c.tagName === 'DETAILS' && (ttl === '成績' || ttl === '段位認定') && !c.open) c.open = true;
+        });
+        main.appendChild(cols);
       }
       var ch = kids('button.choice');
       var quiz = mq.matches && ch.length > 0;

@@ -1047,6 +1047,7 @@ footer.tabs button{font-size:11px}
   #app>main.pcq .qtop{font-size:14.5px}
   #app>main.pcq>.pinrow{margin-top:16px}
   #app>main.pcq .exgrid{grid-template-columns:repeat(auto-fill,46px)}
+  #app>main.pc2 .exgrid{grid-template-columns:repeat(auto-fill,46px)}
   body.tutTabs #tabs{position:sticky;left:auto;right:auto;bottom:auto}
   #app>main{grid-column:2;grid-row:1 / span 2;border-left:1px solid var(--line);min-height:100vh;padding:34px max(48px, calc((100vw - var(--pcnav) - 860px) / 2)) 56px}
   /* ホーム：左に今日の状況、右に出題設定 */
@@ -1078,6 +1079,20 @@ footer.tabs button{font-size:11px}
   #xenc .encard.open>.enbody{position:fixed;top:0;bottom:0;left:calc(48px + var(--pcen) + 60px + 44px);right:0;overflow-y:auto;overflow-x:hidden;overflow-wrap:anywhere;border-top:none;padding:30px 32px 56px 0;background:var(--bg)}
   #xenc .encard.open>.enbody>*{max-width:1040px}
   #xenc .encard.open>.enbody::before{content:attr(data-n);display:block;font:700 22px var(--sans);color:var(--ink);margin:0 0 6px;max-width:1040px}
+  /* 模擬試験の解答中：右は解答状況。案内の枠は出さない */
+  #app>main.pcq.pcexam::after{content:none}
+  #app>main.pcq.pcexam>.pcside details.exmap{margin-top:0}
+  #app>main.pcq>div.choice{max-width:var(--pcl)}
+  /* 一問一答：左にカード、右に関連する事典の項目 */
+  #app>main.pcqa{padding:30px 40px 64px 48px}
+  #app>main.pcqa>*{max-width:var(--pcl)}
+  #app>main.pcqa .qasent{font-size:18px;line-height:1.9}
+  #app>main.pcqa .qaexp{font-size:15px}
+  #app>main.pcqa .qaencbody{position:fixed;top:0;bottom:0;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:0;overflow-y:auto;overflow-x:hidden;overflow-wrap:anywhere;border:none;border-radius:0;padding:30px 32px 56px 0;background:var(--bg);margin:0;max-height:none}
+  #app>main.pcqa .qaencbody>*{max-width:980px}
+  #app>main.pcqa .qaencbody p{font-size:14.5px}
+  #app>main.pcqa .qaencbody::before{content:attr(data-n);display:block;font:700 22px var(--sans);color:var(--ink);margin:0 0 16px;padding-bottom:12px;border-bottom:1px solid var(--line);max-width:980px}
+  #app>main.pcqa:not(:has(.qaencbody))::after{content:'解答すると、ここに関連する事典の項目が出ます（1・2 または ←・→ で解答、Enter で次の問題）';position:fixed;top:38px;left:calc(var(--pcnav) + 48px + var(--pcl) + 44px);right:32px;max-width:980px;box-sizing:border-box;padding:18px 20px;border:1px dashed var(--line);border-radius:12px;font:500 13px var(--sans);color:var(--soft)}
   /* 結果・マイリスト：左に操作、右に一覧 */
   #app>main.pc2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:44px;align-content:start;align-items:start;padding-left:max(48px, calc((100% - 1320px) / 2));padding-right:max(48px, calc((100% - 1320px) / 2))}
   #app>main.pc2>.pcleft{grid-column:1;min-width:0}
@@ -3489,7 +3504,7 @@ function qaHtml(){
          + '<span class="qaencc">'+esc(letterOf(ent.c))+'</span>'
          + '<span class="qaencv">'+(open?'▴':'▾')+'</span></button>';
       if(open){
-        h += '<div class="qaencbody">';
+        h += '<div class="qaencbody" data-n="'+esc(ent.n)+'">';
         encycSecs(ent.b).forEach(function(sec){
           if(sec.label) h += '<div class="enlabel">'+esc(sec.label)+'</div>';
           h += renderContentWithTable(sec.text);
@@ -4700,7 +4715,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "95f25204361e";
+<script>window.BOARD_BUILD = "31c4403b01b6";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5049,7 +5064,7 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
 (function(){
   var mq = window.matchMedia('(min-width:1180px) and (hover:hover) and (pointer:fine)');
   var main = document.getElementById('main'); if(!main) return;
-  var busy = false;
+  var busy = false, qaSeen = '';
   function kids(sel){ return Array.prototype.filter.call(main.children, function(c){ return c.matches(sel); }); }
   function arrange(){
     if(busy) return; busy = true;
@@ -5103,12 +5118,41 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
         });
         main.appendChild(cols);
       }
-      var ch = kids('button.choice');
+      /* 模擬試験の結果：左に合否と次の操作、右に問題一覧 */
+      var rg = main.querySelector(':scope > .resgrid');
+      if(mq.matches && rg && main.querySelector(':scope > .examres')){
+        var L4 = document.createElement('div'), R4 = document.createElement('div');
+        L4.className = 'pcleft'; R4.className = 'pcright';
+        var hd4 = rg.previousElementSibling;
+        Array.prototype.slice.call(main.children).forEach(function(c){ ((c === rg || (c === hd4 && c.tagName === 'H2')) ? R4 : L4).appendChild(c); });
+        main.appendChild(L4); main.appendChild(R4);
+      }
+      main.classList.toggle('pc2', mq.matches && !!main.querySelector(':scope > .pcleft') && !document.getElementById('homeSetupCard'));
+      /* 一問一答：左にカード、右に関連する事典の項目（解答したら自動で開く） */
+      var qb = main.querySelector(':scope > .qabox');
+      main.classList.toggle('pcqa', mq.matches && !!qb);
+      if(mq.matches && qb && qb.querySelector('.qanext')){
+        var num = (qb.querySelector('.qanum') || {}).textContent || '';
+        if(num !== qaSeen && !qb.querySelector('.qaenc.open')){
+          qaSeen = num;
+          var qe = qb.querySelector('.qaenc');
+          if(qe) setTimeout(function(){ if(qe.isConnected) qe.click(); }, 0);
+        }
+      }
+      /* 演習・模擬試験・試験の見直し（見直しは選択肢が div） */
+      var ch = kids('button.choice, div.choice');
       var quiz = mq.matches && ch.length > 0;
+      var taking = quiz && !!main.querySelector(':scope > .examnav') && !main.querySelector('.pointcard');   /* 模擬試験の解答中 */
       main.classList.toggle('pcq', quiz);
+      main.classList.toggle('pcexam', taking);
       if(quiz && !main.querySelector(':scope > .pcside')){
         var last = ch[ch.length-1], move = [], n = last.nextElementSibling;
-        while(n){ if(!n.matches('.betwrap,.nextwrap,.pcside,.pchint,.exnav,details.exmap,.pinrow') && (n.children.length || n.textContent.trim())) move.push(n); n = n.nextElementSibling; }
+        while(n){
+          var keepLeft = n.matches('.betwrap,.nextwrap,.pcside,.pchint,.examnav,.exfin2,.pinrow') || (n.matches('details.exmap') && !taking) || (taking && n.matches('.sub'));
+          if(!keepLeft && (n.children.length || n.textContent.trim())) move.push(n);
+          n = n.nextElementSibling;
+        }
+        if(taking) move.forEach(function(x){ if(x.tagName === 'DETAILS') x.open = true; });
         if(move.length){
           var side = document.createElement('div'); side.className = 'pcside';
           move.forEach(function(x){ side.appendChild(x); });
@@ -5126,7 +5170,7 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
       if(tabs) tabs.classList.toggle('pcnavshow', (quiz && !!main.querySelector('.qtop [data-act="quit"]') && !main.querySelector('.qtop .exbadge')) || (mq.matches && !!main.querySelector('.reslist')));
       if(quiz && !main.querySelector(':scope > .pchint')){
         var hint = document.createElement('div'); hint.className = 'pchint';
-        hint.textContent = 'キー操作：1〜5で選択肢、Q・W・Eで自信度（低・中・高）、Enterで次の問題';
+        hint.textContent = (taking || main.querySelector(':scope > .examnav')) ? 'キー操作：1〜5で選択肢、Enter・→で次の問題、←で前の問題' : 'キー操作：1〜5で選択肢、Q・W・Eで自信度（低・中・高）、Enterで次の問題';
         main.appendChild(hint);
       }
     } finally { busy = false; }
@@ -5161,15 +5205,20 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
   if(mq.addEventListener) mq.addEventListener('change', arrange);
   arrange();
   document.addEventListener('keydown', function(e){
-    if(!mq.matches || !main.classList.contains('pcq')) return;
+    if(!mq.matches || !(main.classList.contains('pcq') || main.classList.contains('pcqa'))) return;
     if(e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
     var tg = e.target; if(tg && (tg.tagName === 'INPUT' || tg.tagName === 'TEXTAREA' || tg.tagName === 'SELECT' || tg.isContentEditable)) return;
     var dlg = document.getElementById('dlg'); if(dlg && !dlg.classList.contains('hide')) return;
     if(document.getElementById('tagSheet') || document.getElementById('tutOverlay')) return;
     var k = e.key.toLowerCase(), el = null;
-    if(k >= '1' && k <= '5'){ el = kids('button.choice')[parseInt(k,10)-1]; }
+    if(main.classList.contains('pcqa')){
+      if(k === '1' || k === '2' || k === 'arrowleft' || k === 'arrowright'){ el = main.querySelectorAll('.qaopt')[(k === '1' || k === 'arrowleft') ? 0 : 1]; if(el && main.querySelector('.qanext')) el = null; }
+      else if(k === 'enter'){ el = main.querySelector('.qanext'); }
+    }
+    else if(k >= '1' && k <= '5'){ el = kids('button.choice')[parseInt(k,10)-1]; }
     else if(k === 'q' || k === 'w' || k === 'e'){ el = main.querySelectorAll('[data-bet]')[{q:0,w:1,e:2}[k]]; }
-    else if(k === 'enter'){ el = document.getElementById('nextBtn'); }
+    else if(k === 'enter' || k === 'arrowright'){ el = (k === 'enter' && document.getElementById('nextBtn')) || main.querySelector('.examnav [data-exmove="1"], .examnav [data-rvmove="1"]'); }
+    else if(k === 'arrowleft'){ el = main.querySelector('.examnav .exprev'); }
     if(el && !el.disabled){ e.preventDefault(); el.click(); }
   });
 })();

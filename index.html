@@ -1049,6 +1049,14 @@ footer.tabs button{font-size:11px}
   #app>main.pcq .exgrid{grid-template-columns:repeat(auto-fill,46px)}
   #app>main.pc2 .exgrid{grid-template-columns:repeat(auto-fill,46px)}
   body.tutTabs #tabs{position:sticky;left:auto;right:auto;bottom:auto}
+  /* 使い方の案内：下のタブ用に空けていた帯をなくし、演習中は案内の札を左の問題欄の上に出す（右の解説欄を隠さない） */
+  #tutOverlay.tabfree{bottom:0;padding-bottom:22px;align-items:center}
+  body:has(#main.pcq) .tutcard.pinned, body:has(#main.pcq) #tutOverlay.demo .tutcard{left:calc(var(--pcnav) + 48px + var(--pcl) / 2)}
+  .tutcard{max-width:400px}
+  .tutcard.pinned,.tutcard.demo{max-width:400px}
+  /* タグの選択：下からのシートではなく、中央の小窓にする */
+  #tagSheet{align-items:center}
+  #tagSheet .tsbox{max-width:460px;border-radius:18px;padding-bottom:16px}
   #app>main{grid-column:2;grid-row:1 / span 2;border-left:1px solid var(--line);min-height:100vh;padding:34px max(48px, calc((100vw - var(--pcnav) - 860px) / 2)) 56px}
   /* ホーム：左に今日の状況、右に出題設定 */
   #app>main:has(#homeSetupCard){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:44px;align-content:start;align-items:start;padding-left:max(48px, calc((100% - 1320px) / 2));padding-right:max(48px, calc((100% - 1320px) / 2))}
@@ -4002,8 +4010,10 @@ function renderQuiz(){
        + '<div class="xpbadge'+(gain.xp<0?' minus':'')+'">'+(gain.xp>=0?'+':'')+gain.xp+' XP</div></div>';
     if(gain.capped) h += '<div class="sub" style="margin:-6px 0 10px">XPは0より下がりません</div>';
     h += kinkiWarn(q, s.picked);
-    h += '<div class="betrecap"><span class="chipbet '+(BETS[gain.bet]?BETS[gain.bet].cls:'')+'">'+esc(bl)+'</span>'
-       + '<span class="calc">'+(gain.base>=0?'+':'')+gain.base+(gain.mult>1?' × '+gain.mult.toFixed(1):'')+(gain.shadow?' <b class="shx">× 1.5</b>':'')+'</span></div>';
+    if(typeof gain.base === 'number'){   /* 使い方の案内のデモ問題はXPを計算しないので出さない */
+      h += '<div class="betrecap"><span class="chipbet '+(BETS[gain.bet]?BETS[gain.bet].cls:'')+'">'+esc(bl)+'</span>'
+         + '<span class="calc">'+(gain.base>=0?'+':'')+gain.base+(gain.mult>1?' × '+gain.mult.toFixed(1):'')+(gain.shadow?' <b class="shx">× 1.5</b>':'')+'</span></div>';
+    }
     h += comboHtml(gain);
   } else {
     h += '<div style="margin-bottom:11px"><span style="font:600 10.5px var(--mono);color:var(--accent);background:var(--accentSoft);padding:3px 9px;border-radius:6px">'+esc(catLabel(q.category))+'</span>'
@@ -4715,7 +4725,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "31c4403b01b6";
+<script>window.BOARD_BUILD = "8348f614e57b";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

@@ -649,6 +649,22 @@ button.rankrow:active{filter:brightness(.95)}
 .chicknext{margin-top:10px;min-height:44px;font-size:13px}
 .chicklast{margin-top:10px;text-align:center;font:600 12px var(--sans);color:var(--soft)}
 .shbadge.mb{background:#B45309;color:#fff}
+.shbadge.cu{background:#6D28D9;color:#fff}
+/* ---- Curtain mode ---- */
+.curstem .curact{display:inline}
+.curstem .cnew{animation:curIn .45s ease-out;background:linear-gradient(transparent 62%,var(--accentSoft) 62%)}
+@keyframes curIn{from{opacity:0}to{opacity:1}}
+.curstem .curveil{display:block;margin:10px 0;padding:10px 12px;border:1.5px dashed var(--line);border-radius:10px;
+  font:600 12px var(--sans);color:var(--soft);text-align:center;background:repeating-linear-gradient(90deg,var(--deep) 0 14px,transparent 14px 28px)}
+.curstem .curask{display:block;margin-top:8px}
+.curbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.curstage{font:700 12px var(--mono);color:#6D28D9;background:rgba(109,40,217,.10);padding:5px 10px;border-radius:8px}
+.curstage b{margin-left:4px}
+.curnext{flex:1;min-width:200px;font:700 13px var(--sans);padding:10px 12px;border-radius:10px;border:1.5px solid #6D28D9;
+  background:var(--card);color:#6D28D9;cursor:pointer}
+.curnext:active{background:rgba(109,40,217,.10)}
+.curall{font:600 12px var(--sans);color:var(--soft)}
+.bet.curlock{opacity:.35}
 .hardnow.ta{background:var(--good);color:#fff}
 .amtbox{border:1px solid var(--line);border-radius:12px;background:var(--bg)}
 .amtbox>summary{display:flex;align-items:center;gap:8px;padding:11px 13px;cursor:pointer;list-style:none}
@@ -1331,7 +1347,7 @@ var DAY = 86400000;
 var K = 'board-' + SUBJ.id + '-v1';
 var S = load();
 function load(){
-  var d = { theme:'auto', cats:CATS.slice(), count:10, mode:'random', qtype:'all', shadow:false, sound:false, soundVol:0.7, rank:0, examLog:[], xp:0, xpTotal:0, palette:'default', owned:['default'], skin:'default', ownedSkins:['default'], pack:'bell', ownedPacks:['bell'], prog:{}, hist:{}, log:[], marks:{}, tutSeen:0, chicken:0, timeatk:0, taMin:10, bmNames:{1:'セット1',2:'セット2',3:'セット3'}, tagDefs:null, qtags:{}, qatags:{}, spacing:{lowMin:10, mid:2, high:9}, fontsize:'md', fontfamily:'default', feedback:[], dailyGoal:20, session:null };
+  var d = { theme:'auto', cats:CATS.slice(), count:10, mode:'random', qtype:'all', shadow:false, sound:false, soundVol:0.7, rank:0, examLog:[], xp:0, xpTotal:0, palette:'default', owned:['default'], skin:'default', ownedSkins:['default'], pack:'bell', ownedPacks:['bell'], prog:{}, hist:{}, log:[], marks:{}, tutSeen:0, chicken:0, curtain:0, timeatk:0, taMin:10, bmNames:{1:'セット1',2:'セット2',3:'セット3'}, tagDefs:null, qtags:{}, qatags:{}, spacing:{lowMin:10, mid:2, high:9}, fontsize:'md', fontfamily:'default', feedback:[], dailyGoal:20, session:null };
   try{ var r = JSON.parse(localStorage.getItem(K)); if(r) for(var k in r) d[k]=r[k]; }catch(e){}
   /* 見た目・音・チュートリアル既読・XPと買ったもの（色・音色・演出）は全科目で共通。学習データ・段位は科目ごと */
   var SHARED_KEYS = ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack'];
@@ -1714,9 +1730,30 @@ function matchesQtype(q){
   var qt = q.qtype || 'general';
   return qt === S.qtype;
 }
+/* ---- Curtain mode ----
+   臨床問題の問題文を3幕に分けて少しずつ開く。問いの文と選択肢は最初から見せる。
+   倍率は正解にも不正解にも掛ける（早い幕での当てずっぽうが得にならないように）。 */
+var CURT_MULT = [1, 2.0, 1.5, 1.0];
+function curtParts(q){
+  if(q._ct !== undefined) return q._ct;
+  var r = null;
+  if((q.qtype || 'general') === 'clinical' && q.stem){
+    var ss = q.stem.match(/[^。]+。?/g) || [];
+    var k = ss.length - 1;
+    while(k > 0 && /^\s*[0-9０-９一二三]つ選べ/.test(ss[k])) k--;   /* 「2つ選べ。」は問いの文に含める */
+    var ctx = ss.slice(0, k), n = ctx.length;
+    if(n >= 3){
+      var b1 = Math.max(1, Math.round(n/3)), b2 = Math.min(n-1, Math.max(b1+1, Math.round(2*n/3)));
+      r = { acts:[ctx.slice(0,b1).join(''), ctx.slice(b1,b2).join(''), ctx.slice(b2).join('')], ask: ss.slice(k).join('') };
+    }
+  }
+  q._ct = r; return r;
+}
+function curtOn(s, q){ return !!(s && s.curtain && !s.exam && !s.tut && curtParts(q)); }
 function buildQueue(){
-  var pool = QUESTIONS.filter(function(q){ return S.cats.indexOf(q.category)>=0 && matchesQtype(q); });
-  var due = dueList().filter(function(q){ return S.cats.indexOf(q.category)>=0 && matchesQtype(q); });
+  var okQ = function(q){ return S.cats.indexOf(q.category)>=0 && (S.curtain ? !!curtParts(q) : matchesQtype(q)); };
+  var pool = QUESTIONS.filter(okQ);
+  var due = dueList().filter(okQ);
   var fresh = pool.filter(function(q){ return !S.prog[q.id] || !S.prog[q.id].seen; });
   var rest = pool.filter(function(q){ return due.indexOf(q)<0 && fresh.indexOf(q)<0; });
   if(S.mode==='random'){ shuffle(fresh); shuffle(rest); }
@@ -1726,8 +1763,8 @@ function buildQueue(){
   return out.map(function(q){ return q.id; });
 }
 function startSession(ids, reviewing){
-  if(!ids.length){ alert('出題できる問題がありません。分野の選択を確認してください。'); return; }
-  S.session = { ids:ids, i:0, picked:[], revealed:false, res:[], reviewing:!!reviewing, t0:Date.now(), qt:Date.now(), combo:0, bestCombo:0, shadow:!!S.shadow, chicken:!!S.chicken, timeatk:!!S.timeatk,
+  if(!ids.length){ alert(S.curtain ? 'Curtain mode で出題できる臨床問題がありません。分野の選択を確認してください。' : '出題できる問題がありません。分野の選択を確認してください。'); return; }
+  S.session = { ids:ids, i:0, picked:[], revealed:false, res:[], reviewing:!!reviewing, t0:Date.now(), qt:Date.now(), combo:0, bestCombo:0, shadow:!!S.shadow, chicken:!!S.chicken, curtain:!!S.curtain, cur:1, timeatk:!!S.timeatk,
                 taEnd: S.timeatk ? Date.now() + (S.taMin||10)*60*1000 : 0,
                 taMin: S.timeatk ? (S.taMin||10) : 0 };
   save(); go('quiz');
@@ -2185,6 +2222,9 @@ function submitAnswer(bet){
     save(); renderQuiz(); return;
   }
   if(!BETS[bet]) bet = 'mid';
+  var cuOn = curtOn(s, q), cuAct = cuOn ? (s.cur||1) : 0;
+  if(cuOn && cuAct < 3 && bet === 'low') return;   /* 第3幕より前は「自信なし」を選べない */
+  var cuM = cuOn ? CURT_MULT[cuAct] : 1;
   s.hist = s.hist || {};
   s.hist[s.i] = s.picked.slice();   /* 前の問題を見直すときに選択を再現する */
   s.pendPick = null; s.pendOpen = null; s.mapPage = null;
@@ -2212,7 +2252,7 @@ function submitAnswer(bet){
   var mult = ok ? comboMult(s.combo) : 1;
   var shMult = (ok && s.shadow) ? 1.5 : 1;      /* XX mode の正解は1.5倍（失点は据え置き） */
   if(ok && s.chicken) shMult *= 2.0;           /* Chicken mode は選び直せない難しさぶん高め */
-  var gain = Math.round(base * mult * shMult);
+  var gain = Math.round(base * mult * shMult * cuM);   /* Curtain は失点にも倍率を掛ける */
   var xpBefore = S.xp;
   S.xp = Math.max(0, S.xp + gain);
   var capped = (gain < 0 && (S.xp - xpBefore) > gain);  /* 手持ちが足りず減点しきれなかった */
@@ -2224,11 +2264,11 @@ function submitAnswer(bet){
     xp: gain, base: base, mult: mult, bet: bet, ok: ok,
     combo: s.combo, brokeAt: broke,
     tier: ok ? comboTier(s.combo) : null,
-    shadow: shMult > 1, capped: capped
+    shadow: shMult > 1, shm: shMult, cuM: cuM, cuAct: cuAct, capped: capped
   };
   s.lastBet = bet;
   s.revealed = true;
-  s.res.push({ id:q.id, ok:ok, bet:bet, sec: Math.round((Date.now()-s.qt)/1000) });
+  s.res.push({ id:q.id, ok:ok, bet:bet, sec: Math.round((Date.now()-s.qt)/1000), act: cuAct || undefined });
 
   /* --- 復習間隔：ベットと結果の組合せで決める --- */
   var sp = S.spacing, ival;
@@ -2266,7 +2306,7 @@ function pageTop(){
 }
 function nextQuestion(){
   if(S.session && S.session.tut) return;   /* 体験中は案内側で進める */
-  if(S.session){ S.session.open = 0; S.session.autoPick = 0; }   /* Chicken mode の状態を戻す */
+  if(S.session){ S.session.open = 0; S.session.autoPick = 0; S.session.cur = 1; }   /* Chicken・Curtain mode の状態を戻す */
   var sX = S.session;
   if(sX && !sX.exam && sX.hist && sX.hist[sX.i] && sX.i < sX.res.length - 1){
     /* 見直し中。まだ解いていない問題まで進める */
@@ -3195,7 +3235,7 @@ var TUTORIAL = [
   { tab:'home', sel:'#homeSetup', t:'出題設定',
     b:'演習量・出題順・問題タイプ・分野をここで選びます。'
      +'演習量は問題数でも時間でも指定できます。'
-     +'「難易度を上げる」では XX mode と Chicken mode を選べます。' },
+     +'「難易度を上げる」では XX mode・Chicken mode・Curtain mode を選べます。' },
   { demo:1, t:'実際に1問解いてみましょう',
     b:'まず、正しいと思う選択肢を選んでください。' },
   { tab:'quiz-explain', sel:'.star', t:'マイリストに保存する',
@@ -3730,15 +3770,17 @@ function renderHome(){
   h += '<button class="chip'+(S.mode==='random'?' on':'')+'" data-mode="random">ランダム</button><button class="chip'+(S.mode==='sequential'?' on':'')+'" data-mode="sequential">番号順</button>';
   h += '</div><div class="setlab">問題の種類</div><div class="chiprow" style="margin-bottom:14px">';
   [['all','すべて'],['general','一般問題'],['clinical','臨床問題']].forEach(function(t){
-    h += '<button class="chip'+(S.qtype===t[0]?' on':'')+'" data-qtype="'+t[0]+'">'+t[1]+'</button>';
+    h += '<button class="chip'+(S.qtype===t[0]&&!S.curtain?' on':'')+'" data-qtype="'+t[0]+'"'+(S.curtain?' disabled style="opacity:.4"':'')+'>'+t[1]+'</button>';
   });
+  if(S.curtain) h += '</div><div class="sub" style="margin:-8px 0 14px">Curtain mode 中は臨床問題だけが出題されます</div><div>';
   /* 2つの高難度モードは同時に使えない（正解数も選択肢も不明では解答できないため）。
      普段は折りたたんでおき、必要なときだけ開く。 */
-  var hardOn = (S.shadow ? 1 : 0) + (S.chicken ? 1 : 0);
+  var hardOn = (S.shadow ? 1 : 0) + (S.chicken ? 1 : 0) + (S.curtain ? 1 : 0);
   h += '</div><details class="hardbox"'+(hardOn?' open':'')+'>'
      + '<summary><span class="hardt">難易度を上げる</span>'
      +   (S.shadow ? '<span class="hardnow">XX</span>' : '')
      +   (S.chicken ? '<span class="hardnow">Chicken</span>' : '')
+     +   (S.curtain ? '<span class="hardnow">Curtain</span>' : '')
 
      +   (hardOn ? '' : '<span class="hardoff">オフ</span>')
      + '</summary>'
@@ -3752,7 +3794,11 @@ function renderHome(){
      +   '<span class="sw"><i></i></span>'
      + '</button>'
 
-     + '<div class="hardnote">XX mode と Chicken mode は同時には使えません。</div>'
+     + '<button class="shadowtog'+(S.curtain?' on':'')+'" data-curtain="1" style="margin-top:8px">'
+     +   '<span class="stg"><b>Curtain mode<span class="shtag">XP 最大×2.0</span></b><span>臨床問題の問題文が3幕に分かれて少しずつ開きます。早い幕で答えるほどXPが増えますが、外れたときの減点も同じ倍率で増えます。第3幕より前は「自信なし」を選べません。臨床問題だけが出題されます</span></span>'
+     +   '<span class="sw"><i></i></span>'
+     + '</button>'
+     + '<div class="hardnote">3つのモードは同時には使えません。</div>'
      + '</div></details>';
   h += '<details style="margin-top:14px"><summary style="font:600 12px var(--sans);color:var(--accent);cursor:pointer">分野を選ぶ（'+S.cats.length+'/'+CATS.length+'）</summary>'
      + '<div style="display:flex;gap:8px;margin-top:10px"><button class="catbtn catbtn-all" data-catall="1">すべて選択</button><button class="catbtn catbtn-none" data-catall="0">すべて解除</button></div>'
@@ -3871,9 +3917,11 @@ function homeClick(e){
     if(exa){ var rr = rankById(parseInt(exa.dataset.exam,10)); if(rr) startExam(rr); return; }
     var chip = t.closest('[data-count]'); if(chip){ S.count = parseInt(chip.dataset.count,10); S.timeatk = 0; save(); renderHome(); return; }
     var shd = t.closest('[data-shadow]');
-    if(shd){ S.shadow = !S.shadow; if(S.shadow) S.chicken = 0; save(); renderHome(); return; }
+    if(shd){ S.shadow = !S.shadow; if(S.shadow){ S.chicken = 0; S.curtain = 0; } save(); renderHome(); return; }
     var chk = t.closest('[data-chicken]');
-    if(chk){ S.chicken = S.chicken ? 0 : 1; if(S.chicken) S.shadow = false; save(); renderHome(); return; }
+    if(chk){ S.chicken = S.chicken ? 0 : 1; if(S.chicken){ S.shadow = false; S.curtain = 0; } save(); renderHome(); return; }
+    var crt = t.closest('[data-curtain]');
+    if(crt){ S.curtain = S.curtain ? 0 : 1; if(S.curtain){ S.shadow = false; S.chicken = 0; } save(); renderHome(); return; }
     var tam = t.closest('[data-tamin]');
     if(tam){ S.timeatk = 1; S.taMin = parseInt(tam.dataset.tamin,10); save(); renderHome(); return; }
     var md = t.closest('[data-mode]'); if(md){ S.mode = md.dataset.mode; save(); renderHome(); return; }
@@ -3952,11 +4000,11 @@ function getOrder(q){
 function quizJump(j){
   var s=S.session; if(!s || s.exam) return;
   if(j < 0 || j > s.res.length || j >= s.ids.length || j === s.i) return;
-  if(!s.revealed){ s.pendPick = s.picked.slice(); s.pendOpen = s.open; }     /* 解答中の選択は残しておく */
+  if(!s.revealed){ s.pendPick = s.picked.slice(); s.pendOpen = s.open; s.pendCur = s.cur; }     /* 解答中の選択は残しておく */
   s.mapPage = null;
   s.i = j;
   if(j < s.res.length && s.hist && s.hist[j]){ s.revealed = true; s.picked = s.hist[j].slice(); }
-  else { s.revealed = false; s.picked = (s.pendPick || []).slice(); s.open = (s.pendOpen != null) ? s.pendOpen : null; }
+  else { s.revealed = false; s.picked = (s.pendPick || []).slice(); s.open = (s.pendOpen != null) ? s.pendOpen : null; s.cur = s.pendCur || 1; }
   save(); renderQuiz(); pageTop();
 }
 function renderQuiz(){
@@ -4012,7 +4060,7 @@ function renderQuiz(){
     h += kinkiWarn(q, s.picked);
     if(typeof gain.base === 'number'){   /* 使い方の案内のデモ問題はXPを計算しないので出さない */
       h += '<div class="betrecap"><span class="chipbet '+(BETS[gain.bet]?BETS[gain.bet].cls:'')+'">'+esc(bl)+'</span>'
-         + '<span class="calc">'+(gain.base>=0?'+':'')+gain.base+(gain.mult>1?' × '+gain.mult.toFixed(1):'')+(gain.shadow?' <b class="shx">× 1.5</b>':'')+'</span></div>';
+         + '<span class="calc">'+(gain.base>=0?'+':'')+gain.base+(gain.mult>1?' × '+gain.mult.toFixed(1):'')+(gain.shadow?' <b class="shx">× '+(gain.shm||1.5).toFixed(1)+'</b>':'')+(gain.cuM&&gain.cuM!==1?' <b class="shx">× '+gain.cuM.toFixed(1)+'（第'+gain.cuAct+'幕）</b>':'')+'</span></div>';
     }
     h += comboHtml(gain);
   } else {
@@ -4020,9 +4068,21 @@ function renderQuiz(){
        + diffBadge(q)
        + '<span style="font:600 10.5px var(--mono);color:var(--soft);margin-left:8px">#'+q.id+'</span></div>';
   }
-  h += '<div style="font:700 16px/1.75 var(--sans);margin-bottom:14px">'+esc(sh && !s.revealed ? stripCount(q.stem) : q.stem)+'</div>';
+  var ct = (!s.revealed && curtOn(s, q)) ? curtParts(q) : null;
+  if(ct){
+    if(!s.cur) s.cur = 1;
+    h += '<div class="curstem" style="font:700 16px/1.75 var(--sans);margin-bottom:10px">';
+    for(var ai=0; ai<s.cur; ai++) h += '<span class="curact'+(ai===s.cur-1 && ai>0?' cnew':'')+'">'+esc(ct.acts[ai])+'</span>';
+    if(s.cur < 3) h += '<span class="curveil">… 続きは幕の向こう …</span>';
+    h += '<span class="curask">'+esc(ct.ask)+'</span></div>';
+    h += '<div class="curbar"><span class="curstage">第'+s.cur+'幕 / 3 <b>×'+CURT_MULT[s.cur].toFixed(1)+'</b></span>'
+       + (s.cur < 3 ? '<button class="curnext" data-curtnext="1">次の幕を開ける（第'+(s.cur+1)+'幕 ×'+CURT_MULT[s.cur+1].toFixed(1)+'）</button>' : '<span class="curall">すべて開きました</span>')
+       + '</div>';
+  } else {
+    h += '<div style="font:700 16px/1.75 var(--sans);margin-bottom:14px">'+esc(sh && !s.revealed ? stripCount(q.stem) : q.stem)+'</div>';
+  }
   var img = q.img || q.image;
-  if(img && IMAGES[img]) h += '<img class="qimg" src="data:image/png;base64,'+IMAGES[img]+'" alt="別冊画像" data-act="zoom">';
+  if(img && IMAGES[img] && !(ct && s.cur < 3)) h += '<img class="qimg" src="data:image/png;base64,'+IMAGES[img]+'" alt="別冊画像" data-act="zoom">';
   if(multi && !s.revealed) h += '<div class="sub" style="margin:-6px 0 10px">'+(sh ? '※ 正しいものをすべて選べ（選ぶ数は非表示）' : '※ '+q.correct.length+'つ選べ')+'</div>';
 
   /* Chicken mode：選択肢を上から1つずつ開いていく。
@@ -4109,16 +4169,19 @@ function renderQuiz(){
       }
       h += '</div></details>';
     } else {
-    var cm = comboMult(s.combo||0) * (s.shadow ? 1.5 : 1);
+    var cuM2 = ct ? CURT_MULT[s.cur] : 1;
+    var cm = comboMult(s.combo||0) * (s.shadow ? 1.5 : 1) * cuM2;
     h += '<div class="betwrap'+(ready?'':' off')+'">'
-       + '<div class="betlead">自信度を選んで解答'+(s.shadow?'<span class="shbadge">XX ×1.5</span>':'')+(s.chicken?'<span class="shbadge mb">CHICKEN ×2.0</span>':'')+'<span class="betlead2">'+(ready?'押すと解答が確定します':'先に選択肢を選んでください')+'</span></div>'
+       + '<div class="betlead">自信度を選んで解答'+(s.shadow?'<span class="shbadge">XX ×1.5</span>':'')+(s.chicken?'<span class="shbadge mb">CHICKEN ×2.0</span>':'')+(ct?'<span class="shbadge cu">CURTAIN 第'+s.cur+'幕 ×'+cuM2.toFixed(1)+'</span>':'')+'<span class="betlead2">'+(ready?'押すと解答が確定します':'先に選択肢を選んでください')+'</span></div>'
        + '<div class="bets">'
        + ['low','mid','high'].map(function(k){
            var b = BETS[k];
-           var win = Math.round(b.win*cm), lose = b.lose;
-           return '<button class="bet '+b.cls+'" data-bet="'+k+'"'+(ready?'':' disabled')+'>'
+           var win = Math.round(b.win*cm), lose = Math.round(b.lose*cuM2);
+           var lock = !!(ct && s.cur < 3 && k === 'low');   /* 第3幕より前は「自信なし」を選べない */
+           return '<button class="bet '+b.cls+(lock?' curlock':'')+'" data-bet="'+k+'"'+(ready&&!lock?'':' disabled')+(lock?' title="第3幕まで開くと選べます"':'')+'>'
                 + '<div class="bl">'+b.label+'</div>'
-                + '<div class="bp"><span class="up">+'+win+'</span>'+(lose<0?'<span class="dn">'+lose+'</span>':'<span class="dn zero">±0</span>')+'</div>'
+                + (lock ? '<div class="bp"><span class="dn zero">第3幕から</span></div>'
+                        : '<div class="bp"><span class="up">+'+win+'</span>'+(lose<0?'<span class="dn">'+lose+'</span>':'<span class="dn zero">±0</span>')+'</div>')
                 + '</button>';
          }).join('')
        + '</div></div>';
@@ -4172,6 +4235,10 @@ function renderQuiz(){
     var qm = e.target.closest('[data-qmark]');
     if(qm){
       openTagSheet('q', parseInt(qm.dataset.qmark,10), renderQuiz); return;
+    }
+    if(e.target.closest('[data-curtnext]')){
+      if((s.cur||1) < 3){ s.cur = (s.cur||1) + 1; save(); renderQuiz(); }
+      return;
     }
     if(e.target.closest('[data-chicknext]')){
       if(s.open == null) s.open = 0;
@@ -4725,7 +4792,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "146ae3b68e4a";
+<script>window.BOARD_BUILD = "c1cf4dae0a23";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5180,7 +5247,7 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
       if(tabs) tabs.classList.toggle('pcnavshow', (quiz && !!main.querySelector('.qtop [data-act="quit"]') && !main.querySelector('.qtop .exbadge')) || (mq.matches && !!main.querySelector('.reslist')));
       if(quiz && !main.querySelector(':scope > .pchint')){
         var hint = document.createElement('div'); hint.className = 'pchint';
-        hint.textContent = (taking || main.querySelector(':scope > .examnav')) ? 'キー操作：1〜5で選択肢、Enter・→で次の問題、←で前の問題' : 'キー操作：1〜5で選択肢、Q・W・Eで自信度（低・中・高）、Enterで次の問題';
+        hint.textContent = (taking || main.querySelector(':scope > .examnav')) ? 'キー操作：1〜5で選択肢、Enter・→で次の問題、←で前の問題' : (main.querySelector('[data-curtnext]') ? 'キー操作：1〜5で選択肢、Q・W・Eで自信度（低・中・高）、Enterで次の幕' : 'キー操作：1〜5で選択肢、Q・W・Eで自信度（低・中・高）、Enterで次の問題');
         main.appendChild(hint);
       }
     } finally { busy = false; }
@@ -5227,7 +5294,7 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
     }
     else if(k >= '1' && k <= '5'){ el = kids('button.choice')[parseInt(k,10)-1]; }
     else if(k === 'q' || k === 'w' || k === 'e'){ el = main.querySelectorAll('[data-bet]')[{q:0,w:1,e:2}[k]]; }
-    else if(k === 'enter' || k === 'arrowright'){ el = (k === 'enter' && document.getElementById('nextBtn')) || main.querySelector('.examnav [data-exmove="1"], .examnav [data-rvmove="1"]'); }
+    else if(k === 'enter' || k === 'arrowright'){ el = (k === 'enter' && (document.getElementById('nextBtn') || main.querySelector('[data-curtnext]'))) || main.querySelector('.examnav [data-exmove="1"], .examnav [data-rvmove="1"]'); }
     else if(k === 'arrowleft'){ el = main.querySelector('.examnav .exprev'); }
     if(el && !el.disabled){ e.preventDefault(); el.click(); }
   });

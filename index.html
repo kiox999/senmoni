@@ -1734,6 +1734,7 @@ function matchesQtype(q){
    臨床問題の問題文を3幕に分けて少しずつ開く。問いの文と選択肢は最初から見せる。
    倍率は正解にも不正解にも掛ける（早い幕での当てずっぽうが得にならないように）。 */
 var CURT_MULT = [1, 2.0, 1.5, 1.0];
+var CURT_CC = /来院|受診|搬送|搬入|出現|訴え|自覚|気づ|発症|続い|続く|続き|主訴|紹介|入院|倒れ|嘔吐|痛|発熱|熱が|咳|下痢|けいれん|意識|呼吸困難|息切れ|腫れ|腫脹|しびれ|ふらつ|出血|吐血|下血|黄疸|むくみ|浮腫|発疹|皮疹|紅斑|紫斑|指摘|見つか|発見|運ばれ|受け|ぐったり|泣|哺乳|元気がない|倦怠/;
 function curtParts(q){
   if(q._ct !== undefined) return q._ct;
   var r = null;
@@ -1743,8 +1744,13 @@ function curtParts(q){
     while(k > 0 && /^\s*[0-9０-９一二三]つ選べ/.test(ss[k])) k--;   /* 「2つ選べ。」は問いの文に含める */
     var ctx = ss.slice(0, k), n = ctx.length;
     if(n >= 3){
-      var b1 = Math.max(1, Math.round(n/3)), b2 = Math.min(n-1, Math.max(b1+1, Math.round(2*n/3)));
-      r = { acts:[ctx.slice(0,b1).join(''), ctx.slice(b1,b2).join(''), ctx.slice(b2).join('')], ask: ss.slice(k).join('') };
+      /* 第1幕は、主訴や受診のきっかけが読める文まで広げる（「24歳女性。」だけで止めない） */
+      var b1 = Math.max(1, Math.round(n/3));
+      while(b1 < n-2 && !CURT_CC.test(ctx.slice(0,b1).join(''))) b1++;
+      var first = ctx.slice(0,b1).join('');
+      var rest = n - b1, b2 = b1 + Math.max(1, Math.round(rest/2));
+      if((CURT_CC.test(first) || first.length > 14) && b2 < n)
+        r = { acts:[first, ctx.slice(b1,b2).join(''), ctx.slice(b2).join('')], ask: ss.slice(k).join('') };
     }
   }
   q._ct = r; return r;
@@ -4792,7 +4798,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "459f28f00536";
+<script>window.BOARD_BUILD = "2f3a47023fa0";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

@@ -660,7 +660,7 @@ button.rankrow:active{filter:brightness(.95)}
 .curbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
 .curstage{font:700 12px var(--mono);color:#6D28D9;background:rgba(109,40,217,.10);padding:5px 10px;border-radius:8px}
 .curstage b{margin-left:4px}
-.curnext{flex:1;min-width:200px;font:700 13px var(--sans);padding:10px 12px;border-radius:10px;border:1.5px solid #6D28D9;
+.curnext{flex:1;min-width:180px;white-space:nowrap;font:700 13px var(--sans);padding:10px 12px;border-radius:10px;border:1.5px solid #6D28D9;
   background:var(--card);color:#6D28D9;cursor:pointer}
 .curnext:active{background:rgba(109,40,217,.10)}
 .curall{font:600 12px var(--sans);color:var(--soft)}
@@ -4076,7 +4076,7 @@ function renderQuiz(){
     if(s.cur < 3) h += '<span class="curveil">続きはまだ表示していません</span>';
     h += '<span class="curask">'+esc(ct.ask)+'</span></div>';
     h += '<div class="curbar"><span class="curstage">第'+s.cur+'幕／全3幕 <b>×'+CURT_MULT[s.cur].toFixed(1)+'</b></span>'
-       + (s.cur < 3 ? '<button class="curnext" data-curtnext="1">続きを表示する（倍率は ×'+CURT_MULT[s.cur+1].toFixed(1)+' になります）</button>' : '<span class="curall">問題文をすべて表示しました</span>')
+       + (s.cur < 3 ? '<button class="curnext" data-curtnext="1">続きを表示する（次は ×'+CURT_MULT[s.cur+1].toFixed(1)+'）</button>' : '<span class="curall">問題文をすべて表示しました</span>')
        + '</div>';
   } else {
     h += '<div style="font:700 16px/1.75 var(--sans);margin-bottom:14px">'+esc(sh && !s.revealed ? stripCount(q.stem) : q.stem)+'</div>';
@@ -4792,7 +4792,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "5e89484e71d3";
+<script>window.BOARD_BUILD = "459f28f00536";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

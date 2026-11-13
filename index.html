@@ -3772,7 +3772,7 @@ function renderHome(){
   [['all','すべて'],['general','一般問題'],['clinical','臨床問題']].forEach(function(t){
     h += '<button class="chip'+(S.qtype===t[0]&&!S.curtain?' on':'')+'" data-qtype="'+t[0]+'"'+(S.curtain?' disabled style="opacity:.4"':'')+'>'+t[1]+'</button>';
   });
-  if(S.curtain) h += '</div><div class="sub" style="margin:-8px 0 14px">Curtain mode 中は臨床問題だけが出題されます</div><div>';
+  if(S.curtain) h += '</div><div class="sub" style="margin:-8px 0 14px">Curtain mode では、臨床問題だけを出題します</div><div>';
   /* 2つの高難度モードは同時に使えない（正解数も選択肢も不明では解答できないため）。
      普段は折りたたんでおき、必要なときだけ開く。 */
   var hardOn = (S.shadow ? 1 : 0) + (S.chicken ? 1 : 0) + (S.curtain ? 1 : 0);
@@ -3795,10 +3795,10 @@ function renderHome(){
      + '</button>'
 
      + '<button class="shadowtog'+(S.curtain?' on':'')+'" data-curtain="1" style="margin-top:8px">'
-     +   '<span class="stg"><b>Curtain mode<span class="shtag">XP 最大×2.0</span></b><span>臨床問題の問題文が3幕に分かれて少しずつ開きます。早い幕で答えるほどXPが増えますが、外れたときの減点も同じ倍率で増えます。第3幕より前は「自信なし」を選べません。臨床問題だけが出題されます</span></span>'
+     +   '<span class="stg"><b>Curtain mode<span class="shtag">XP ×1.0〜2.0</span></b><span>臨床問題の問題文を、3回に分けて表示します。途中で解答すると、得点と減点の両方に倍率がかかります（第1幕 ×2.0、第2幕 ×1.5、全文 ×1.0）。全文を表示するまで「自信なし」は選べません。出題されるのは臨床問題だけです</span></span>'
      +   '<span class="sw"><i></i></span>'
      + '</button>'
-     + '<div class="hardnote">3つのモードは同時には使えません。</div>'
+     + '<div class="hardnote">3つのモードは、同時に1つだけ使えます。</div>'
      + '</div></details>';
   h += '<details style="margin-top:14px"><summary style="font:600 12px var(--sans);color:var(--accent);cursor:pointer">分野を選ぶ（'+S.cats.length+'/'+CATS.length+'）</summary>'
      + '<div style="display:flex;gap:8px;margin-top:10px"><button class="catbtn catbtn-all" data-catall="1">すべて選択</button><button class="catbtn catbtn-none" data-catall="0">すべて解除</button></div>'
@@ -4060,7 +4060,7 @@ function renderQuiz(){
     h += kinkiWarn(q, s.picked);
     if(typeof gain.base === 'number'){   /* 使い方の案内のデモ問題はXPを計算しないので出さない */
       h += '<div class="betrecap"><span class="chipbet '+(BETS[gain.bet]?BETS[gain.bet].cls:'')+'">'+esc(bl)+'</span>'
-         + '<span class="calc">'+(gain.base>=0?'+':'')+gain.base+(gain.mult>1?' × '+gain.mult.toFixed(1):'')+(gain.shadow?' <b class="shx">× '+(gain.shm||1.5).toFixed(1)+'</b>':'')+(gain.cuM&&gain.cuM!==1?' <b class="shx">× '+gain.cuM.toFixed(1)+'（第'+gain.cuAct+'幕）</b>':'')+'</span></div>';
+         + '<span class="calc">'+(gain.base>=0?'+':'')+gain.base+(gain.mult>1?' × '+gain.mult.toFixed(1):'')+(gain.shadow?' <b class="shx">× '+(gain.shm||1.5).toFixed(1)+'</b>':'')+(gain.cuM&&gain.cuM!==1?' <b class="shx">× '+gain.cuM.toFixed(1)+'（第'+gain.cuAct+'幕で解答）</b>':'')+'</span></div>';
     }
     h += comboHtml(gain);
   } else {
@@ -4073,10 +4073,10 @@ function renderQuiz(){
     if(!s.cur) s.cur = 1;
     h += '<div class="curstem" style="font:700 16px/1.75 var(--sans);margin-bottom:10px">';
     for(var ai=0; ai<s.cur; ai++) h += '<span class="curact'+(ai===s.cur-1 && ai>0?' cnew':'')+'">'+esc(ct.acts[ai])+'</span>';
-    if(s.cur < 3) h += '<span class="curveil">… 続きは幕の向こう …</span>';
+    if(s.cur < 3) h += '<span class="curveil">続きはまだ表示していません</span>';
     h += '<span class="curask">'+esc(ct.ask)+'</span></div>';
-    h += '<div class="curbar"><span class="curstage">第'+s.cur+'幕 / 3 <b>×'+CURT_MULT[s.cur].toFixed(1)+'</b></span>'
-       + (s.cur < 3 ? '<button class="curnext" data-curtnext="1">次の幕を開ける（第'+(s.cur+1)+'幕 ×'+CURT_MULT[s.cur+1].toFixed(1)+'）</button>' : '<span class="curall">すべて開きました</span>')
+    h += '<div class="curbar"><span class="curstage">第'+s.cur+'幕／全3幕 <b>×'+CURT_MULT[s.cur].toFixed(1)+'</b></span>'
+       + (s.cur < 3 ? '<button class="curnext" data-curtnext="1">続きを表示する（倍率は ×'+CURT_MULT[s.cur+1].toFixed(1)+' になります）</button>' : '<span class="curall">問題文をすべて表示しました</span>')
        + '</div>';
   } else {
     h += '<div style="font:700 16px/1.75 var(--sans);margin-bottom:14px">'+esc(sh && !s.revealed ? stripCount(q.stem) : q.stem)+'</div>';
@@ -4178,9 +4178,9 @@ function renderQuiz(){
            var b = BETS[k];
            var win = Math.round(b.win*cm), lose = Math.round(b.lose*cuM2);
            var lock = !!(ct && s.cur < 3 && k === 'low');   /* 第3幕より前は「自信なし」を選べない */
-           return '<button class="bet '+b.cls+(lock?' curlock':'')+'" data-bet="'+k+'"'+(ready&&!lock?'':' disabled')+(lock?' title="第3幕まで開くと選べます"':'')+'>'
+           return '<button class="bet '+b.cls+(lock?' curlock':'')+'" data-bet="'+k+'"'+(ready&&!lock?'':' disabled')+(lock?' title="問題文をすべて表示すると選べます"':'')+'>'
                 + '<div class="bl">'+b.label+'</div>'
-                + (lock ? '<div class="bp"><span class="dn zero">第3幕から</span></div>'
+                + (lock ? '<div class="bp"><span class="dn zero">第3幕で選べます</span></div>'
                         : '<div class="bp"><span class="up">+'+win+'</span>'+(lose<0?'<span class="dn">'+lose+'</span>':'<span class="dn zero">±0</span>')+'</div>')
                 + '</button>';
          }).join('')
@@ -4792,7 +4792,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "e3b57c6055f3";
+<script>window.BOARD_BUILD = "5e89484e71d3";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5247,7 +5247,7 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
       if(tabs) tabs.classList.toggle('pcnavshow', (quiz && !!main.querySelector('.qtop [data-act="quit"]') && !main.querySelector('.qtop .exbadge')) || (mq.matches && !!main.querySelector('.reslist')));
       if(quiz && !main.querySelector(':scope > .pchint')){
         var hint = document.createElement('div'); hint.className = 'pchint';
-        hint.textContent = (taking || main.querySelector(':scope > .examnav')) ? 'キー操作：1〜5で選択肢、Enter・→で次の問題、←で前の問題' : (main.querySelector('[data-curtnext]') ? 'キー操作：1〜5で選択肢、Q・W・Eで自信度（低・中・高）、Enterで次の幕' : 'キー操作：1〜5で選択肢、Q・W・Eで自信度（低・中・高）、Enterで次の問題');
+        hint.textContent = (taking || main.querySelector(':scope > .examnav')) ? 'キー操作：1〜5で選択肢、Enter・→で次の問題、←で前の問題' : (main.querySelector('[data-curtnext]') ? 'キー操作：1〜5で選択肢、Q・W・Eで自信度（低・中・高）、Enterで続きを表示' : 'キー操作：1〜5で選択肢、Q・W・Eで自信度（低・中・高）、Enterで次の問題');
         main.appendChild(hint);
       }
     } finally { busy = false; }

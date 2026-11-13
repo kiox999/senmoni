@@ -1733,22 +1733,22 @@ function matchesQtype(q){
 /* ---- Curtain mode ----
    臨床問題の問題文を3幕に分けて少しずつ開く。問いの文と選択肢は最初から見せる。
    倍率は正解にも不正解にも掛ける（早い幕での当てずっぽうが得にならないように）。 */
-var CURT_MULT = [1, 2.0, 1.5, 1.0];
 function curtParts(q){
   if(q._ct !== undefined) return q._ct;
   var r = null;
-  if((q.qtype || 'general') === 'clinical' && q.stem){
+  /* 区切りは問題ごとに決めてある（q.ct）。第1幕で正解を絞り込める問題だけが対象。 */
+  if(q.ct && q.ct.length && q.stem){
     var ss = q.stem.match(/[^。]+。?/g) || [];
     var k = ss.length - 1;
     while(k > 0 && /^\s*[0-9０-９一二三]つ選べ/.test(ss[k])) k--;   /* 「2つ選べ。」は問いの文に含める */
-    var ctx = ss.slice(0, k), n = ctx.length;
-    if(n >= 3){
-      var b1 = Math.max(1, Math.round(n/3)), b2 = Math.min(n-1, Math.max(b1+1, Math.round(2*n/3)));
-      r = { acts:[ctx.slice(0,b1).join(''), ctx.slice(b1,b2).join(''), ctx.slice(b2).join('')], ask: ss.slice(k).join('') };
-    }
+    var cuts = q.ct.concat([k]), acts = [], prev = 0;
+    cuts.forEach(function(c){ acts.push(ss.slice(prev, c).join('')); prev = c; });
+    r = { acts: acts, ask: ss.slice(k).join('') };
   }
   q._ct = r; return r;
 }
+/* 倍率：第1幕 ×2.0、途中の幕 ×1.5、全文 ×1.0 */
+function curtMult(ct, st){ return st >= ct.acts.length ? 1.0 : (st === 1 ? 2.0 : 1.5); }
 function curtOn(s, q){ return !!(s && s.curtain && !s.exam && !s.tut && curtParts(q)); }
 function buildQueue(){
   var okQ = function(q){ return S.cats.indexOf(q.category)>=0 && (S.curtain ? !!curtParts(q) : matchesQtype(q)); };
@@ -2222,9 +2222,9 @@ function submitAnswer(bet){
     save(); renderQuiz(); return;
   }
   if(!BETS[bet]) bet = 'mid';
-  var cuOn = curtOn(s, q), cuAct = cuOn ? (s.cur||1) : 0;
-  if(cuOn && cuAct < 3 && bet === 'low') return;   /* 第3幕より前は「自信なし」を選べない */
-  var cuM = cuOn ? CURT_MULT[cuAct] : 1;
+  var cuOn = curtOn(s, q), cuAct = cuOn ? (s.cur||1) : 0, cuN = cuOn ? curtParts(q).acts.length : 0;
+  if(cuOn && cuAct < cuN && bet === 'low') return;   /* 全文を表示するまで「自信なし」は選べない */
+  var cuM = cuOn ? curtMult(curtParts(q), cuAct) : 1;
   s.hist = s.hist || {};
   s.hist[s.i] = s.picked.slice();   /* 前の問題を見直すときに選択を再現する */
   s.pendPick = null; s.pendOpen = null; s.mapPage = null;
@@ -3772,7 +3772,7 @@ function renderHome(){
   [['all','すべて'],['general','一般問題'],['clinical','臨床問題']].forEach(function(t){
     h += '<button class="chip'+(S.qtype===t[0]&&!S.curtain?' on':'')+'" data-qtype="'+t[0]+'"'+(S.curtain?' disabled style="opacity:.4"':'')+'>'+t[1]+'</button>';
   });
-  if(S.curtain) h += '</div><div class="sub" style="margin:-8px 0 14px">Curtain mode では、臨床問題だけを出題します</div><div>';
+  if(S.curtain) h += '</div><div class="sub" style="margin:-8px 0 14px">Curtain mode では、区切りを設定した臨床問題だけを出題します</div><div>';
   /* 2つの高難度モードは同時に使えない（正解数も選択肢も不明では解答できないため）。
      普段は折りたたんでおき、必要なときだけ開く。 */
   var hardOn = (S.shadow ? 1 : 0) + (S.chicken ? 1 : 0) + (S.curtain ? 1 : 0);
@@ -3795,7 +3795,7 @@ function renderHome(){
      + '</button>'
 
      + '<button class="shadowtog'+(S.curtain?' on':'')+'" data-curtain="1" style="margin-top:8px">'
-     +   '<span class="stg"><b>Curtain mode<span class="shtag">XP ×1.0〜2.0</span></b><span>臨床問題の問題文を、3回に分けて表示します。途中で解答すると、得点と減点の両方に倍率がかかります（第1幕 ×2.0、第2幕 ×1.5、全文 ×1.0）。全文を表示するまで「自信なし」は選べません。出題されるのは臨床問題だけです</span></span>'
+     +   '<span class="stg"><b>Curtain mode<span class="shtag">XP ×1.0〜2.0</span></b><span>臨床問題の問題文を、2〜3回に分けて表示します。第1幕だけで正解を絞り込める問題を選んであります。途中で解答すると、得点と減点の両方に倍率がかかります（第1幕 ×2.0、第2幕 ×1.5、全文 ×1.0）。全文を表示するまで「自信なし」は選べません</span></span>'
      +   '<span class="sw"><i></i></span>'
      + '</button>'
      + '<div class="hardnote">3つのモードは、同時に1つだけ使えます。</div>'
@@ -4073,16 +4073,16 @@ function renderQuiz(){
     if(!s.cur) s.cur = 1;
     h += '<div class="curstem" style="font:700 16px/1.75 var(--sans);margin-bottom:10px">';
     for(var ai=0; ai<s.cur; ai++) h += '<span class="curact'+(ai===s.cur-1 && ai>0?' cnew':'')+'">'+esc(ct.acts[ai])+'</span>';
-    if(s.cur < 3) h += '<span class="curveil">続きはまだ表示していません</span>';
+    if(s.cur < ct.acts.length) h += '<span class="curveil">続きはまだ表示していません</span>';
     h += '<span class="curask">'+esc(ct.ask)+'</span></div>';
-    h += '<div class="curbar"><span class="curstage">第'+s.cur+'幕／全3幕 <b>×'+CURT_MULT[s.cur].toFixed(1)+'</b></span>'
-       + (s.cur < 3 ? '<button class="curnext" data-curtnext="1">続きを表示する（次は ×'+CURT_MULT[s.cur+1].toFixed(1)+'）</button>' : '<span class="curall">問題文をすべて表示しました</span>')
+    h += '<div class="curbar"><span class="curstage">第'+s.cur+'幕／全'+ct.acts.length+'幕 <b>×'+curtMult(ct, s.cur).toFixed(1)+'</b></span>'
+       + (s.cur < ct.acts.length ? '<button class="curnext" data-curtnext="1">続きを表示する（次は ×'+curtMult(ct, s.cur+1).toFixed(1)+'）</button>' : '<span class="curall">問題文をすべて表示しました</span>')
        + '</div>';
   } else {
     h += '<div style="font:700 16px/1.75 var(--sans);margin-bottom:14px">'+esc(sh && !s.revealed ? stripCount(q.stem) : q.stem)+'</div>';
   }
   var img = q.img || q.image;
-  if(img && IMAGES[img] && !(ct && s.cur < 3)) h += '<img class="qimg" src="data:image/png;base64,'+IMAGES[img]+'" alt="別冊画像" data-act="zoom">';
+  if(img && IMAGES[img] && !(ct && s.cur < ct.acts.length)) h += '<img class="qimg" src="data:image/png;base64,'+IMAGES[img]+'" alt="別冊画像" data-act="zoom">';
   if(multi && !s.revealed) h += '<div class="sub" style="margin:-6px 0 10px">'+(sh ? '※ 正しいものをすべて選べ（選ぶ数は非表示）' : '※ '+q.correct.length+'つ選べ')+'</div>';
 
   /* Chicken mode：選択肢を上から1つずつ開いていく。
@@ -4169,7 +4169,7 @@ function renderQuiz(){
       }
       h += '</div></details>';
     } else {
-    var cuM2 = ct ? CURT_MULT[s.cur] : 1;
+    var cuM2 = ct ? curtMult(ct, s.cur) : 1;
     var cm = comboMult(s.combo||0) * (s.shadow ? 1.5 : 1) * cuM2;
     h += '<div class="betwrap'+(ready?'':' off')+'">'
        + '<div class="betlead">自信度を選んで解答'+(s.shadow?'<span class="shbadge">XX ×1.5</span>':'')+(s.chicken?'<span class="shbadge mb">CHICKEN ×2.0</span>':'')+(ct?'<span class="shbadge cu">CURTAIN 第'+s.cur+'幕 ×'+cuM2.toFixed(1)+'</span>':'')+'<span class="betlead2">'+(ready?'押すと解答が確定します':'先に選択肢を選んでください')+'</span></div>'
@@ -4177,10 +4177,10 @@ function renderQuiz(){
        + ['low','mid','high'].map(function(k){
            var b = BETS[k];
            var win = Math.round(b.win*cm), lose = Math.round(b.lose*cuM2);
-           var lock = !!(ct && s.cur < 3 && k === 'low');   /* 第3幕より前は「自信なし」を選べない */
+           var lock = !!(ct && s.cur < ct.acts.length && k === 'low');   /* 全文を表示するまで「自信なし」は選べない */
            return '<button class="bet '+b.cls+(lock?' curlock':'')+'" data-bet="'+k+'"'+(ready&&!lock?'':' disabled')+(lock?' title="問題文をすべて表示すると選べます"':'')+'>'
                 + '<div class="bl">'+b.label+'</div>'
-                + (lock ? '<div class="bp"><span class="dn zero">第3幕で選べます</span></div>'
+                + (lock ? '<div class="bp"><span class="dn zero">全文表示後に選べます</span></div>'
                         : '<div class="bp"><span class="up">+'+win+'</span>'+(lose<0?'<span class="dn">'+lose+'</span>':'<span class="dn zero">±0</span>')+'</div>')
                 + '</button>';
          }).join('')
@@ -4237,7 +4237,7 @@ function renderQuiz(){
       openTagSheet('q', parseInt(qm.dataset.qmark,10), renderQuiz); return;
     }
     if(e.target.closest('[data-curtnext]')){
-      if((s.cur||1) < 3){ s.cur = (s.cur||1) + 1; save(); renderQuiz(); }
+      var ctN = curtParts(q); if(ctN && (s.cur||1) < ctN.acts.length){ s.cur = (s.cur||1) + 1; save(); renderQuiz(); }
       return;
     }
     if(e.target.closest('[data-chicknext]')){
@@ -4792,7 +4792,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "459f28f00536";
+<script>window.BOARD_BUILD = "2252ab982a42";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

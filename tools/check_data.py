@@ -54,6 +54,13 @@ def check_question(q, emap):
         err.append('暗記ポイントで「＝」を「は」「である」の代わりに使っている')
     if any(noun_ended(s) for s in sents):
         err.append('暗記ポイントに体言止めの文がある')
+    if 'ct' in q:
+        ss = re.findall(r'[^。]+。?', q.get('stem', '')); k = len(ss) - 1
+        while k > 0 and re.match(r'^\s*[0-9０-９一二三]つ選べ', ss[k]): k -= 1
+        ct = q['ct']
+        if not (isinstance(ct, list) and 1 <= len(ct) <= 2 and all(isinstance(x, int) for x in ct)
+                and ct == sorted(set(ct)) and ct[0] >= 1 and ct[-1] < k):
+            err.append('Curtain の区切り(ct)がおかしい（文の数 %d）' % k)
     if 'chk' in q and not re.fullmatch(r'20\d\d-(0[1-9]|1[0-2])', str(q['chk'])):
         err.append('確認時期(chk)の書き方がおかしい（例 2026-11）')
     name = deep_name(q)

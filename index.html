@@ -1039,12 +1039,12 @@ footer.tabs button{font-size:11px}
 .hlm{display:block;font:500 11px var(--sans);color:var(--soft);margin-top:3px}
 .ghost.danger{color:var(--bad);border-color:var(--bad);background:var(--badSoft)}
 
-/* ===== パソコン版（幅1180px以上・マウス操作）。スマホ版の見た目は変えない ===== */
+/* ===== パソコン版（幅1000px以上。iPadの横向きも含む）。スマホ版の見た目は変えない ===== */
 .pcside{display:block}
 .pcsubj{display:none}
 .pchome{display:none}
 .pckey{display:none}
-@media (min-width:1180px) and (hover:hover) and (pointer:fine){
+@media (min-width:1000px){
   :root{--pcnav:236px;--pcl:clamp(440px, calc((100vw - 236px) * .46), 760px);--pcen:clamp(320px, calc((100vw - 236px) * .27), 400px)}
   /* 左に縦のメニュー、右に本文 */
   #app{max-width:none;display:grid;grid-template-columns:var(--pcnav) minmax(0,1fr);grid-template-rows:auto 1fr}
@@ -1146,6 +1146,31 @@ footer.tabs button{font-size:11px}
   #hubCards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
   #hubCards .subjcard{margin-bottom:0}
   #hubCards{margin-bottom:14px}
+}
+
+/* パソコン版のうち、幅が狭め（iPad mini・iPadの横向きなど）のときは左メニューと問題欄を少し詰める */
+@media (min-width:1000px) and (max-width:1279px){
+  :root{--pcnav:196px;--pcl:clamp(400px, calc((100vw - 196px) * .48), 640px);--pcen:clamp(300px, calc((100vw - 196px) * .32), 380px)}
+  #app>header{padding:24px 16px 14px}
+  #app>footer.tabs{padding:8px 8px}
+  #app>main.pcq,#app>main.pcqa,#app>main:has(>#studyResults){padding-left:28px;padding-right:24px}
+  #app>main.pcq>.pcside,#app>main.pcqa .qaencbody{left:calc(var(--pcnav) + 28px + var(--pcl) + 28px);padding-right:22px}
+  #app>main.pcq:not(:has(>.pcside))::after,#app>main.pcqa:not(:has(.qaencbody))::after{left:calc(var(--pcnav) + 28px + var(--pcl) + 28px);right:22px}
+  #studyResults .encard.open>.enbody{left:calc(var(--pcnav) + 28px + var(--pcen) + 28px);padding-right:22px}
+  #app>main:has(>#studyResults):not(:has(.encard.open))::after{left:calc(var(--pcnav) + 28px + var(--pcen) + 28px);right:22px}
+  #xenc{padding-left:28px;padding-right:24px}
+  #xenc .encard.open>.enbody{left:calc(28px + var(--pcen) + 60px + 28px);padding-right:22px}
+  #app>main:has(#homeSetupCard),#app>main.pc2,#app>main:has(>.pccols){padding-left:32px;padding-right:32px;column-gap:28px}
+  .pccols{column-gap:28px}
+  .pccols.pcgrid{gap:0 28px}
+  #hub{padding-left:28px;padding-right:28px}
+}
+/* タッチ操作のiPadなど：キーボード操作の案内は出さず、押しやすさを優先する */
+@media (min-width:1000px) and (pointer:coarse){
+  .pckey,.pchint{display:none!important}
+  #app>main.pcqa:not(:has(.qaencbody))::after{content:'解答すると、ここに関連する事典の項目が出ます'}
+  #app>footer.tabs button{min-height:48px}
+  #app>main.pcq .exgrid,#app>main.pc2 .exgrid{grid-template-columns:repeat(auto-fill,50px)}
 }
 </style>
 </head>
@@ -4792,7 +4817,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "abb75a5832c7";
+<script>window.BOARD_BUILD = "05b288c5daf9";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5139,7 +5164,7 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
 <script>
 /* パソコン版：演習画面で解説を右の欄に移し、キーボードで解答できるようにする。スマホ版では何もしない */
 (function(){
-  var mq = window.matchMedia('(min-width:1180px) and (hover:hover) and (pointer:fine)');
+  var mq = window.matchMedia('(min-width:1000px)');
   var main = document.getElementById('main'); if(!main) return;
   var busy = false, qaSeen = '';
   function kids(sel){ return Array.prototype.filter.call(main.children, function(c){ return c.matches(sel); }); }

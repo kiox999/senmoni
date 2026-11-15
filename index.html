@@ -1027,6 +1027,18 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 #xenc .xbtns{display:flex;gap:8px;margin-top:6px}
 #xenc .xbtns .enquiz{margin-top:0}
 #xenc .xbtns .xopen{background:none;border-color:var(--line);color:var(--ink)}
+#xenc .xidx{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:12px}
+#xenc .xidxrow{display:flex;align-items:flex-start;gap:8px}
+#xenc .xidxg{flex:0 0 3.4em;font:700 11px var(--sans);color:var(--soft);padding-top:9px}
+#xenc .xidxk{flex:1;display:flex;flex-wrap:wrap;gap:5px}
+#xenc .xini{min-width:40px;height:38px;padding:0 6px;border:1.5px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:700 15px var(--sans);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+#xenc .xini small{font:600 9px var(--mono);color:var(--soft)}
+#xenc .xini.on{border-color:var(--accent);background:var(--accentSoft);color:var(--accent)}
+#xenc .xsubidx{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 10px}
+#xenc .xini2{height:32px;padding:0 10px;border:1.5px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);font:700 13px var(--sans);cursor:pointer}
+#xenc .xini2 small{margin-left:4px;font:600 9.5px var(--mono);color:var(--soft)}
+#xenc .xini2.on{border-color:var(--accent);background:var(--accentSoft);color:var(--accent)}
+#xenc .xinihd{font:800 13px var(--sans);color:var(--accent);margin:4px 2px 8px;scroll-margin-top:12px}
 #xenc .xmore{text-align:center;font:500 12px var(--sans);color:var(--soft);padding:12px}
 .xencgo{float:right;font:600 11.5px var(--sans);padding:6px 10px;border-radius:9px;border:1px solid var(--accent);background:var(--accentSoft);color:var(--accent);cursor:pointer;margin-top:6px}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--soft);font:600 13px var(--mono);z-index:50}
@@ -1357,6 +1369,19 @@ function encCompare(a, b){
 /* 一覧の見出し（A–Z・あ行・か行…）。清音・濁音・半濁音は同じ行にまとめる */
 var GYO = [['あ','あいうえおぁぃぅぇぉゔ'],['か','かきくけこがぎぐげご'],['さ','さしすせそざじずぜぞ'],['た','たちつてとだぢづでどっ'],['な','なにぬねの'],
            ['は','はひふへほばびぶべぼぱぴぷぺぽ'],['ま','まみむめも'],['や','やゆよゃゅょ'],['ら','らりるれろ'],['わ','わをん']];
+/* 頭文字：英字は大文字1字（数字は「0–9」）、かなは清音の1字（が→か、ぁ→あ） */
+var KANA_BASE = { 'が':'か','ぎ':'き','ぐ':'く','げ':'け','ご':'こ','ざ':'さ','じ':'し','ず':'す','ぜ':'せ','ぞ':'そ','だ':'た','ぢ':'ち','づ':'つ','で':'て','ど':'と',
+  'ば':'は','び':'ひ','ぶ':'ふ','べ':'へ','ぼ':'ほ','ぱ':'は','ぴ':'ひ','ぷ':'ふ','ぺ':'へ','ぽ':'ほ','ぁ':'あ','ぃ':'い','ぅ':'う','ぇ':'え','ぉ':'お','っ':'つ','ゃ':'や','ゅ':'ゆ','ょ':'よ','ゔ':'う' };
+function encInitial(e){
+  if(encIsLatin(e.n)){
+    var c = e.n.charAt(0).normalize ? e.n.charAt(0).normalize('NFKC') : e.n.charAt(0);
+    if(/[0-9]/.test(c)) return '0–9';
+    if(/[A-Za-z]/.test(c)) return c.toUpperCase();
+    return 'α';
+  }
+  var k = encKana(e).charAt(0);
+  return KANA_BASE[k] || k;
+}
 function encGyo(e){
   if(encIsLatin(e.n)) return 'A–Z';
   var c = encKana(e).charAt(0);
@@ -5105,7 +5130,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "57094a637a45";
+<script>window.BOARD_BUILD = "f50f01ea3126";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5251,7 +5276,7 @@ document.getElementById('subjBtn').addEventListener('click', function(){
   location.reload();
 });
 /* ---------- 全科目の事典検索 ---------- */
-var XE = { items:null, loading:false, q:'', subj:'', open:null, limit:150 };
+var XE = { items:null, loading:false, q:'', subj:'', open:null, limit:150, ini:'', ini2:'' };
 /* 科目の代わりに使う「薬剤」「略語・検査値」の区分 */
 var XREF = { drug:{ id:'drug', short:'薬剤' }, term:{ id:'term', short:'略語・検査値' } };
 function xSecs(body){
@@ -5354,39 +5379,77 @@ function xSnip(r){
   return '<span class="xsnip">'+(a>0?'…':'')+esc(t.slice(a, r.pos))+'<b>'+esc(t.slice(r.pos, r.pos+r.len))+'</b>'
        + esc(t.slice(r.pos+r.len, z))+(z<t.length?'…':'')+'</span>';
 }
+function xCardHtml(r){
+  var it = r.it, id = it.s.id + '|' + it.n, op = XE.open === id, h = '';
+  h += '<div class="encard'+(op?' open':'')+'">'
+     + '<button class="enhead" data-xen="'+esc(id)+'"><span class="enname">'+esc(it.n)
+     + (it.ab ? '<span class="enab">'+esc(it.ab)+'</span>' : '')
+     + (it.y ? '<span class="enyomi">'+esc(it.y)+'</span>' : '')
+     + (it.p ? '<span class="xpar">（'+esc(it.p)+'）</span>' : '')
+     + (op ? '' : xSnip(r)) + '</span>'
+     + '<span class="encat">'+esc(it.s.short)+'</span><span class="enchev">'+(op?'▴':'▾')+'</span></button>';
+  if(op){
+    h += '<div class="enbody" data-n="'+esc(it.n)+'"><div class="xsub2" style="margin-top:8px">'+esc(it.s.short)+' ／ '+esc(it.g ? it.g+' ／ '+it.c : it.c)+'</div>';
+    if(it.br && it.br.length) h += '<div class="enlabel">商品名</div><p class="dnames">'+it.br.map(esc).join('、')+'</p>';
+    if(it.abl && it.abl.length) h += '<div class="enlabel">'+(it.cls ? '主な薬（一般名）' : '別名・略称')+'</div><p class="dnames">'+it.abl.map(esc).join('、')+'</p>';
+    xSecs(it.b).forEach(function(sec){
+      if(sec.label) h += '<div class="enlabel">'+esc(sec.label)+'</div>';
+      h += xContent(sec.text);
+    });
+    if(it.s === XREF.drug) h += '<div class="chkline">実際の投与は最新の添付文書で確認してください。</div>';
+    if(!XREF[it.s.id]) h += '<div class="xbtns">'
+       + '<button class="enquiz xopen" type="button" data-xgo="'+esc(id)+'">'+esc(it.s.short)+'の事典で開く</button>'
+       + (it.nq ? '<button class="enquiz" type="button" data-xq="'+esc(id)+'">問題を解く（'+it.nq+'問）</button>' : '')
+       + '</div>';
+    h += '</div>';
+  }
+  return h + '</div>';
+}
+/* 検索語がないときは、頭文字の索引（A B C… / あ い う え お…）を出し、選んだ頭文字の項目だけを並べる */
 function xResults(){
   var el = document.getElementById('xres'); if(!el) return;
-  var all = xMatch();
-  var h = '<div class="xsub2">'+all.length+'件'+(XE.q.trim() ? '' : '（キーワードを入れると絞り込めます）')+'</div>';
-  if(!all.length) h += '<div class="xsub2">該当する項目がありません。別の言葉や略語で探してみてください。</div>';
-  h += '<div class="enlist">';
-  all.slice(0, XE.limit).forEach(function(r){
-    var it = r.it, id = it.s.id + '|' + it.n, op = XE.open === id;
-    h += '<div class="encard'+(op?' open':'')+'">'
-       + '<button class="enhead" data-xen="'+esc(id)+'"><span class="enname">'+esc(it.n)
-       + (it.ab ? '<span class="enab">'+esc(it.ab)+'</span>' : '')
-       + (it.y ? '<span class="enyomi">'+esc(it.y)+'</span>' : '')
-       + (it.p ? '<span class="xpar">（'+esc(it.p)+'）</span>' : '')
-       + (op ? '' : xSnip(r)) + '</span>'
-       + '<span class="encat">'+esc(it.s.short)+'</span><span class="enchev">'+(op?'▴':'▾')+'</span></button>';
-    if(op){
-      h += '<div class="enbody" data-n="'+esc(it.n)+'"><div class="xsub2" style="margin-top:8px">'+esc(it.s.short)+' ／ '+esc(it.g ? it.g+' ／ '+it.c : it.c)+'</div>';
-      if(it.br && it.br.length) h += '<div class="enlabel">商品名</div><p class="dnames">'+it.br.map(esc).join('、')+'</p>';
-      if(it.abl && it.abl.length) h += '<div class="enlabel">'+(it.cls ? '主な薬（一般名）' : '別名・略称')+'</div><p class="dnames">'+it.abl.map(esc).join('、')+'</p>';
-      xSecs(it.b).forEach(function(sec){
-        if(sec.label) h += '<div class="enlabel">'+esc(sec.label)+'</div>';
-        h += xContent(sec.text);
-      });
-      if(it.s === XREF.drug) h += '<div class="chkline">実際の投与は最新の添付文書で確認してください。</div>';
-      if(!XREF[it.s.id]) h += '<div class="xbtns">'
-         + '<button class="enquiz xopen" type="button" data-xgo="'+esc(id)+'">'+esc(it.s.short)+'の事典で開く</button>'
-         + (it.nq ? '<button class="enquiz" type="button" data-xq="'+esc(id)+'">問題を解く（'+it.nq+'問）</button>' : '')
-         + '</div>';
-      h += '</div>';
-    }
+  var all = xMatch(), q = XE.q.trim(), h = '';
+  if(!q){
+    var rows = [], byI = {}, rowOf = {};
+    all.forEach(function(r){
+      var ini = encInitial(r.it), gy = encGyo(r.it);
+      if(!byI[ini]){ byI[ini] = []; if(!rowOf[gy]){ rowOf[gy] = []; rows.push(gy); } rowOf[gy].push(ini); }
+      byI[ini].push(r);
+    });
+    if(XE.ini && !byI[XE.ini]) XE.ini = '';
+    h += '<div class="xsub2">'+all.length+'件。頭文字を選ぶと、その項目が出ます（キーワードを入れても探せます）</div><div class="xidx">';
+    rows.forEach(function(gy){
+      h += '<div class="xidxrow"><span class="xidxg">'+esc(gy==='A–Z'||gy==='その他' ? gy : gy+'行')+'</span><span class="xidxk">'
+         + rowOf[gy].map(function(ini){
+             return '<button type="button" class="xini'+(XE.ini===ini?' on':'')+'" data-xi="'+esc(ini)+'">'+esc(ini)+'<small>'+byI[ini].length+'</small></button>';
+           }).join('') + '</span></div>';
+    });
     h += '</div>';
-  });
-  h += '</div>';
+    if(XE.ini){
+      var list = byI[XE.ini], subs = [], bySub = {};
+      h += '<div class="xinihd" id="xinihd">「'+esc(XE.ini)+'」で始まる項目 '+list.length+'件</div>';
+      /* 多い頭文字は、読みの最初の2文字でさらに絞れるようにする（しょう・しん・じん…） */
+      if(list.length > 40 && !encIsLatin(list[0].it.n)){
+        var subKey = function(it){ var k = encKana(it); return /[ゃゅょぁぃぅぇぉ]/.test(k.charAt(1)) ? k.slice(0,3) : k.slice(0,2); };
+        var cnt = {}; list.forEach(function(r){ var k = subKey(r.it); cnt[k] = (cnt[k]||0) + 1; });
+        list.forEach(function(r){ var k = subKey(r.it); if(cnt[k] < 4) k = 'ほか'; if(!bySub[k]){ bySub[k] = []; subs.push(k); } bySub[k].push(r); });
+        subs.sort(function(a, b){ return a === 'ほか' ? 1 : b === 'ほか' ? -1 : 0; });
+        if(XE.ini2 && !bySub[XE.ini2]) XE.ini2 = '';
+        if(subs.length > 1){
+          h += '<div class="xsubidx"><button type="button" class="xini2'+(XE.ini2?'':' on')+'" data-xi2="">すべて</button>'
+             + subs.map(function(k){ return '<button type="button" class="xini2'+(XE.ini2===k?' on':'')+'" data-xi2="'+esc(k)+'">'+esc(k)+'<small>'+bySub[k].length+'</small></button>'; }).join('')
+             + '</div>';
+          if(XE.ini2) list = bySub[XE.ini2];
+        }
+      }
+      h += '<div class="enlist">' + list.map(xCardHtml).join('') + '</div>';
+    }
+    el.innerHTML = h;
+    return;
+  }
+  h = '<div class="xsub2">'+all.length+'件</div>';
+  if(!all.length) h += '<div class="xsub2">該当する項目がありません。別の言葉や略語で探してみてください。</div>';
+  h += '<div class="enlist">' + all.slice(0, XE.limit).map(xCardHtml).join('') + '</div>';
   if(all.length > XE.limit) h += '<button class="enquiz xopen" type="button" data-xmore="1" style="margin-top:10px">さらに表示（残り'+(all.length-XE.limit)+'件）</button>';
   el.innerHTML = h;
 }
@@ -5426,6 +5489,12 @@ document.getElementById('xenc').addEventListener('click', function(e){
   var t;
   if((t = e.target.closest('[data-xs]'))){ XE.subj = t.dataset.xs; XE.open = null; XE.limit = 150; xChips(); xResults(); return; }
   if((t = e.target.closest('[data-xmore]'))){ XE.limit += 150; xResults(); return; }
+  if((t = e.target.closest('[data-xi2]'))){ XE.ini2 = t.dataset.xi2; XE.open = null; xResults(); var hd2 = document.getElementById('xinihd'); if(hd2) hd2.scrollIntoView({block:'start'}); return; }
+  if((t = e.target.closest('[data-xi]'))){
+    XE.ini = (XE.ini === t.dataset.xi) ? '' : t.dataset.xi; XE.ini2 = ''; XE.open = null; xResults();
+    var hd = document.getElementById('xinihd'); if(hd) hd.scrollIntoView({block:'start', behavior:'smooth'});
+    return;
+  }
   if((t = e.target.closest('[data-xgo]')) || (t = e.target.closest('[data-xq]'))){
     var it = xFind(t.dataset.xgo || t.dataset.xq); if(!it) return;
     try{ localStorage.setItem(SKEY, it.s.id); }catch(err){}

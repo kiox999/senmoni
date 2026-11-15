@@ -20,4 +20,6 @@ python3 tools/stamp.py        # 版番号を中身から決めて sw.js と inde
 - プルリクエストごとに GitHub 上で同じ検査が走ります（`.github/workflows/check.yml`）
 - 検査の中身：問題番号の重複、選択肢の数、「Nつ選べ」と正解数、選択肢の「のみ」「だけ」、暗記ポイントの体言止め・「→」「＝」の誤用、関連知識と事典の対応 など
 - 関連知識は事典本文と同じ文章なので、問題側には項目名（`dd`）だけを置いています。事典にない独自の文章を出したい問題だけ `deepdive` に本文を書きます。`dd` と `deepdive` の両方があるときは、表示は `deepdive`、事典との紐づけは `dd` を使います。`python3 tools/pack_deep.py` で写しを参照に置き換えられます
+- 事典の並び順は読み（`k`）で決まります。疾患・薬剤を足したら `python3 tools/yomi.py` で読みをつけ直してください（要 `pip install fugashi unidic-lite jaconv`。読み違えは `READ_FIX` に足す）。英字・数字で始まる項目は「A–Z」として先頭にまとまります
+- 薬剤事典（`data/ref.js`）の大きな括り（`g`）は `tools/drug_groups.cjs` で決めています。薬を足したらそこにも名前を足して `node tools/drug_groups.cjs` を実行します
 - 制度やガイドラインに左右される問題は `python3 tools/review_list.py` で一覧にできます。出典に当たって確かめた問題には `chk`（例 `"2026-11"`）を書くと、解説の下に確認時期が出ます

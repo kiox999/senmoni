@@ -848,6 +848,7 @@ details.shop summary .skprev{width:26px;height:20px;border-radius:6px;display:fl
 .sttab{flex:1;min-height:40px;border:none;border-radius:9px;background:none;color:var(--soft);font:700 13px var(--sans);cursor:pointer}
 .sttab span{margin-left:5px;font:600 10.5px var(--mono);opacity:.75}
 .sttab.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.dnames{margin:2px 0 8px;font:600 14px/1.7 var(--sans);color:var(--ink)}
 .relrow{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}
 .relchip{border:1.5px solid var(--line);border-radius:999px;background:var(--card);color:var(--accent);font:600 12.5px var(--sans);padding:6px 12px;cursor:pointer;text-decoration:none}
 .encard{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
@@ -2861,10 +2862,13 @@ function refQs(keys){
   return out;
 }
 var DRUGS = (REF.drugs||[]).map(function(d){
-  var keys = [d.n].concat(d.br||[], d.ab||[]);
-  return { n:d.n, c:d.c, b:d.b, kind:'drug', chk:d.chk, rel:d.rel||[], br:d.br||[],
-           ab:(d.ab||[]).join('・'), y:(d.br && d.br.length ? '商品名：'+d.br.join('、') : ''),
-           keys:keys, q:refQs(keys) };
+  var br = (d.br||[]).filter(function(x){ return x !== d.n; });   /* 一般名と同じ名前の製品は商品名として出さない */
+  var keys = [d.n].concat(br, d.ab||[]);
+  var nl = d.nl || [];
+  return { n:d.n, c:d.c, b:d.b, kind:'drug', chk:d.chk, rel:d.rel||[], br:br, abl:d.ab||[],
+           ab:(d.ab||[]).join('・'), y:(br.length ? '商品名：'+br.join('、') : ''),
+           keys:keys, link:keys.filter(function(k){ return nl.indexOf(k) < 0; }),
+           q:refQs(keys.filter(function(k){ return nl.indexOf(k) < 0; })) };
 });
 var TERMS = (REF.terms||[]).map(function(t){
   return { n:t.n, c:t.c, b:t.b, kind:'term', y:t.y||'', ab:'', keys:[t.n], q:refQs([t.n]) };
@@ -3019,6 +3023,11 @@ function childrenOf(name){
 /* 本文（節見出し＋表・箇条書き）。noQuiz は用語カードの中など、演習を始めるボタンを出さない場所で使う */
 function encBodyHtml(e, noQuiz){
   var h = '';
+  /* 薬剤は、商品名と別名・略称を本文の最初に出す */
+  if(e.kind==='drug'){
+    if(e.br.length) h += '<div class="enlabel">商品名</div><p class="dnames">'+e.br.map(esc).join('、')+'</p>';
+    if(e.abl.length) h += '<div class="enlabel">別名・略称</div><p class="dnames">'+e.abl.map(esc).join('、')+'</p>';
+  }
   encycSecs(e.b).forEach(function(sec){
     if(sec.label) h += '<div class="enlabel">'+esc(sec.label)+'</div>';
     h += renderContentWithTable(sec.text);   /* [TABLE]記法を表として描画 */
@@ -3182,7 +3191,7 @@ function tlIndex(){
     if(base !== e.n && base.length >= 3) add(base, 'dis', e.n);
     if(e.ab) add(e.ab, 'dis', e.n);
   });
-  DRUGS.forEach(function(d){ d.keys.forEach(function(k){ add(k, 'drug', d.n); }); });
+  DRUGS.forEach(function(d){ d.link.forEach(function(k){ add(k, 'drug', d.n); }); });
   TERMS.forEach(function(t){ add(t.n, 'term', t.n); });
   var keys = Object.keys(map).sort(function(a,b){ return b.length - a.length; });
   var re = keys.length ? new RegExp(keys.map(function(k){ return k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }).join('|'), 'g') : null;
@@ -3265,7 +3274,7 @@ function tlOpen(kind, n, push){
     requestAnimationFrame(function(){ o.classList.add('show'); });
   }
   var kl = { dis:'疾患', drug:'薬剤', term:'略語・検査値' }[kind];
-  var sub = kind==='drug' ? [e.y, e.ab ? '別名・略称：'+e.ab.replace(/・/g,'、') : ''].filter(Boolean).join('　') : (e.y || (e.ab ? '略称：'+e.ab : ''));
+  var sub = kind==='drug' ? '' : (e.y || (e.ab ? '略称：'+e.ab : ''));   /* 薬剤の商品名・略称は本文の最初に出す */
   var box = o.querySelector('.rsbox');
   box.innerHTML = '<div class="rshead">'
     + (tlStack.length > 1 ? '<button type="button" class="rsback" data-rsback aria-label="前のカードに戻る">‹</button>' : '')
@@ -5063,7 +5072,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "fb41f0d9c4ca";
+<script>window.BOARD_BUILD = "bb805d7f272d";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

@@ -3026,7 +3026,8 @@ function encBodyHtml(e, noQuiz){
   /* 薬剤は、商品名と別名・略称を本文の最初に出す */
   if(e.kind==='drug'){
     if(e.br.length) h += '<div class="enlabel">商品名</div><p class="dnames">'+e.br.map(esc).join('、')+'</p>';
-    if(e.abl.length) h += '<div class="enlabel">別名・略称</div><p class="dnames">'+e.abl.map(esc).join('、')+'</p>';
+    /* 「薬の種類」の項目では、別名ではなく含まれる薬の一般名を並べている */
+    if(e.abl.length) h += '<div class="enlabel">'+(/薬の種類/.test(e.c||'') ? '主な薬（一般名）' : '別名・略称')+'</div><p class="dnames">'+e.abl.map(esc).join('、')+'</p>';
   }
   encycSecs(e.b).forEach(function(sec){
     if(sec.label) h += '<div class="enlabel">'+esc(sec.label)+'</div>';
@@ -5072,7 +5073,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "bb805d7f272d";
+<script>window.BOARD_BUILD = "bfcf3461d22e";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

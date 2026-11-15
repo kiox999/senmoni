@@ -225,6 +225,7 @@ details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0
 .spacingRow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font:600 13px var(--sans)}
 .spacingRow:last-of-type{border-bottom:none}
 .spacingRow span:last-child{display:flex;align-items:center;gap:6px;color:var(--soft);font:600 12px var(--sans)}
+.spacingRow select{padding:6px 4px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:600 12px var(--sans)}
 .spacingRow input{width:56px;padding:6px 8px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:700 13px var(--mono);text-align:right}
 #heatDetails{margin:16px 0 9px}
 #heatDetails summary{font:700 12px var(--sans);cursor:pointer;list-style:revert;color:var(--ink)}
@@ -1410,6 +1411,7 @@ function load(){
   if(!d.marks) d.marks = {};   /* あとで見返す問題（問題ID→true） */
   if(!d.bmNames) d.bmNames = {1:'セット1',2:'セット2',3:'セット3'};
   if(!d.spacing) d.spacing = {lowMin:10, mid:2, high:9};
+  if(d.prio !== 'fresh') d.prio = 'due';   /* 出題の優先：due＝復習待ちから／fresh＝新しい問題から */
   if(!d.fontsize) d.fontsize = 'md';
   if(!d.fontfamily) d.fontfamily = 'default';
   if(!d.qtype) d.qtype = 'all';
@@ -1810,7 +1812,8 @@ function buildQueue(){
   if(S.mode==='random'){ shuffle(fresh); shuffle(rest); }
   /* 時間で区切る場合は、途中で尽きないよう多めに用意する（1分3問の見当） */
   var take = S.timeatk ? Math.max(30, (S.taMin||10) * 3) : S.count;
-  var out = due.concat(fresh, rest).slice(0, take);
+  /* 新しい問題を優先する設定では、未出題 → 復習待ち → その他 の順に並べる */
+  var out = (S.prio==='fresh' ? fresh.concat(due, rest) : due.concat(fresh, rest)).slice(0, take);
   return out.map(function(q){ return q.id; });
 }
 function startSession(ids, reviewing){
@@ -4017,7 +4020,11 @@ function renderHome(){
   h += '<div style="height:12px"></div>';
   h += '<div class="setlab">出題順</div><div class="chiprow" style="margin-bottom:14px">';
   h += '<button class="chip'+(S.mode==='random'?' on':'')+'" data-mode="random">ランダム</button><button class="chip'+(S.mode==='sequential'?' on':'')+'" data-mode="sequential">番号順</button>';
-  h += '</div><div class="setlab">問題の種類</div><div class="chiprow" style="margin-bottom:14px">';
+  h += '</div><div class="setlab">出題の優先</div><div class="chiprow" style="margin-bottom:'+(S.prio==='fresh'?'6':'14')+'px">';
+  h += '<button class="chip'+(S.prio!=='fresh'?' on':'')+'" data-prio="due">復習待ちから</button><button class="chip'+(S.prio==='fresh'?' on':'')+'" data-prio="fresh">新しい問題から</button>';
+  h += '</div>';
+  if(S.prio==='fresh') h += '<div class="sub" style="margin:0 0 14px">まだ解いていない問題を先に出します。復習待ちの問題は「今日の復習」から解けます。</div>';
+  h += '<div class="setlab">問題の種類</div><div class="chiprow" style="margin-bottom:14px">';
   [['all','すべて'],['general','一般問題'],['clinical','臨床問題']].forEach(function(t){
     h += '<button class="chip'+(S.qtype===t[0]&&!S.curtain?' on':'')+'" data-qtype="'+t[0]+'"'+(S.curtain?' disabled style="opacity:.4"':'')+'>'+t[1]+'</button>';
   });
@@ -4174,6 +4181,7 @@ function homeClick(e){
     var tam = t.closest('[data-tamin]');
     if(tam){ S.timeatk = 1; S.taMin = parseInt(tam.dataset.tamin,10); save(); renderHome(); return; }
     var md = t.closest('[data-mode]'); if(md){ S.mode = md.dataset.mode; save(); renderHome(); return; }
+    var pq = t.closest('[data-prio]'); if(pq){ S.prio = pq.dataset.prio==='fresh' ? 'fresh' : 'due'; save(); renderHome(); return; }
     var qt = t.closest('[data-qtype]'); if(qt){ S.qtype = qt.dataset.qtype; save(); renderHome(); return; }
     var ca = t.closest('[data-catall]');
     if(ca){
@@ -4734,6 +4742,22 @@ function renderStats(){
 
 /* ---------- settings ---------- */
 var shopOpen = false, skinOpen = false, certOpen = false, heatOpen = false, discOpen = false, soundOpen = false;
+/* 復習間隔の表示単位。保存する値は従来どおり（自信なし＝分、まあまあ・自信あり＝日）で、単位は表示と入力だけに使う */
+var SP_UNITS = { min:{m:1, t:'分'}, hour:{m:60, t:'時間'}, day:{m:1440, t:'日'} };
+function spMin(k){ return k==='low' ? S.spacing.lowMin : S.spacing[k]*1440; }
+function spSet(k, min){ if(k==='low') S.spacing.lowMin = min; else S.spacing[k] = min/1440; }
+function spUnit(k){
+  var u = S.spacing.u && S.spacing.u[k];
+  return SP_UNITS[u] ? u : (k==='low' ? 'min' : 'day');
+}
+function spRow(k, label){
+  var u = spUnit(k), v = Math.round(spMin(k) / SP_UNITS[u].m * 100) / 100;
+  return '<div class="spacingRow"><span>'+label+'</span><span><input type="number" id="sp_'+k+'" min="0.01" step="any" inputmode="decimal" value="'+v+'">'
+       + '<select id="spu_'+k+'" aria-label="'+label+'の単位">'
+       + ['min','hour','day'].map(function(x){ return '<option value="'+x+'"'+(x===u?' selected':'')+'>'+SP_UNITS[x].t+'</option>'; }).join('')
+       + '</select>後</span></div>';
+}
+
 function renderSettings(){
   var h = '';
   h += '<h1 style="margin:8px 0 14px">設定</h1>';
@@ -4860,9 +4884,7 @@ function renderSettings(){
 
   h += '<h2>復習間隔の設定</h2><div class="card" style="margin-bottom:16px">'
      + '<div class="sub" style="margin-bottom:10px">解答するときに選ぶ自信度ごとに、次にその問題が出るまでの間隔を決めます。試験が近いときは短め、普段は長めがおすすめです。</div>'
-     + '<div class="spacingRow"><span>自信なし</span><span><input type="number" id="spLow" min="1" max="1440" value="'+S.spacing.lowMin+'">分後</span></div>'
-     + '<div class="spacingRow"><span>まあまあ（初回）</span><span><input type="number" id="spMid" min="0.1" max="60" step="0.1" value="'+S.spacing.mid+'">日後</span></div>'
-     + '<div class="spacingRow"><span>自信あり（初回）</span><span><input type="number" id="spHigh" min="0.1" max="180" step="0.1" value="'+S.spacing.high+'">日後</span></div>'
+     + spRow('low','自信なし') + spRow('mid','まあまあ（初回）') + spRow('high','自信あり（初回）')
      + '<div style="display:flex;gap:8px;margin-top:12px"><button class="ghost" data-preset="exam" style="flex:1">試験直前モード</button><button class="ghost" data-preset="normal" style="flex:1">普段モード</button></div>'
      + '</div>';
 
@@ -4930,16 +4952,16 @@ function renderSettings(){
     });
   });
 
-  ['spLow','spMid','spHigh'].forEach(function(id){
-    var el = document.getElementById(id);
-    if(!el) return;
-    el.onchange = function(){
+  ['low','mid','high'].forEach(function(k){
+    var el = document.getElementById('sp_'+k), us = document.getElementById('spu_'+k);
+    if(!el || !us) return;
+    /* 数値を変えたら保存。単位を変えたら、入力中の数値はそのままに新しい単位で読み直す */
+    el.onchange = us.onchange = function(){
       var v = parseFloat(el.value);
-      if(!isFinite(v) || v<=0) return;
-      if(id==='spLow') S.spacing.lowMin = v;
-      if(id==='spMid') S.spacing.mid = v;
-      if(id==='spHigh') S.spacing.high = v;
-      save();
+      if(!S.spacing.u) S.spacing.u = {};
+      S.spacing.u[k] = us.value;
+      if(isFinite(v) && v>0) spSet(k, Math.min(v * SP_UNITS[us.value].m, 365*1440));
+      save(); renderSettings();
     };
   });
 
@@ -5001,7 +5023,7 @@ function renderSettings(){
     if(gl){ S.dailyGoal = parseInt(gl.dataset.goal,10); save(); renderSettings(); return; }
     var pr = e.target.closest('[data-preset]');
     if(pr){
-      if(pr.dataset.preset==='exam') S.spacing = {lowMin:5, mid:0.5, high:1};
+      if(pr.dataset.preset==='exam') S.spacing = {lowMin:5, mid:0.5, high:1, u:{low:'min', mid:'hour', high:'day'}};
       else S.spacing = {lowMin:10, mid:2, high:9};
       save(); renderSettings(); return;
     }
@@ -5041,7 +5063,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "236e4325f813";
+<script>window.BOARD_BUILD = "b8efd7c0be33";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

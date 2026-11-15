@@ -848,6 +848,9 @@ details.shop summary .skprev{width:26px;height:20px;border-radius:6px;display:fl
 .sttab{flex:1;min-height:40px;border:none;border-radius:9px;background:none;color:var(--soft);font:700 13px var(--sans);cursor:pointer}
 .sttab span{margin-left:5px;font:600 10.5px var(--mono);opacity:.75}
 .sttab.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.engyo{font:800 12px var(--mono);color:var(--accent);letter-spacing:.08em;padding:12px 4px 2px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.enlist>.engyo:first-child{padding-top:2px}
+.dclass{display:inline-block;margin:2px 0 6px;padding:3px 9px;border-radius:999px;background:var(--accentSoft);color:var(--accent);font:700 11.5px var(--sans)}
 .dnames{margin:2px 0 8px;font:600 14px/1.7 var(--sans);color:var(--ink)}
 .relrow{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}
 .relchip{border:1.5px solid var(--line);border-radius:999px;background:var(--card);color:var(--accent);font:600 12.5px var(--sans);padding:6px 12px;cursor:pointer;text-decoration:none}
@@ -1210,7 +1213,7 @@ footer.tabs button{font-size:11px}
   <div class="hubsub">科目を選んでください。学習の記録と段位は科目ごと、XPは全科目共通です。</div>
   <div id="hubTotal"></div>
   <div id="hubCards"></div>
-  <button class="hubxenc" type="button" id="hubXenc"><span class="xi">📖</span><span>全科目の事典を検索<small>内科・小児科・救急科の事典をまとめて調べられます</small></span></button>
+  <button class="hubxenc" type="button" id="hubXenc"><span class="xi">📖</span><span>全科目の事典を検索<small>内科・小児科・救急科の疾患と、薬剤・略語・検査値をまとめて調べられます</small></span></button>
   <div class="hubtools">
     <button class="hubtool" type="button" data-hubact="settings">見た目・音の設定</button>
     <button class="hubtool" type="button" data-hubact="tut">使い方を見る</button>
@@ -1340,6 +1343,26 @@ footer.tabs button{font-size:11px}
 /* 表・箇条書きの描画は、科目ごとの画面と全科目の事典検索（ホーム側）の両方で使うので全体で共有する */
 /* 本文中のブロック記法：[TABLE]〜[/TABLE]（表）と [LIST]〜[/LIST]（箇条書き）。1節に複数あってもよい */
 var BLOCK_RE = /\[(TABLE|LIST)\]([\s\S]*?)\[\/\1\]/g;
+/* 事典の並び順：英字・数字で始まる項目（欧文）を先にアルファベット順、続いて読み（k、ひらがな）の50音順。
+   k はデータ側で tools/yomi.py がつける。k がない日本語名は、名前をそのまま読みとして使う（カタカナはひらがなにする） */
+var JA_COLL = (window.Intl && Intl.Collator) ? new Intl.Collator('ja') : null;
+function encIsLatin(n){ return /^[A-Za-z0-9０-９Ａ-Ｚａ-ｚα-ωΑ-Ωβ]/.test(n || ''); }
+function encKana(e){ return e.k || String(e.n).replace(/[\u30a1-\u30f6]/g, function(c){ return String.fromCharCode(c.charCodeAt(0) - 0x60); }); }
+function encCompare(a, b){
+  var la = encIsLatin(a.n), lb = encIsLatin(b.n);
+  if(la !== lb) return la ? -1 : 1;
+  var x = la ? a.n.toLowerCase() : encKana(a), y = lb ? b.n.toLowerCase() : encKana(b);
+  return JA_COLL ? JA_COLL.compare(x, y) : (x < y ? -1 : x > y ? 1 : 0);
+}
+/* 一覧の見出し（A–Z・あ行・か行…）。清音・濁音・半濁音は同じ行にまとめる */
+var GYO = [['あ','あいうえおぁぃぅぇぉゔ'],['か','かきくけこがぎぐげご'],['さ','さしすせそざじずぜぞ'],['た','たちつてとだぢづでどっ'],['な','なにぬねの'],
+           ['は','はひふへほばびぶべぼぱぴぷぺぽ'],['ま','まみむめも'],['や','やゆよゃゅょ'],['ら','らりるれろ'],['わ','わをん']];
+function encGyo(e){
+  if(encIsLatin(e.n)) return 'A–Z';
+  var c = encKana(e).charAt(0);
+  for(var i=0;i<GYO.length;i++) if(GYO[i][1].indexOf(c) >= 0) return GYO[i][0];
+  return 'その他';
+}
 function blockTableHtml(body, fmt){
   var rows = body.trim().split('\n').map(function(r){ return r.split('|').map(function(c){ return c.trim(); }); }).filter(function(r){ return r.length && r.some(function(c){return c!=='';}); });
   if(!rows.length) return '';
@@ -2865,19 +2888,22 @@ var DRUGS = (REF.drugs||[]).map(function(d){
   var br = (d.br||[]).filter(function(x){ return x !== d.n; });   /* 一般名と同じ名前の製品は商品名として出さない */
   var keys = [d.n].concat(br, d.ab||[]);
   var nl = d.nl || [];
-  return { n:d.n, c:d.c, b:d.b, kind:'drug', chk:d.chk, rel:d.rel||[], br:br, abl:d.ab||[],
+  return { n:d.n, c:d.c, g:d.g, k:d.k, b:d.b, kind:'drug', chk:d.chk, rel:d.rel||[], br:br, abl:d.ab||[],
            ab:(d.ab||[]).join('・'), y:(br.length ? '商品名：'+br.join('、') : ''),
            keys:keys, link:keys.filter(function(k){ return nl.indexOf(k) < 0; }),
            q:refQs(keys.filter(function(k){ return nl.indexOf(k) < 0; })) };
 });
 var TERMS = (REF.terms||[]).map(function(t){
-  return { n:t.n, c:t.c, b:t.b, kind:'term', y:t.y||'', ab:'', keys:[t.n], q:refQs([t.n]) };
+  return { n:t.n, c:t.c, k:t.k, b:t.b, kind:'term', y:t.y||'', ab:'', keys:[t.n], q:refQs([t.n]) };
 });
 function studyItems(){ return studyTab==='drug' ? DRUGS : (studyTab==='term' ? TERMS : ENCYC); }
 function studyCats(){
   if(studyTab==='dis') return CATS;
+  if(studyTab==='drug' && REF.groups && REF.groups.length) return REF.groups;
   var out = []; studyItems().forEach(function(e){ if(out.indexOf(e.c)<0) out.push(e.c); }); return out;
 }
+/* 絞り込みに使う分類：疾患と用語は c、薬剤は大きな括り g */
+function catOf(e){ return e.kind==='drug' ? (e.g || e.c) : e.c; }
 /* 関連する疾患の名前を、いまの科目の事典項目に当てる（完全一致 → 前方一致 → いちばん短い部分一致） */
 function findDisease(nm){
   var ex = null, pre = null, part = null;
@@ -2928,7 +2954,7 @@ function studyList(){
   }
   var out = [], rest = [];
   studyItems().forEach(function(e){
-    if(studyCat && e.c !== studyCat) return;
+    if(studyCat && catOf(e) !== studyCat) return;
     if(!q){ out.push(e); return; }
     var nm = e.n.toLowerCase();
     var ab = (e.ab||'').toLowerCase();
@@ -2940,6 +2966,7 @@ function studyList(){
     var body = stripMark(e.b);
     if(re ? re.test(body) : body.toLowerCase().indexOf(q) >= 0) rest.push(e);
   });
+  if(!q) out.sort(encCompare);   /* 検索していないときは50音順（欧文が先） */
   return q ? out.concat(rest) : out;
 }
 /* マウス／トラックパッドでも横に動かせるようにする */
@@ -3003,7 +3030,7 @@ function renderStudy(){
   h += '<input class="search" id="stq" type="search" inputmode="text" lang="ja" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="'+esc(ph)+'" value="'+esc(studyQ)+'">';
   h += '<div class="scrollwrap"><div class="chiprow chipscroll" id="stcat"><button class="chip'+(studyCat?'':' on')+'" data-scat="">すべて</button>'
      + studyCats().map(function(cc){
-         var n = items.filter(function(e){ return e.c===cc; }).length;
+         var n = items.filter(function(e){ return catOf(e)===cc; }).length;
          if(!n) return '';
          return '<button class="chip'+(studyCat===cc?' on':'')+'" data-scat="'+esc(cc)+'">'+(studyTab==='dis'?esc(letterOf(cc))+'｜':'')+esc(cc)+' '+n+'</button>';
        }).join('')
@@ -3025,6 +3052,7 @@ function encBodyHtml(e, noQuiz){
   var h = '';
   /* 薬剤は、商品名と別名・略称を本文の最初に出す */
   if(e.kind==='drug'){
+    if(!noQuiz) h += '<div class="dclass">'+esc(e.c)+'</div>';   /* カードでは見出しに分類が出ている */
     if(e.br.length) h += '<div class="enlabel">商品名</div><p class="dnames">'+e.br.map(esc).join('、')+'</p>';
     /* 「薬の種類」の項目では、別名ではなく含まれる薬の一般名を並べている */
     if(e.abl.length) h += '<div class="enlabel">'+(/薬の種類/.test(e.c||'') ? '主な薬（一般名）' : '別名・略称')+'</div><p class="dnames">'+e.abl.map(esc).join('、')+'</p>';
@@ -3045,6 +3073,7 @@ function encBodyHtml(e, noQuiz){
   if(!noQuiz && e.q.length) h += '<button class="enquiz" data-enq="'+esc(e.n)+'">この項目の問題を解く（'+e.q.length+'問）</button>';
   return h;
 }
+var STUDY_MAX = 1500;   /* 50音順の一覧は全件出す（1科目あたり数百件） */
 function studyResultsHtml(){
   var h = '';
   var hit = studyList();
@@ -3055,6 +3084,7 @@ function studyResultsHtml(){
     if(seen[top.n]) return;
     seen[top.n] = 1; shown.push(top);
   });
+  if(!studyQ.trim()) shown.sort(encCompare);   /* 子項目から親を引き上げたあとで並べ直す */
   var nChild = hit.filter(function(e){ return e.p; }).length;
   h += '<div class="sub" style="margin:0 2px 8px">'+shown.length+'件'
      + (nChild ? '<span style="margin-left:8px;color:var(--soft)">（関連項目 '+nChild+' 件を含む）</span>' : '')
@@ -3063,7 +3093,9 @@ function studyResultsHtml(){
     h += '<div class="soft">該当する項目がありません。別の言葉で探してみてください。</div>';
   }
   h += '<div class="enlist">';
-  shown.slice(0,400).forEach(function(e){
+  var lastGyo = null, sorted = !studyQ.trim();
+  shown.slice(0,STUDY_MAX).forEach(function(e){
+    if(sorted){ var gy = encGyo(e); if(gy !== lastGyo){ h += '<div class="engyo">'+esc(gy)+'</div>'; lastGyo = gy; } }
     var op = studyOpen === e.n;
     var kids = childrenOf(e.n);
     h += '<div class="encard'+(op?' open':'')+'">'
@@ -3091,7 +3123,7 @@ function studyResultsHtml(){
     h += '</div>';
   });
   h += '</div>';
-  if(shown.length>400) h += '<div class="sub" style="margin:10px 2px">上位400件を表示しています。検索で絞り込んでください。</div>';
+  if(shown.length>STUDY_MAX) h += '<div class="sub" style="margin:10px 2px">上位'+STUDY_MAX+'件を表示しています。検索で絞り込んでください。</div>';
   return h;
 }
 /* 検索結果だけを差し替える */
@@ -5073,7 +5105,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "bfcf3461d22e";
+<script>window.BOARD_BUILD = "589ab7aab338";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5220,6 +5252,8 @@ document.getElementById('subjBtn').addEventListener('click', function(){
 });
 /* ---------- 全科目の事典検索 ---------- */
 var XE = { items:null, loading:false, q:'', subj:'', open:null, limit:150 };
+/* 科目の代わりに使う「薬剤」「略語・検査値」の区分 */
+var XREF = { drug:{ id:'drug', short:'薬剤' }, term:{ id:'term', short:'略語・検査値' } };
 function xSecs(body){
   var guard = [];
   body = body.replace(/\[(TABLE|LIST)\][\s\S]*?\[\/\1\]/g, function(t){ guard.push(t); return '\u0000TBL' + (guard.length-1) + '\u0000'; });
@@ -5246,8 +5280,29 @@ function xLoad(done){
   if(XE.loading) return;
   XE.loading = true;
   var items = [], i = 0;
+  /* 薬剤・略語・検査値（全科目共通の data/ref.js）も同じ一覧に入れる */
+  function addRef(){
+    var R = window.BOARD_REF || { drugs:[], terms:[] };
+    (R.drugs||[]).forEach(function(d){
+      var br = (d.br||[]).filter(function(x){ return x !== d.n; }), ab = d.ab||[];
+      items.push({ s:XREF.drug, n:d.n, k:d.k, ab:ab.join('・'), y:(br.length ? '商品名：'+br.join('、') : ''), c:d.c, g:d.g, p:'', b:d.b||'', nq:0,
+                   br:br, abl:ab, cls:/薬の種類/.test(d.c||''),
+                   key:(d.n+' '+br.join(' ')+' '+ab.join(' ')).toLowerCase(), plain:xPlain(d.b||'') });
+    });
+    (R.terms||[]).forEach(function(t){
+      items.push({ s:XREF.term, n:t.n, k:t.k, ab:'', y:t.y||'', c:t.c, p:'', b:t.b||'', nq:0,
+                   key:(t.n+' '+(t.y||'')).toLowerCase(), plain:xPlain(t.b||'') });
+    });
+  }
   (function next(){
-    if(i >= SUBJECTS.length){ XE.items = items; XE.loading = false; done(); return; }
+    if(i === SUBJECTS.length && !window.BOARD_REF){
+      i++;
+      var rs = document.createElement('script');
+      rs.src = 'data/ref.js?v=' + (window.BOARD_BUILD||'1');
+      rs.onload = rs.onerror = function(){ rs.parentNode.removeChild(rs); next(); };
+      document.body.appendChild(rs); return;
+    }
+    if(i >= SUBJECTS.length){ addRef(); XE.items = items; XE.loading = false; done(); return; }
     var s = SUBJECTS[i++];
     var sc = document.createElement('script');
     sc.src = 'data/' + s.id + '.js?v=' + (window.BOARD_BUILD||'1');
@@ -5255,7 +5310,7 @@ function xLoad(done){
       var d = window.BOARD_DATA; window.BOARD_DATA = null;
       var en = (d && d.raw && d.raw.encyc) || [];
       en.forEach(function(e){
-        items.push({ s:s, n:e.n, ab:e.ab||'', y:e.y||'', c:e.c, p:e.p||'', b:e.b||'', nq:(e.q||[]).length,
+        items.push({ s:s, n:e.n, k:e.k, ab:e.ab||'', y:e.y||'', c:e.c, p:e.p||'', b:e.b||'', nq:(e.q||[]).length,
                      key:(e.n+' '+(e.ab||'')+' '+(e.y||'')).toLowerCase(), plain:xPlain(e.b||'') });
       });
       sc.parentNode.removeChild(sc);
@@ -5289,6 +5344,7 @@ function xMatch(){
     var sb = b.it.n.toLowerCase()===q || b.it.ab.toLowerCase()===q ? 0 : (b.it.key.indexOf(q)===0 ? 1 : 2);
     return sa - sb;
   });
+  if(!q) head.sort(function(a,b){ return encCompare(a.it, b.it); });
   return q ? head.concat(body) : head;
 }
 function xSnip(r){
@@ -5314,15 +5370,19 @@ function xResults(){
        + (op ? '' : xSnip(r)) + '</span>'
        + '<span class="encat">'+esc(it.s.short)+'</span><span class="enchev">'+(op?'▴':'▾')+'</span></button>';
     if(op){
-      h += '<div class="enbody" data-n="'+esc(it.n)+'"><div class="xsub2" style="margin-top:8px">'+esc(it.s.short)+' ／ '+esc(it.c)+'</div>';
+      h += '<div class="enbody" data-n="'+esc(it.n)+'"><div class="xsub2" style="margin-top:8px">'+esc(it.s.short)+' ／ '+esc(it.g ? it.g+' ／ '+it.c : it.c)+'</div>';
+      if(it.br && it.br.length) h += '<div class="enlabel">商品名</div><p class="dnames">'+it.br.map(esc).join('、')+'</p>';
+      if(it.abl && it.abl.length) h += '<div class="enlabel">'+(it.cls ? '主な薬（一般名）' : '別名・略称')+'</div><p class="dnames">'+it.abl.map(esc).join('、')+'</p>';
       xSecs(it.b).forEach(function(sec){
         if(sec.label) h += '<div class="enlabel">'+esc(sec.label)+'</div>';
         h += xContent(sec.text);
       });
-      h += '<div class="xbtns">'
+      if(it.s === XREF.drug) h += '<div class="chkline">実際の投与は最新の添付文書で確認してください。</div>';
+      if(!XREF[it.s.id]) h += '<div class="xbtns">'
          + '<button class="enquiz xopen" type="button" data-xgo="'+esc(id)+'">'+esc(it.s.short)+'の事典で開く</button>'
          + (it.nq ? '<button class="enquiz" type="button" data-xq="'+esc(id)+'">問題を解く（'+it.nq+'問）</button>' : '')
-         + '</div></div>';
+         + '</div>';
+      h += '</div>';
     }
     h += '</div>';
   });
@@ -5334,7 +5394,7 @@ function xChips(){
   var el = document.getElementById('xchips'); if(!el) return;
   var cnt = {}; XE.items.forEach(function(it){ cnt[it.s.id] = (cnt[it.s.id]||0) + 1; });
   el.innerHTML = '<button class="chip'+(XE.subj?'':' on')+'" data-xs="">すべて '+XE.items.length+'</button>'
-    + SUBJECTS.map(function(s){ return '<button class="chip'+(XE.subj===s.id?' on':'')+'" data-xs="'+s.id+'">'+esc(s.short)+' '+(cnt[s.id]||0)+'</button>'; }).join('');
+    + SUBJECTS.concat([XREF.drug, XREF.term]).map(function(s){ return '<button class="chip'+(XE.subj===s.id?' on':'')+'" data-xs="'+s.id+'">'+esc(s.short)+' '+(cnt[s.id]||0)+'</button>'; }).join('');
 }
 function openXenc(q){
   XE.q = q || XE.q; XE.open = null; XE.limit = 150;
@@ -5342,8 +5402,8 @@ function openXenc(q){
   document.getElementById('hub').classList.add('hide');
   v.classList.remove('hide');
   v.innerHTML = '<div class="xtop"><button class="xback" type="button" id="xback">‹ 戻る</button><h1>全科目の事典検索</h1></div>'
-    + '<div class="xsub">内科・小児科・救急科の疾患事典をまとめて探せます。略語（AKI、DKAなど）や本文中の語でも検索できます。</div>'
-    + '<input class="search" id="xq" type="search" lang="ja" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="疾患名・略語・キーワード（例：敗血症、DKA、川崎病）" value="'+esc(XE.q)+'">'
+    + '<div class="xsub">内科・小児科・救急科の疾患事典と、薬剤・略語・検査値をまとめて探せます。略語（AKI、DKAなど）・商品名・本文中の語でも検索できます。</div>'
+    + '<input class="search" id="xq" type="search" lang="ja" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="疾患名・薬剤名・略語（例：敗血症、ボスミン、DKA）" value="'+esc(XE.q)+'">'
     + '<div class="xchips" id="xchips"></div><div id="xres"><div class="xsub2">事典を読み込み中…</div></div>';
   window.scrollTo(0, 0);
   var inp = document.getElementById('xq'), composing = false, tm = null;

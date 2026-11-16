@@ -1526,7 +1526,7 @@ function load(){
   var d = { theme:'auto', cats:CATS.slice(), count:10, mode:'random', qtype:'all', shadow:false, sound:false, soundVol:0.7, rank:0, examLog:[], xp:0, xpTotal:0, palette:'default', owned:['default'], skin:'default', ownedSkins:['default'], pack:'bell', ownedPacks:['bell'], fx:'none', ownedFx:[], bg:'none', ownedBgs:[], prog:{}, hist:{}, log:[], marks:{}, tutSeen:0, chicken:0, curtain:0, timeatk:0, taMin:10, bmNames:{1:'セット1',2:'セット2',3:'セット3'}, tagDefs:null, qtags:{}, qatags:{}, spacing:{lowMin:10, mid:2, high:9}, fontsize:'md', fontfamily:'default', feedback:[], dailyGoal:20, session:null };
   try{ var r = JSON.parse(localStorage.getItem(K)); if(r) for(var k in r) d[k]=r[k]; }catch(e){}
   /* 見た目・音・チュートリアル既読・XPと買ったもの（色・音色・演出）は全科目で共通。学習データ・段位は科目ごと */
-  var SHARED_KEYS = ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack','ownedFx','fx','ownedBgs','bg'];
+  var SHARED_KEYS = ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack','ownedFx','fx','ownedBgs','bg','dayStart'];
   try{ var g = JSON.parse(localStorage.getItem('board-global-v1')); if(g) for(var sk in g) if(SHARED_KEYS.indexOf(sk)>=0) d[sk]=g[sk]; }catch(e){}
   if(!d.cats || !d.cats.length) d.cats = CATS.slice();
   d.cats = d.cats.filter(function(c){ return CATS.indexOf(c) >= 0; });   /* 旧バージョンの分野名など無効値を除去 */
@@ -1568,7 +1568,7 @@ function load(){
   return d;
 }
 var saveTimer=null;
-function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} try{ var g={}; ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack','ownedFx','fx','ownedBgs','bg'].forEach(function(k){ g[k]=S[k]; }); localStorage.setItem('board-global-v1', JSON.stringify(g)); }catch(e){} },80); }
+function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} try{ var g={}; ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack','ownedFx','fx','ownedBgs','bg','dayStart'].forEach(function(k){ g[k]=S[k]; }); localStorage.setItem('board-global-v1', JSON.stringify(g)); }catch(e){} },80); }
 
 /* ---------- マイリスト（タグ） ----------
    1問に複数のタグを付けられる。問題は qtags、一問一答は qatags に「ID→タグIDの配列」で持つ。
@@ -1840,7 +1840,9 @@ function applyFont(){
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ if(S.theme==='auto') applyTheme(); });
 
 function P(id){ return S.prog[id] || (S.prog[id] = { seen:0, ok:0, ng:0, due:0, ival:0, last:0 }); }
-function todayKey(d){ d = d||new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+/* 1日の切り替え時刻（0〜6時。初期値は午前4時）。それより前の深夜に解いた分は前日として数える。全科目共通 */
+function dayStartOf(v){ return (typeof v === 'number' && v >= 0 && v <= 6) ? Math.floor(v) : 4; }
+function todayKey(d){ d = new Date((d||new Date()).getTime() - dayStartOf(S && S.dayStart)*3600000); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 function dueList(){ var n=Date.now(); return QUESTIONS.filter(function(q){ var p=S.prog[q.id]; return p && p.due && p.due<=n; }); }
 function streak(){
   var n=0, d=new Date();
@@ -5209,6 +5211,10 @@ function renderSettings(){
      + '<div class="sub" style="margin-bottom:10px">1日に解く問題数の目標です。ホームのリングに反映されます。</div>'
      + '<div class="chiprow" style="flex-wrap:wrap">'
      + [5,10,15,20,30,40,50,75,100,150,200].map(function(n){ return '<button class="chip'+(S.dailyGoal===n?' on':'')+'" data-goal="'+n+'">'+n+'問</button>'; }).join('')
+     + '</div>'
+     + '<div class="sub" style="margin:14px 0 8px">1日の切り替え時刻（全科目共通）。この時刻より前の深夜に解いた分は、前の日の分として数えます。</div>'
+     + '<div class="chiprow" style="flex-wrap:wrap">'
+     + [0,1,2,3,4,5,6].map(function(n){ return '<button class="chip'+(dayStartOf(S.dayStart)===n?' on':'')+'" data-daystart="'+n+'">'+(n===0?'0時（日付どおり）':'午前'+n+'時')+'</button>'; }).join('')
      + '</div></div>';
 
   h += '<h2>復習間隔の設定</h2><div class="card" style="margin-bottom:16px">'
@@ -5371,6 +5377,8 @@ function renderSettings(){
     if(th){ S.theme = th.dataset.settheme; applyTheme(); save(); renderSettings(); return; }
     if(e.target.closest('[data-contact]')){ window.openContact({ subj: SUBJ.id, page: 'settings' }); return; }
     if(e.target.closest('[data-cloudsync]')){ if(window.BoardSync && window.BoardSync.open) window.BoardSync.open(); return; }
+    var dsb = e.target.closest('[data-daystart]');
+    if(dsb){ S.dayStart = parseInt(dsb.dataset.daystart,10); save(); renderSettings(); return; }
     var gl = e.target.closest('[data-goal]');
     if(gl){ S.dailyGoal = parseInt(gl.dataset.goal,10); save(); renderSettings(); return; }
     var pr = e.target.closest('[data-preset]');
@@ -5415,7 +5423,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "121c37413eb4";
+<script>window.BOARD_BUILD = "3c93281d9e97";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5558,6 +5566,8 @@ function renderHub(){
   document.getElementById('hubCards').innerHTML = h;
   /* 科目ごとの1日の目標。各科目の設定タブと同じ値（dailyGoal）を読み書きする */
   var GOALS = [5,10,15,20,30,40,50,75,100,150,200], now = new Date();
+  var hds = (g && typeof g.dayStart === 'number' && g.dayStart >= 0 && g.dayStart <= 6) ? Math.floor(g.dayStart) : 4;
+  now = new Date(now.getTime() - hds*3600000);
   var tk = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
   var gh = '<div class="hubgoals"><h3>1日の目標</h3><div class="hgsub">科目ごとに、1日に解く問題数の目標を決められます。</div>';
   SUBJECTS.forEach(function(s){
@@ -5569,6 +5579,9 @@ function renderHub(){
         + GOALS.map(function(n){ return '<option value="'+n+'"'+(n===goal?' selected':'')+'>'+n+'問</option>'; }).join('')
         + '</select></div>';
   });
+  gh += '<div class="hgrow"><span class="hgname" style="font-weight:600">1日の切り替え時刻</span><select data-hubday aria-label="1日の切り替え時刻">'
+      + [0,1,2,3,4,5,6].map(function(n){ return '<option value="'+n+'"'+(n===hds?' selected':'')+'>'+(n===0?'0時':'午前'+n+'時')+'</option>'; }).join('')
+      + '</select></div><div class="hpnote">この時刻より前の深夜に解いた分は、前の日の分として数えます（目標・連続日数・リマインド通知）。</div>';
   document.getElementById('hubGoals').innerHTML = gh + '</div>';
   hubDoneToday = SUBJECTS.some(function(s){ var d=null; try{ d = JSON.parse(localStorage.getItem('board-'+s.id+'-v1')); }catch(e){} return !!(d && d.hist && d.hist[tk] && d.hist[tk].a); }) ? tk : '';
   renderHubPush();
@@ -5615,6 +5628,14 @@ document.querySelector('.hubtools').addEventListener('click', function(e){
 });
 document.getElementById('hubContact').addEventListener('click', function(){ window.openContact({ page: 'hub' }); });
 document.getElementById('hubGoals').addEventListener('change', function(e){
+  var ds = e.target.closest('[data-hubday]');
+  if(ds){
+    var gg = null; try{ gg = JSON.parse(localStorage.getItem('board-global-v1')); }catch(er){}
+    if(!gg || typeof gg !== 'object') gg = {};
+    gg.dayStart = parseInt(ds.value, 10) || 0;
+    try{ localStorage.setItem('board-global-v1', JSON.stringify(gg)); }catch(er){}
+    renderHub(); return;
+  }
   var sel = e.target.closest('[data-hubgoal]'); if(!sel) return;
   var key = 'board-'+sel.dataset.hubgoal+'-v1', d = null;
   try{ d = JSON.parse(localStorage.getItem(key)); }catch(er){}

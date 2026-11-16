@@ -4819,6 +4819,7 @@ function showCert(rec){
 }
 function zoom(src){
   var o = document.createElement('div');
+  o.className = 'zoomov';
   o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99;display:flex;align-items:center;justify-content:center;padding:12px';
   o.innerHTML = '<img src="'+src+'" style="max-width:100%;max-height:100%;object-fit:contain">';
   o.onclick = function(){ document.body.removeChild(o); };
@@ -5404,6 +5405,19 @@ if(START.enc){
 } else go(START.view || 'home');
 /* 初回起動時（全科目で1回）のみ使い方を表示する。ホームの「使い方」からは常に表示する */
 if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
+/* 戻る操作（左スワイプ・戻るボタン）で1つ前の画面に戻す。戻る先がなければ false を返す */
+window.BOARD_BACK = function(){
+  /* 使い方の案内・体験中は、画面から抜けて詰まないよう何もしない */
+  if((S.session && S.session.tut) || document.getElementById('tutOverlay')) return true;
+  var b;
+  if(view==='exrev'){ closeExamReview(); return true; }
+  if(view==='quiz'){ b = main.querySelector('[data-act="quit"]'); if(b) b.click(); return true; }   /* ✕と同じ。続きはホームから再開できる */
+  if(view==='result'){ b = main.querySelector('[data-act="home"],[data-act="toRank"]'); if(b) b.click(); else go('home'); return true; }
+  if(view!=='home'){ go('home'); return true; }
+  if(qaOn){ qaOn = false; if(qaFromMl){ qaFromMl = false; qaTagPool = null; qaRecent = []; mlOn = true; } renderHome(); window.scrollTo(0,0); return true; }
+  if(mlOn){ mlOn = false; renderHome(); window.scrollTo(0,0); return true; }
+  return false;
+};
 }
 </script>
 
@@ -5415,7 +5429,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "121c37413eb4";
+<script>window.BOARD_BUILD = "1a1c979b88c9";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5899,8 +5913,9 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
 </script>
 
 <script>
-/* 戻る操作（左スワイプ・戻るボタン）でサイトから抜けないようにする。
-   戻ろうとするたびに履歴を積み直して、その場にとどまる。
+/* 戻る操作（左スワイプ・戻るボタン）でサイトから抜けず、アプリ内の1つ前の画面に戻す。
+   戻ろうとするたびに履歴を積み直してページにとどまり、代わりに画面を1つ戻す。
+   順番は「開いているカードや窓を閉じる → 演習なら中断してホーム → 各タブならホーム → ホームなら科目選択」。
    ブラウザは操作前の履歴追加を無視することがあるため、最初のタップ時にも積む。 */
 (function(){
   if(!window.history || !history.pushState) return;
@@ -5910,7 +5925,27 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
   function once(){ if(armed) return; armed = true; arm(); }
   window.addEventListener('pointerdown', once, { once:true, passive:true });
   window.addEventListener('touchstart', once, { once:true, passive:true });
-  window.addEventListener('popstate', function(){ arm(); });
+  function shown(id){ var e = document.getElementById(id); return e && !e.classList.contains('hide') ? e : null; }
+  function back(){
+    var o, b;
+    if(shown('dlg')){ b = document.getElementById('dlgCancel'); if(b.classList.contains('hide')) b = document.getElementById('dlgOk'); b.click(); return; }
+    if((o = document.querySelector('.zoomov, .certoverlay'))){ o.click(); return; }
+    if((o = document.getElementById('tagSheet'))){ b = o.querySelector('[data-tsclose]'); if(b) b.click(); return; }
+    if((o = document.getElementById('refSheet'))){ b = o.querySelector('[data-rsback]') || o.querySelector('[data-rsclose]'); if(b) b.click(); else o.click(); return; }
+    /* 入力中のメモ・お問い合わせは、書きかけを消さないよう閉じない */
+    if((o = document.querySelector('#contactOverlay, #memoOverlay'))){
+      var t = o.querySelector('textarea');
+      if(t && t.value.trim() && document.activeElement === t) return;
+      b = o.querySelector('[data-memo="close"], [data-ct="close"]'); if(b) b.click(); return;
+    }
+    if(shown('xenc')){ b = document.getElementById('xback'); if(b) b.click(); return; }
+    if(shown('app')){
+      if(typeof window.BOARD_BACK === 'function' && window.BOARD_BACK()) return;
+      b = document.getElementById('subjBtn'); if(b) b.click();   /* 科目のホーム → 科目選択 */
+    }
+    /* 科目選択の画面では、戻る先がないので何もしない */
+  }
+  window.addEventListener('popstate', function(){ arm(); try{ back(); }catch(e){} });
 })();
 </script>
 <script>

@@ -850,18 +850,15 @@ details.shop summary .skprev{width:26px;height:20px;border-radius:6px;display:fl
 .sttab.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .engyo{font:800 12px var(--mono);color:var(--accent);letter-spacing:.08em;padding:12px 4px 2px;border-bottom:1px solid var(--line);margin-bottom:2px}
 .enlist>.engyo:first-child{padding-top:2px}
-.engyoall{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 2px 6px;font:600 12px var(--sans);color:var(--soft)}
-.engyoall button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font:600 12px var(--sans);cursor:pointer}
-.engyo.fold{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin:0 0 6px;font:800 15px var(--sans);color:var(--ink);letter-spacing:.02em;cursor:pointer}
-.engyo.fold small{font:600 12px var(--mono);color:var(--soft)}
-.engyo.fold i{margin-left:auto;font-style:normal;color:var(--soft)}
-.engyo.fold.on{border-color:var(--accent);color:var(--accent);background:var(--accentSoft)}
+.engyobar{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin:0 0 10px}
+.engb{height:44px;border:1.5px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);font:800 15px var(--sans);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;padding:0}
+.engb small{font:600 9px var(--mono);color:var(--soft)}
+.engb.on{border-color:var(--accent);background:var(--accent);color:var(--accentInk)}
+.engb.on small{color:var(--accentInk);opacity:.8}
 .eninirow{display:flex;flex-wrap:wrap;gap:6px;margin:2px 2px 10px}
 .enini{min-width:44px;height:40px;padding:0 8px;border:1.5px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:700 15px var(--sans);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
 .enini small{font:600 9px var(--mono);color:var(--soft)}
 .enini.on{border-color:var(--accent);background:var(--accentSoft);color:var(--accent)}
-.eninihd{font:800 13px var(--sans);color:var(--accent);padding:8px 4px 4px;border-bottom:1px solid var(--line);margin-bottom:4px}
-.eninihd small{margin-left:8px;font:600 11px var(--mono);color:var(--soft)}
 .dclass{display:inline-block;margin:2px 0 6px;padding:3px 9px;border-radius:999px;background:var(--accentSoft);color:var(--accent);font:700 11.5px var(--sans)}
 .dnames{margin:2px 0 8px;font:600 14px/1.7 var(--sans);color:var(--ink)}
 .relrow{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}
@@ -3111,8 +3108,8 @@ function encBodyHtml(e, noQuiz){
   return h;
 }
 var STUDY_MAX = 1500;
-var STUDY_FOLD = 40, STUDY_FOLD2 = 30;   /* これより多い一覧は行ごと、行の中は頭文字ごとに折りたたむ */
-var studyGyoOpen = {}, studyIniOpen = {};   /* 50音順の一覧は全件出す（1科目あたり数百件） */
+var STUDY_FOLD = 40, STUDY_FOLD2 = 30;   /* これより多い一覧は行の索引で切り替え、行の中が多ければ頭文字でも絞る */
+var studyGyo = '', studyIni = '';   /* 一覧の索引で選んでいる行・頭文字 */   /* 50音順の一覧は全件出す（1科目あたり数百件） */
 function studyResultsHtml(){
   var h = '';
   var hit = studyList();
@@ -3133,32 +3130,30 @@ function studyResultsHtml(){
   }
   h += '<div class="enlist">';
   var lastGyo = null, sorted = !studyQ.trim();
-  /* 検索していない長い一覧は、行（あ行・か行…）ごとに折りたたむ。行が長ければ頭文字でもう一段たたむ */
+  /* 検索していない長い一覧は、上に行の索引（A–Z あ か さ…）を出し、選んだ行だけを並べる。
+     行が長ければ、その下に頭文字のボタンを出してさらに絞れるようにする */
   if(sorted && shown.length > STUDY_FOLD){
     var gyos = [], byG = {};
     shown.forEach(function(e){ var g = encGyo(e); if(!byG[g]){ byG[g] = []; gyos.push(g); } byG[g].push(e); });
-    var anyOpen = gyos.some(function(g){ return studyGyoOpen[g]; });
-    h += '<div class="engyoall"><span>行をタップすると開きます</span>'
-       + (anyOpen ? '<button type="button" data-gyall="0">すべて閉じる</button>' : '<button type="button" data-gyall="1">すべて開く</button>') + '</div>';
-    gyos.forEach(function(g){
-      var list = byG[g], gop = !!studyGyoOpen[g];
-      h += '<button type="button" class="engyo fold'+(gop?' on':'')+'" data-gy="'+esc(g)+'">'
-         + '<span>'+esc(g==='A–Z'||g==='その他' ? g : g+'行')+'</span><small>'+list.length+'件</small><i>'+(gop?'▴':'▾')+'</i></button>';
-      if(!gop) return;
-      if(list.length > STUDY_FOLD2){
-        var inis = [], byI = {};
-        list.forEach(function(e){ var k = encInitial(e); if(!byI[k]){ byI[k] = []; inis.push(k); } byI[k].push(e); });
-        h += '<div class="eninirow">' + inis.map(function(k){
-               return '<button type="button" class="enini'+(studyIniOpen[k]?' on':'')+'" data-gi="'+esc(k)+'">'+esc(k)+'<small>'+byI[k].length+'</small></button>';
-             }).join('') + '</div>';
-        inis.forEach(function(k){
-          if(!studyIniOpen[k]) return;
-          h += '<div class="eninihd">'+esc(k)+'<small>'+byI[k].length+'件</small></div>';
-          byI[k].forEach(function(e){ h += studyCardHtml(e); });
-        });
-      } else {
-        list.forEach(function(e){ h += studyCardHtml(e); });
-      }
+    if(!byG[studyGyo]) studyGyo = gyos[0];
+    h += '<div class="engyobar">' + gyos.map(function(g){
+           return '<button type="button" class="engb'+(studyGyo===g?' on':'')+'" data-gy="'+esc(g)+'">'+esc(g)+'<small>'+byG[g].length+'</small></button>';
+         }).join('') + '</div>';
+    var list = byG[studyGyo];
+    if(list.length > STUDY_FOLD2){
+      var inis = [], byI = {};
+      list.forEach(function(e){ var k = encInitial(e); if(!byI[k]){ byI[k] = []; inis.push(k); } byI[k].push(e); });
+      if(studyIni && !byI[studyIni]) studyIni = '';
+      h += '<div class="eninirow"><button type="button" class="enini'+(studyIni?'':' on')+'" data-gi="">すべて</button>'
+         + inis.map(function(k){
+             return '<button type="button" class="enini'+(studyIni===k?' on':'')+'" data-gi="'+esc(k)+'">'+esc(k)+'<small>'+byI[k].length+'</small></button>';
+           }).join('') + '</div>';
+      if(studyIni) list = byI[studyIni];
+    }
+    var lastI = null, multi = !studyIni && list.length > STUDY_FOLD2;
+    list.forEach(function(e){
+      if(multi){ var k = encInitial(e); if(k !== lastI){ h += '<div class="engyo">'+esc(k)+'</div>'; lastI = k; } }
+      h += studyCardHtml(e);
     });
     h += '</div>';
     return h;
@@ -3238,12 +3233,12 @@ function studyClick(ev){
     if(document.getElementById('tutOverlay')) return;
     var tb = ev.target.closest('[data-stab]');
     if(tb){
-      if(studyTab !== tb.dataset.stab){ studyTab = tb.dataset.stab; studyCat = ''; studyQ = ''; studyOpen = null; studyChildOpen = null; studyChipLeft = 0; studyGyoOpen = {}; studyIniOpen = {}; renderStudy(); }
+      if(studyTab !== tb.dataset.stab){ studyTab = tb.dataset.stab; studyCat = ''; studyQ = ''; studyOpen = null; studyChildOpen = null; studyChipLeft = 0; studyGyo = ''; studyIni = ''; renderStudy(); }
       return;
     }
     var sc = ev.target.closest('[data-scat]');
     if(sc){
-      studyCat = sc.dataset.scat; studyOpen = null; studyGyoOpen = {}; studyIniOpen = {};
+      studyCat = sc.dataset.scat; studyOpen = null; studyGyo = ''; studyIni = '';
       var el2 = document.getElementById('stcat');
       if(el2) studyChipLeft = el2.scrollLeft;
       Array.prototype.forEach.call(document.querySelectorAll('#stcat .chip'), function(b2){
@@ -3252,29 +3247,10 @@ function studyClick(ev){
       refreshStudyResults();
       return;
     }
-    var ga = ev.target.closest('[data-gyall]');
-    if(ga){
-      studyGyoOpen = {}; studyIniOpen = {};
-      if(ga.dataset.gyall === '1') Array.prototype.forEach.call(document.querySelectorAll('[data-gy]'), function(b){ studyGyoOpen[b.dataset.gy] = 1; });
-      refreshStudyResults();
-      return;
-    }
     var gy = ev.target.closest('[data-gy]');
-    if(gy){
-      var g = gy.dataset.gy;
-      if(studyGyoOpen[g]) delete studyGyoOpen[g]; else studyGyoOpen[g] = 1;
-      refreshStudyResults();
-      var gb = document.querySelector('[data-gy="'+g.replace(/"/g,'\\"')+'"]');
-      if(gb) gb.scrollIntoView({ block:'nearest' });
-      return;
-    }
+    if(gy){ studyGyo = gy.dataset.gy; studyIni = ''; studyOpen = null; refreshStudyResults(); return; }
     var gi = ev.target.closest('[data-gi]');
-    if(gi){
-      var k = gi.dataset.gi;
-      if(studyIniOpen[k]) delete studyIniOpen[k]; else studyIniOpen[k] = 1;
-      refreshStudyResults();
-      return;
-    }
+    if(gi){ studyIni = gi.dataset.gi; studyOpen = null; refreshStudyResults(); return; }
     var eq = ev.target.closest('[data-enq]');
     if(eq){
       var nm = eq.dataset.enq, hit = null, its = studyItems();
@@ -5202,7 +5178,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "e46036ebfa90";
+<script>window.BOARD_BUILD = "fb0bc5cbf27c";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

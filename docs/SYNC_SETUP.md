@@ -80,3 +80,7 @@ window.BOARD_FIREBASE = {
 3. **Firestore Database** → 「データ」→「コレクションを開始」→ コレクションID `admins`、ドキュメントID に 2 のUIDを貼る（フィールドは何か1つ入れればよい。例：`name` = `作者`）→ 保存
 4. 最新の `firestore.rules` を「ルール」に貼り直して公開
 5. アプリを開き直すと、解説画面の下にボタンが出る
+
+## リマインド通知
+
+その日まだ解いていないときに通知を送る機能の設定は [PUSH_SETUP.md](PUSH_SETUP.md) を参照。

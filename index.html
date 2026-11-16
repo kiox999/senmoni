@@ -1070,6 +1070,12 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 .hgrow .hgname{flex:1;font:700 13.5px var(--sans);color:var(--ink)}
 .hgrow .hgtoday{font:600 12px var(--mono);color:var(--soft);white-space:nowrap}
 .hgrow .hgtoday.done{color:var(--sj)}
+.hubpush{margin-top:12px}
+.hpnote{font:500 12px/1.6 var(--sans);color:var(--soft);padding:6px 0 2px}
+.hpnote.warn{color:var(--bad,#C0392B)}
+.hpsw{flex:1;display:flex;align-items:center;gap:9px;font:700 13.5px var(--sans);color:var(--ink);cursor:pointer}
+.hpsw input{width:20px;height:20px;accent-color:var(--accent)}
+.hpbtn{margin-top:6px;font:700 13px var(--sans);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:9px;padding:8px 14px;cursor:pointer}
 .hgrow select{font:700 13px var(--sans);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:9px;padding:6px 8px}
 .hubtools{display:flex;gap:10px;margin:14px 0 0}
 .hubtool{flex:1;font:600 13px var(--sans);padding:12px 8px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
@@ -1293,6 +1299,7 @@ footer.tabs button{font-size:11px}
   <div id="hubTotal"></div>
   <div id="hubCards"></div>
   <div id="hubGoals"></div>
+  <div id="hubPush"></div>
   <button class="hubxenc" type="button" id="hubXenc"><span class="xi">📖</span><span>全科目の事典を検索<small>内科・小児科・救急科の疾患と、薬剤・略語・検査値をまとめて調べられます</small></span></button>
   <div class="hubtools">
     <button class="hubtool" type="button" data-hubact="settings">見た目・音の設定</button>
@@ -2486,6 +2493,7 @@ function submitAnswer(bet){
   p.seen++; p.lastOk = ok; p.last = Date.now();
   if(ok) p.ok++; else p.ng++;
   var hk = todayKey(); var h = S.hist[hk] || (S.hist[hk]={a:0,c:0}); h.a++; if(ok) h.c++;
+  if(window.BoardSync && BoardSync.push) BoardSync.push.markActive(hk);
   S.log.unshift({ id:q.id, ok:ok, ts:Date.now() });
   if(S.log.length>50) S.log.length = 50;
 
@@ -2807,6 +2815,7 @@ function finishExam(timeUp){
     p.seen++; p.lastOk = okq; p.last = Date.now();
     if(okq) p.ok++; else p.ng++;
     hh.a++; if(okq) hh.c++;
+    if(window.BoardSync && BoardSync.push) BoardSync.push.markActive(todayKey());
     p.ival = okq ? (p.ival>0 ? Math.max(sp.mid*0.5, p.ival*1.6) : sp.mid) : sp.lowMin/1440;
     p.due = Date.now() + p.ival*DAY;
     s.res.push({ id:qid, ok:okq, answered: mine!=='', ans: (s.ans && s.ans[idx]) ? s.ans[idx].slice() : [] });
@@ -5406,7 +5415,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "e4282dec8b9a";
+<script>window.BOARD_BUILD = "121c37413eb4";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5480,6 +5489,54 @@ function progressOf(id){
 /* 問題数は、その科目を一度開いたときの実数を覚えておき、なければ組み込みの値を使う */
 function countOf(s){ var n = 0; try{ n = parseInt(localStorage.getItem('board-count-'+s.id), 10) || 0; }catch(e){} return n || s.total; }
 var RANKNAME = ['なし','5級','4級','3級','2級','1級','初段','二段','三段','四段','五段','六段','七段','八段','九段','十段'];
+/* リマインド通知（その日まだ解いていないときに届くプッシュ通知）の設定欄。
+   未設定(firebase-config.js の vapidKey が空)なら何も出さない */
+var hubDoneToday = '', hubPushMsg = '', hubPushBusy = false;
+function renderHubPush(){
+  var el = document.getElementById('hubPush'); if(!el) return;
+  var P = window.BoardSync && window.BoardSync.push;
+  if(!P){ el.innerHTML = ''; return; }
+  var st = P.state();
+  if(!st.configured || st.supported === null){ el.innerHTML = ''; return; }
+  if(hubDoneToday) P.markActive(hubDoneToday);
+  var h = '<div class="hubgoals hubpush"><h3>リマインド通知</h3><div class="hgsub">その日まだ1問も解いていないときに、決めた時刻に通知でお知らせします。</div>';
+  if(!st.supported){
+    var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    h += '<div class="hpnote">' + (ios
+      ? 'iPhone・iPadでは、Safariの共有メニューから「ホーム画面に追加」したアプリで開くと設定できます。'
+      : 'このブラウザは通知に対応していません。') + '</div>';
+  }else if(!st.signedIn){
+    h += '<div class="hpnote">クラウド同期にログインすると設定できます。</div><button type="button" class="hpbtn" data-hp="login">ログインする</button>';
+  }else{
+    h += '<div class="hgrow"><label class="hpsw"><input type="checkbox" data-hp="on"'+(st.on?' checked':'')+(hubPushBusy?' disabled':'')+'><span>この端末に通知する</span></label>'
+       + '<select data-hp="hour" aria-label="通知する時刻"'+(hubPushBusy?' disabled':'')+'>';
+    for(var i=0;i<24;i++) h += '<option value="'+i+'"'+(i===st.hour?' selected':'')+'>'+i+':00</option>';
+    h += '</select></div>';
+    if(st.on) h += '<div class="hpnote">通知は端末ごとの設定です。時刻は数分〜数十分ほど遅れることがあります。どの科目でも1問解けば、その日は届きません。</div>';
+    else if(st.perm === 'denied') h += '<div class="hpnote warn">通知がブロックされています。ブラウザ（または端末）の設定で、このアプリの通知を許可してください。</div>';
+  }
+  if(hubPushMsg) h += '<div class="hpnote warn">'+esc(hubPushMsg)+'</div>';
+  el.innerHTML = h + '</div>';
+}
+(function(){
+  var el = document.getElementById('hubPush'); if(!el) return;
+  function run(pr){
+    hubPushBusy = true; hubPushMsg = ''; renderHubPush();
+    pr.then(function(){ hubPushBusy = false; renderHubPush(); },
+            function(e){ hubPushBusy = false; hubPushMsg = (e && e.message) || '設定できませんでした。通信状況を確認して、もう一度お試しください。'; renderHubPush(); });
+  }
+  el.addEventListener('click', function(e){
+    if(e.target.closest('[data-hp="login"]') && window.BoardSync && BoardSync.open) BoardSync.open();
+  });
+  el.addEventListener('change', function(e){
+    var P = window.BoardSync && window.BoardSync.push; if(!P) return;
+    var t = e.target.closest('[data-hp]'); if(!t) return;
+    if(t.dataset.hp === 'on') run(t.checked ? P.enable() : P.disable());
+    else if(t.dataset.hp === 'hour') run(P.setHour(parseInt(t.value, 10)));
+  });
+  window.addEventListener('boardsync-auth', function(){ setTimeout(renderHubPush, 0); });
+  if(window.BoardSyncLoaded) window.BoardSyncLoaded.then(function(b){ if(b && b.pushReady) b.pushReady.then(renderHubPush, function(){}); });
+})();
 function renderHub(){
   /* XPは全科目で共通の財布なので、科目カードではなく一覧の上部に1回だけ表示する */
   var g = null; try{ g = JSON.parse(localStorage.getItem('board-global-v1')); }catch(e){}
@@ -5513,6 +5570,8 @@ function renderHub(){
         + '</select></div>';
   });
   document.getElementById('hubGoals').innerHTML = gh + '</div>';
+  hubDoneToday = SUBJECTS.some(function(s){ var d=null; try{ d = JSON.parse(localStorage.getItem('board-'+s.id+'-v1')); }catch(e){} return !!(d && d.hist && d.hist[tk] && d.hist[tk].a); }) ? tk : '';
+  renderHubPush();
   document.getElementById('hub').classList.remove('hide');
   document.getElementById('app').classList.add('hide');
   document.getElementById('loading').classList.add('hide');

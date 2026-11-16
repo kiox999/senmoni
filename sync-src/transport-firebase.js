@@ -7,7 +7,9 @@ import {
 import {
   initializeFirestore, doc, runTransaction, serverTimestamp, collection, addDoc,
   writeBatch, increment, query, where, getDocs, getDoc, setDoc, updateDoc, deleteField, FieldPath
+  , deleteDoc
 } from 'firebase/firestore';
+import { getMessaging, getToken, deleteToken, isSupported as messagingSupported } from 'firebase/messaging';
 
 var MAX_JSON = 900000;   /* Firestoreは1ドキュメント1MiBまで */
 
@@ -86,6 +88,26 @@ export function createFirebaseTransport(cfg) {
       if (level) { var p = {}; p[String(qid)] = level; return setDoc(ref, { p: p }, { merge: true }); }
       return updateDoc(ref, new FieldPath('p', String(qid)), deleteField());
     },
+    /* ---- リマインド通知（Webプッシュ） ---- */
+    pushConfigured: function () { return !!(cfg.vapidKey && cfg.messagingSenderId); },
+    pushSupported: function () {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return Promise.resolve(false);
+      return messagingSupported().catch(function () { return false; });
+    },
+    /* この端末の通知の宛先（トークン）を取得する。アプリ本体の sw.js をそのまま使う */
+    pushToken: async function () {
+      var reg = await navigator.serviceWorker.ready;
+      return getToken(getMessaging(app), { vapidKey: cfg.vapidKey, serviceWorkerRegistration: reg });
+    },
+    pushDropToken: function () { return deleteToken(getMessaging(app)).catch(function () { return false; }); },
+    /* 宛先と通知時刻を pushSubs/<uid>_<端末ID> に保存する */
+    pushSave: function (uid, dev, d) {
+      return setDoc(doc(db, 'pushSubs', uid + '_' + dev),
+        { uid: uid, token: d.token, hour: d.hour, utcHour: d.utcHour, tz: d.tz, updatedAt: serverTimestamp() }, { merge: true });
+    },
+    pushRemove: function (uid, dev) { return deleteDoc(doc(db, 'pushSubs', uid + '_' + dev)); },
+    /* 「この日は解いた」の目印。通知を送る側が見て、解いた日は送らない */
+    pushActive: function (uid, day) { return setDoc(doc(db, 'pushAct', uid), { last: day }); },
     /* クラウドの1ドキュメントを読み、mergeFn(cloudData)の結果を（変化があれば）書き込む。競合時はトランザクションが自動で再試行する */
     syncDoc: function (uid, docId, mergeFn) {
       var ref = doc(db, 'users', uid, 'state', docId);

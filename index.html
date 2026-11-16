@@ -929,12 +929,12 @@ html[data-theme="dark"][data-palette="default"][data-subj="shouni"]{--accent:#E8
 .xchips .chip[class*="sj-"].on{background:var(--sj);color:#fff;border-color:var(--sj)}
 html[data-theme="dark"] .xchips .chip[class*="sj-"].on{color:#0A0B0D}
 .xsjdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sj);margin-right:6px;vertical-align:1px}
-html[data-palette="mint"]{--accent:#0E9E86;--accentSoft:#DFF4F0;--accentInk:#FFFFFF;--barMid:#8FD3C7}
-html[data-theme="dark"][data-palette="mint"]{--accent:#3ED9BC;--accentInk:#06201B;--accentSoft:#123029;--barMid:#255F53}
+html[data-palette="mint"]{--accent:#9A2E5C;--accentSoft:#F8E6EE;--accentInk:#FFFFFF;--barMid:#D9A3BB}
+html[data-theme="dark"][data-palette="mint"]{--accent:#E0709E;--accentInk:#2A0716;--accentSoft:#33141F;--barMid:#6B2C48}
 html[data-palette="sakura"]{--accent:#D4457B;--accentSoft:#FCE7EF;--accentInk:#FFFFFF;--barMid:#EFA8C3}
 html[data-theme="dark"][data-palette="sakura"]{--accent:#FF7FAC;--accentInk:#2A0A17;--accentSoft:#33141F;--barMid:#6B2C43}
-html[data-palette="sunset"]{--accent:#E06A16;--accentSoft:#FDEEE0;--accentInk:#FFFFFF;--barMid:#F0B888}
-html[data-theme="dark"][data-palette="sunset"]{--accent:#FF9A4D;--accentInk:#2A1405;--accentSoft:#332012;--barMid:#6E4526}
+html[data-palette="sunset"]{--accent:#7A5230;--accentSoft:#F3ECE4;--accentInk:#FFFFFF;--barMid:#CDB298}
+html[data-theme="dark"][data-palette="sunset"]{--accent:#D2A276;--accentInk:#231507;--accentSoft:#2B2118;--barMid:#5E4630}
 html[data-palette="lavender"]{--accent:#7B52D0;--accentSoft:#EEE8FB;--accentInk:#FFFFFF;--barMid:#BEA9EA}
 html[data-theme="dark"][data-palette="lavender"]{--accent:#A98BFF;--accentInk:#180A2E;--accentSoft:#241934;--barMid:#4A3670}
 html[data-palette="mono"]{--accent:#3A3F47;--accentSoft:#ECEEF1;--accentInk:#FFFFFF;--barMid:#B4BAC3}
@@ -1675,9 +1675,9 @@ function tagToast(msg, undo){
 
 var PALETTES = [
   { id:'default',   name:'科目の色',     cost:0,     sw:'#1B5FC1', note:'内科は緑・小児科は橙・救急科は青' },
-  { id:'mint',      name:'ミント',       cost:900,   sw:'#0E9E86', note:'すっきりした緑' },
+  { id:'mint',      name:'ワイン',       cost:900,   sw:'#9A2E5C', note:'深みのある赤紫' },   /* 旧ミント（内科の緑と重なるため入れ替え。持っている人はそのまま使える） */
   { id:'sakura',    name:'サクラ',       cost:1800,  sw:'#D4457B', note:'やわらかい桜色' },
-  { id:'sunset',    name:'サンセット',   cost:3000,  sw:'#E06A16', note:'あたたかい夕焼け' },
+  { id:'sunset',    name:'コーヒー',     cost:3000,  sw:'#7A5230', note:'落ち着いた焦げ茶' },   /* 旧サンセット（小児科の橙と重なるため入れ替え） */
   { id:'lavender',  name:'ラベンダー',   cost:4500,  sw:'#7B52D0', note:'落ち着いた紫' },
   { id:'mono',      name:'モノクローム', cost:6500,  sw:'#3A3F47', note:'色を削ぎ落とした黒' },
   { id:'gold',      name:'ゴールド',     cost:12000, sw:'#B8860B', note:'いちばん高い色' }
@@ -5199,7 +5199,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "df3eea3efd6b";
+<script>window.BOARD_BUILD = "75b423a6510f";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

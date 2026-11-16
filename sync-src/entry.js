@@ -4,6 +4,7 @@ import { createStore } from './store.js';
 import { createUI } from './ui.js';
 import { createFirebaseTransport, isConfigured } from './transport-firebase.js';
 import { createQStats } from './qstats.js';
+import { createPush } from './push.js';
 
 (function () {
   var cfg = window.BOARD_FIREBASE;
@@ -12,7 +13,7 @@ import { createQStats } from './qstats.js';
     window.BoardSync = { configured: false, startup: function () { return Promise.resolve(); },
       sendInquiry: function () { return Promise.reject(new Error('送信機能が設定されていません')); },
       reportFirst: function () {}, qstats: function () { return {}; },
-      pins: function () { return {}; }, isAdmin: function () { return false; } };
+      pins: function () { return {}; }, isAdmin: function () { return false; }, push: null };
     return;
   }
 
@@ -60,7 +61,8 @@ import { createQStats } from './qstats.js';
   ui = createUI({
     sync: sync,
     signIn: async function () { interactiveNext = true; try { await transport.signIn(); } finally { interactiveNext = false; } },
-    signOut: function () { return transport.signOut(); },
+    /* ログアウト後はこの端末に通知が届かないよう、先に宛先を消す */
+    signOut: async function () { if (push && push.state().on) { try { await push.disable(); } catch (e) { /* noop */ } } return transport.signOut(); },
     syncNow: function () { return sync.syncAll({}); },
     /* 学習中に他端末の更新を取り込むときは、いまの内容を送ってから再読み込みする（起動時の同期で取り込まれる） */
     reloadApply: async function () { await sync.syncAll({ onlyChanged: true }); location.reload(); },
@@ -83,10 +85,16 @@ import { createQStats } from './qstats.js';
   setTimeout(function () { qs.refresh(false); qs.refreshPins(); }, 4000);
   var admin = false;
 
+  /* ---- リマインド通知 ---- */
+  var push = transport.pushConfigured ? createPush({ ls: window.localStorage, transport: transport, getUid: qsUid }) : null;
+  var pushReady = push ? push.check() : Promise.resolve(false);
+
   transport.init(function (user, interactive) {
     sync.onAuth(user, interactive);
     if (user) setTimeout(function () { qs.flush(user.uid); }, 3000);
     admin = false;
+    if (user && push) pushReady.then(function () { return push.refresh(); }).catch(function () {});
+    try { window.dispatchEvent(new Event('boardsync-auth')); } catch (e) { /* noop */ }
     if (user && transport.checkAdmin) transport.checkAdmin(user.uid).then(function (v) { admin = !!v; }, function () {});
   }, takeInteractive);
 
@@ -107,6 +115,8 @@ import { createQStats } from './qstats.js';
     /* 作者用（admins/<uid> がある人だけ） */
     isAdmin: function () { return admin; },
     setPin: function (subj, qid, level) { return qs.setPin(subj, qid, level); },
+    /* リマインド通知。未設定(vapidKeyが空)・非対応の環境では画面側で出し分ける */
+    push: push, pushReady: pushReady,
     _sync: sync
   };
 })();

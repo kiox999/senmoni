@@ -1,0 +1,28 @@
+name: リマインド通知の送信
+# 1時間ごとに実行し、その日まだ解いていない人へ、本人が決めた時刻に通知を送る。
+# リポジトリの Secrets に FIREBASE_SERVICE_ACCOUNT が無いあいだは何もしない（docs/PUSH_SETUP.md）
+on:
+  schedule:
+    - cron: '3 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: push-remind
+  cancel-in-progress: false
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 送信
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then echo "未設定のため何もしません"; exit 0; fi
+          npm install --no-save --no-audit --no-fund firebase-admin@13
+          node tools/send_push.mjs

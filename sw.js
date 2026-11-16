@@ -1,5 +1,5 @@
 /* オフライン用キャッシュ。ビルドごとに CACHE 名が変わり、古いキャッシュは削除される */
-var CACHE = 'board-e4282dec8b9a';
+var CACHE = 'board-df01dcd0d643';
 var FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192-v2.png', 'icons/icon-512-v2.png',
              'icons/icon-maskable-512-v2.png', 'icons/apple-touch-icon-v2.png',
              'data/naika.js', 'data/shouni.js', 'data/kyukyu.js', 'data/ref.js', 'firebase-config.js', 'sync.bundle.js'];
@@ -31,5 +31,24 @@ self.addEventListener('fetch', function(e){
   }
   e.respondWith(caches.match(e.request, {ignoreSearch:true}).then(function(hit){
     return hit || fetch(e.request);
+  }));
+});
+
+/* リマインド通知。送信側(tools/send_push.mjs)は data だけを送るので、ここで表示する */
+self.addEventListener('push', function(e){
+  var p = {};
+  try{ p = e.data ? e.data.json() : {}; }catch(er){}
+  var d = p.data || p.notification || {};
+  e.waitUntil(self.registration.showNotification(d.title || '専門医試験 演習', {
+    body: d.body || '今日はまだ問題を解いていません。',
+    icon: 'icons/icon-192-v2.png', badge: 'icons/icon-192-v2.png', tag: 'board-remind', data: { url: d.url || './' }
+  }));
+});
+self.addEventListener('notificationclick', function(e){
+  e.notification.close();
+  var url = new URL((e.notification.data && e.notification.data.url) || './', self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({type:'window', includeUncontrolled:true}).then(function(list){
+    for(var i=0;i<list.length;i++){ if(list[i].url.indexOf(self.registration.scope) === 0 && 'focus' in list[i]) return list[i].focus(); }
+    return self.clients.openWindow(url);
   }));
 });

@@ -64,6 +64,27 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['p']);
     }
 
+    // リマインド通知の宛先 pushSubs/<uid>_<端末ID>。本人だけが作成・変更・削除できる。
+    // 読み取りと sent（送信済みの日付）の書き込みは、送信用のサーバー（GitHub Actions・管理者権限）だけが行う
+    match /pushSubs/{id} {
+      allow read: if false;
+      allow delete: if request.auth != null && id.matches(request.auth.uid + '_[a-z0-9]+');
+      allow create, update: if request.auth != null && id.matches(request.auth.uid + '_[a-z0-9]+')
+        && request.resource.data.keys().hasOnly(['uid', 'token', 'hour', 'utcHour', 'tz', 'updatedAt', 'sent'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.token is string && request.resource.data.token.size() < 4096
+        && request.resource.data.hour is int && request.resource.data.hour >= 0 && request.resource.data.hour <= 23
+        && request.resource.data.utcHour is int && request.resource.data.utcHour >= 0 && request.resource.data.utcHour <= 23
+        && request.resource.data.tz is int;
+    }
+    // 最後に問題を解いた日 pushAct/<uid> = { last: 'YYYY-MM-DD' }。解いた日は通知を送らないために使う
+    match /pushAct/{uid} {
+      allow read, delete: if false;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['last'])
+        && request.resource.data.last is string && request.resource.data.last.size() == 10;
+    }
+
     // お問い合わせ: ログインなしでも1件ずつ「追加」だけできる。
     // 読み取り・変更・削除はアプリからは不可（届いた内容は Firebaseコンソール → Firestore の inquiries で確認する）
     match /inquiries/{id} {

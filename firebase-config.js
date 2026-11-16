@@ -4,7 +4,11 @@ window.BOARD_FIREBASE = {
   apiKey: "AIzaSyBhEPdm0_FqmIuZ1QV1En_-uYxWVybhjjs",
   authDomain: "senmoni-board.firebaseapp.com",
   projectId: "senmoni-board",
-  appId: "1:940899832203:web:8e88cf5436d2986d0adf8e"
+  appId: "1:940899832203:web:8e88cf5436d2986d0adf8e",
+  messagingSenderId: "940899832203",
+  /* リマインド通知用の鍵（Firebaseコンソール → プロジェクトの設定 → Cloud Messaging → ウェブプッシュ証明書 の「鍵ペア」。
+     公開してよい値です）。空のままだと通知の設定欄は表示されません。手順は docs/PUSH_SETUP.md */
+  vapidKey: ""
 };
 
 /* お問い合わせをメールでも受け取る（Web3Forms のアクセスキー。公開してよい値です）。

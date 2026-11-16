@@ -8,7 +8,7 @@ window.BOARD_FIREBASE = {
   messagingSenderId: "940899832203",
   /* リマインド通知用の鍵（Firebaseコンソール → プロジェクトの設定 → Cloud Messaging → ウェブプッシュ証明書 の「鍵ペア」。
      公開してよい値です）。空のままだと通知の設定欄は表示されません。手順は docs/PUSH_SETUP.md */
-  vapidKey: ""
+  vapidKey: "BD8_dLxBNwsiEjH_81bZr_AGY2fjLrK8jGcpAUJ8jNpm8nXoGrE8tEcw2xkDo-3BtzW7jz44bUJzTW24uYT8RwQ"
 };
 
 /* お問い合わせをメールでも受け取る（Web3Forms のアクセスキー。公開してよい値です）。

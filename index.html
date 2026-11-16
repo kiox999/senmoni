@@ -1277,6 +1277,9 @@ footer.tabs button{font-size:11px}
   #hubCards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
   #hubCards .subjcard{margin-bottom:0}
   #hubCards{margin-bottom:14px}
+  /* 1日の目標とリマインド通知は横に並べる（横いっぱいに伸ばすと選択欄が遠くなる） */
+  #hubFolds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+  #hubFolds .hubgoals{margin:0}
 }
 
 /* パソコン版のうち、幅が狭め（iPad mini・iPadの横向きなど）のときは左メニューと問題欄を少し詰める */
@@ -3794,8 +3797,8 @@ var TUTORIAL = [
      +'段位が上がるほど問題数が増え、合格ラインと複数解答の割合が高くなります。'
      +'初段からは、複数解答の問題で「いくつ選ぶか」が表示されなくなります。' },
   { tab:'home', sel:'#subjBtn', t:'科目を切り替える',
-    b:'右上の「科目切替」を押すと、科目を選ぶ最初の画面に戻ります。'
-     +'画面の左端からのスワイプ（戻る操作）でも、1つ前の画面に戻れます。' },
+    b:'「科目切替」を押すと、科目を選ぶ最初の画面に戻ります。'
+     +'スマホでは、画面の左端からのスワイプ（戻る操作）でも1つ前の画面に戻れます。' },
   { tab:'hub', sel:'#hubCards', t:'科目を選ぶ画面',
     b:'アプリを開くと最初に出る画面です。科目のカードを押すと、その科目の演習に入ります。'
      +'学習の記録と段位は科目ごと、XPは全科目共通です。' },
@@ -5472,7 +5475,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "3486f691d800";
+<script>window.BOARD_BUILD = "8e2896dd6cbd";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

@@ -47,8 +47,8 @@
 })();
 </script>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192-v2.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-v2.png">
 <meta name="apple-mobile-web-app-title" content="専門医演習">
 <meta name="mobile-web-app-capable" content="yes">
 
@@ -1674,7 +1674,7 @@ function tagToast(msg, undo){
 }
 
 var PALETTES = [
-  { id:'default',   name:'スタンダード', cost:0,     sw:'#1B5FC1', note:'最初からある色' },
+  { id:'default',   name:'科目の色',     cost:0,     sw:'#1B5FC1', note:'内科は緑・小児科は橙・救急科は青' },
   { id:'mint',      name:'ミント',       cost:900,   sw:'#0E9E86', note:'すっきりした緑' },
   { id:'sakura',    name:'サクラ',       cost:1800,  sw:'#D4457B', note:'やわらかい桜色' },
   { id:'sunset',    name:'サンセット',   cost:3000,  sw:'#E06A16', note:'あたたかい夕焼け' },
@@ -1682,6 +1682,7 @@ var PALETTES = [
   { id:'mono',      name:'モノクローム', cost:6500,  sw:'#3A3F47', note:'色を削ぎ落とした黒' },
   { id:'gold',      name:'ゴールド',     cost:12000, sw:'#B8860B', note:'いちばん高い色' }
 ];
+PALETTES[0].sw = ({naika:'#0B8466', shouni:'#D45A08', kyukyu:'#1B5FC1'})[SUBJ.id] || '#1B5FC1';   /* 標準は科目の色 */
 var SKINS = [
   { id:'default', name:'スタンダード', cost:0,    icon:'◆', note:'炎のようなグラデーション' },
   { id:'ice',     name:'アイス',       cost:1400, icon:'❄', note:'青く澄んだ冷たい光' },
@@ -5198,7 +5199,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "ce75b2c608a0";
+<script>window.BOARD_BUILD = "df3eea3efd6b";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

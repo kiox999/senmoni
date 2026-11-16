@@ -958,6 +958,13 @@ html[data-palette="sakura"]{--accent:#D4457B;--accentSoft:#FCE7EF;--accentInk:#F
 html[data-theme="dark"][data-palette="sakura"]{--accent:#FF7FAC;--accentInk:#2A0A17;--accentSoft:#33141F;--barMid:#6B2C43}
 html[data-palette="sunset"]{--accent:#7A5230;--accentSoft:#F3ECE4;--accentInk:#FFFFFF;--barMid:#CDB298}
 html[data-theme="dark"][data-palette="sunset"]{--accent:#D2A276;--accentInk:#231507;--accentSoft:#2B2118;--barMid:#5E4630}
+/* 科目の色を全科目で使う配色（500 XP） */
+html[data-palette="sjgreen"]{--accent:#0B8466;--accentSoft:#E0F3EC;--accentInk:#FFFFFF;--barMid:#8ED1B9}
+html[data-theme="dark"][data-palette="sjgreen"]{--accent:#27A97C;--accentSoft:#11291F;--accentInk:#04190F;--barMid:#23614A}
+html[data-palette="sjorange"]{--accent:#D45A08;--accentSoft:#FDEBDD;--accentInk:#FFFFFF;--barMid:#F2B98C}
+html[data-theme="dark"][data-palette="sjorange"]{--accent:#E87A2E;--accentSoft:#33200F;--accentInk:#2A1405;--barMid:#6E4526}
+html[data-palette="sjblue"]{--accent:#1B5FC1;--accentSoft:#E6EEFC;--accentInk:#FFFFFF;--barMid:#9DBCEC}
+html[data-theme="dark"][data-palette="sjblue"]{--accent:#5B9CFF;--accentSoft:#16233A;--accentInk:#06101F;--barMid:#2E4568}
 html[data-palette="lavender"]{--accent:#7B52D0;--accentSoft:#EEE8FB;--accentInk:#FFFFFF;--barMid:#BEA9EA}
 html[data-theme="dark"][data-palette="lavender"]{--accent:#A98BFF;--accentInk:#180A2E;--accentSoft:#241934;--barMid:#4A3670}
 html[data-palette="mono"]{--accent:#3A3F47;--accentSoft:#ECEEF1;--accentInk:#FFFFFF;--barMid:#B4BAC3}
@@ -1702,6 +1709,9 @@ function tagToast(msg, undo){
 
 var PALETTES = [
   { id:'default',   name:'科目の色',     cost:0,     sw:'#1B5FC1', note:'内科は緑・小児科は橙・救急科は青' },
+  { id:'sjgreen',   name:'いつも緑',     cost:500,   sw:'#0B8466', note:'どの科目でも内科の緑' },
+  { id:'sjorange',  name:'いつも橙',     cost:500,   sw:'#D45A08', note:'どの科目でも小児科の橙' },
+  { id:'sjblue',    name:'いつも青',     cost:500,   sw:'#1B5FC1', note:'どの科目でも救急科の青' },
   { id:'mint',      name:'ワイン',       cost:900,   sw:'#9A2E5C', note:'深みのある赤紫' },   /* 旧ミント（内科の緑と重なるため入れ替え。持っている人はそのまま使える） */
   { id:'sakura',    name:'サクラ',       cost:1800,  sw:'#D4457B', note:'やわらかい桜色' },
   { id:'sunset',    name:'コーヒー',     cost:3000,  sw:'#7A5230', note:'落ち着いた焦げ茶' },   /* 旧サンセット（小児科の橙と重なるため入れ替え） */
@@ -5371,7 +5381,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "98c66a4bae39";
+<script>window.BOARD_BUILD = "896fe27167b3";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

@@ -1708,10 +1708,10 @@ function tagToast(msg, undo){
 }
 
 var PALETTES = [
-  { id:'default',   name:'科目の色',     cost:0,     sw:'#1B5FC1', note:'内科は緑・小児科は橙・救急科は青' },
-  { id:'sjgreen',   name:'いつも緑',     cost:500,   sw:'#0B8466', note:'どの科目でも内科の緑' },
-  { id:'sjorange',  name:'いつも橙',     cost:500,   sw:'#D45A08', note:'どの科目でも小児科の橙' },
-  { id:'sjblue',    name:'いつも青',     cost:500,   sw:'#1B5FC1', note:'どの科目でも救急科の青' },
+  { id:'default',   name:'科目の色',     cost:0,     sw:'#1B5FC1', note:'科目ごとに色が変わる' },
+  { id:'sjgreen',   name:'グリーン',     cost:500,   sw:'#0B8466', note:'全科目を内科の緑に' },
+  { id:'sjorange',  name:'オレンジ',     cost:500,   sw:'#D45A08', note:'全科目を小児科の橙に' },
+  { id:'sjblue',    name:'ブルー',       cost:500,   sw:'#1B5FC1', note:'全科目を救急科の青に' },
   { id:'mint',      name:'ワイン',       cost:900,   sw:'#9A2E5C', note:'深みのある赤紫' },   /* 旧ミント（内科の緑と重なるため入れ替え。持っている人はそのまま使える） */
   { id:'sakura',    name:'サクラ',       cost:1800,  sw:'#D4457B', note:'やわらかい桜色' },
   { id:'sunset',    name:'コーヒー',     cost:3000,  sw:'#7A5230', note:'落ち着いた焦げ茶' },   /* 旧サンセット（小児科の橙と重なるため入れ替え） */
@@ -5049,7 +5049,7 @@ function renderSettings(){
          var cls = 'palrow' + (cur?' on':(own?' owned':(canBuy?' buyable':' locked')));
          return '<button class="'+cls+'" data-pal="'+pl.id+'">'
               + '<span class="swatch" style="background:'+pl.sw+'"></span>'
-              + '<span class="pname">'+pl.name+'</span>'
+              + '<span class="pname">'+pl.name+'<span class="sknote">'+pl.note+'</span></span>'
               + '<span class="pcost">'+(own?(cur?'使用中':'使う'):(canBuy?pl.cost+' XP':'🔒 '+pl.cost))+'</span>'
               + '</button>';
        }).join('')
@@ -5086,7 +5086,7 @@ function renderSettings(){
   var nFxBuy = FXS.filter(function(f){ return !ownsFx(f.id) && S.xp>=f.cost; }).length;
   h += '<details class="shop"'+(fxOpen?' open':'')+' id="fxBox">'
      + '<summary><span class="sswatch fxicon">'+cf.icon+'</span>'
-     + '<span class="stitle">正解したときの演出</span>'
+     + '<span class="stitle">正解演出を変える</span>'
      + '<span class="scount">'+FXS.filter(function(f){ return ownsFx(f.id); }).length+'/'+FXS.length+'</span>'
      + (nFxBuy? '<span class="sbadge">'+nFxBuy+'</span>' : '')
      + '<span class="schev">▾</span></summary>'
@@ -5104,14 +5104,14 @@ function renderSettings(){
               + '</button>';
        }).join('')
      + '</div>'
-     + '<div class="sub" style="margin:8px 2px 0">タップすると試せます。演習で正解したときに、正解の選択肢から出ます（認定試験中は出ません）。</div>'
+     + '<div class="sub" style="margin:8px 2px 0">タップで試せます。演習で正解すると、選択肢から演出が出ます（認定試験中は出ません）。</div>'
      + '</div></details>';
 
   var cb = bgById(curBg());
   var nBgBuy = BGS.filter(function(b){ return !ownsBg(b.id) && S.xp>=b.cost; }).length;
   h += '<details class="shop"'+(bgOpen?' open':'')+' id="bgBox">'
      + '<summary><span class="sswatch bgsw bgpat-'+cb.id+'"></span>'
-     + '<span class="stitle">ホームの背景</span>'
+     + '<span class="stitle">背景を変える</span>'
      + '<span class="scount">'+BGS.filter(function(b){ return ownsBg(b.id); }).length+'/'+BGS.length+'</span>'
      + (nBgBuy? '<span class="sbadge">'+nBgBuy+'</span>' : '')
      + '<span class="schev">▾</span></summary>'
@@ -5128,7 +5128,7 @@ function renderSettings(){
               + '</button>';
        }).join('')
      + '</div>'
-     + '<div class="sub" style="margin:8px 2px 0">ホーム画面の背景に模様を付けます。ダークモードでは暗い色になります。</div>'
+     + '<div class="sub" style="margin:8px 2px 0">ホーム画面の背景に模様が付きます。ダークモードでは暗い色合いになります。</div>'
      + '</div></details>';
 
   var volLabel = S.sound ? ({0.4:'小',0.7:'中',1:'大'}[S.soundVol] || '中') : 'オフ';
@@ -5280,7 +5280,7 @@ function renderSettings(){
       var fx0 = fr.left + 40, fy0 = fr.top + fr.height/2;
       if(ownsFx(fid)){ S.fx = fid; fxPending = ''; save(); fxOpen = true; renderSettings(); playFx(fid, fx0, fy0); return; }
       if(fxPending !== fid || S.xp < fxi.cost){ fxPending = fid; fxOpen = true; renderSettings(); playFx(fid, fx0, fy0); return; }
-      if(!confirm('正解したときの演出「'+fxi.name+'」を '+fxi.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-fxi.cost)+' XP')) return;
+      if(!confirm('正解演出「'+fxi.name+'」を '+fxi.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-fxi.cost)+' XP')) return;
       S.xp -= fxi.cost; S.ownedFx.push(fid); S.fx = fid; fxPending = ''; playSnd('buy');
       save(); fxOpen = true; renderSettings();
       return;
@@ -5290,7 +5290,7 @@ function renderSettings(){
       var bid = bp.dataset.bgp, bgi = bgById(bid);
       if(ownsBg(bid)){ S.bg = bid; save(); applyTheme(); bgOpen = true; renderSettings(); return; }
       if(S.xp < bgi.cost){ alert('XPが足りません。\n\n必要 '+bgi.cost+' XP ／ 手持ち '+S.xp+' XP\nあと '+(bgi.cost-S.xp)+' XP 必要です。'); return; }
-      if(!confirm('ホームの背景「'+bgi.name+'」を '+bgi.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-bgi.cost)+' XP')) return;
+      if(!confirm('背景「'+bgi.name+'」を '+bgi.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-bgi.cost)+' XP')) return;
       S.xp -= bgi.cost; S.ownedBgs.push(bid); S.bg = bid; playSnd('buy');
       save(); applyTheme(); bgOpen = true; renderSettings();
       return;
@@ -5381,7 +5381,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "896fe27167b3";
+<script>window.BOARD_BUILD = "2d1dc272a995";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

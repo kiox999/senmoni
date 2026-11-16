@@ -1043,6 +1043,7 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 #xenc .xini{min-width:40px;height:38px;padding:0 6px;border:1.5px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:700 15px var(--sans);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
 #xenc .xini small{font:600 9px var(--mono);color:var(--soft)}
 #xenc .xini.on{border-color:var(--accent);background:var(--accentSoft);color:var(--accent)}
+#xenc .xinirow{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 10px}
 #xenc .xsubidx{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 10px}
 #xenc .xini2{height:32px;padding:0 10px;border:1.5px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);font:700 13px var(--sans);cursor:pointer}
 #xenc .xini2 small{margin-left:4px;font:600 9.5px var(--mono);color:var(--soft)}
@@ -5178,7 +5179,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "c51394831815";
+<script>window.BOARD_BUILD = "ca9e6bbedb5c";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5324,7 +5325,7 @@ document.getElementById('subjBtn').addEventListener('click', function(){
   location.reload();
 });
 /* ---------- 全科目の事典検索 ---------- */
-var XE = { items:null, loading:false, q:'', subj:'', open:null, limit:150, ini:'', ini2:'' };
+var XE = { items:null, loading:false, q:'', subj:'', open:null, limit:150, gy:'', ini:'', ini2:'' };
 /* 科目の代わりに使う「薬剤」「略語・検査値」の区分 */
 var XREF = { drug:{ id:'drug', short:'薬剤' }, term:{ id:'term', short:'略語・検査値' } };
 function xSecs(body){
@@ -5464,15 +5465,18 @@ function xResults(){
       if(!byI[ini]){ byI[ini] = []; if(!rowOf[gy]){ rowOf[gy] = []; rows.push(gy); } rowOf[gy].push(ini); }
       byI[ini].push(r);
     });
-    if(XE.ini && !byI[XE.ini]) XE.ini = '';
-    h += '<div class="xsub2">'+all.length+'件。頭文字を選ぶと、その項目が出ます（キーワードを入れても探せます）</div><div class="xidx">';
-    rows.forEach(function(gy){
-      h += '<div class="xidxrow"><span class="xidxg">'+esc(gy==='A–Z'||gy==='その他' ? gy : gy+'行')+'</span><span class="xidxk">'
-         + rowOf[gy].map(function(ini){
-             return '<button type="button" class="xini'+(XE.ini===ini?' on':'')+'" data-xi="'+esc(ini)+'">'+esc(ini)+'<small>'+byI[ini].length+'</small></button>';
-           }).join('') + '</span></div>';
-    });
-    h += '</div>';
+    /* 上に行（A–Z・あ・か…）の索引を2段で置き、選んだ行の頭文字だけを次の段に出す */
+    if(!rowOf[XE.gy]) XE.gy = rows[0] || '';
+    if(XE.ini && (!rowOf[XE.gy] || rowOf[XE.gy].indexOf(XE.ini) < 0)) XE.ini = '';
+    if(!XE.ini && rowOf[XE.gy]) XE.ini = rowOf[XE.gy][0];
+    var cntG = {}; rows.forEach(function(gy){ cntG[gy] = rowOf[gy].reduce(function(n, ini){ return n + byI[ini].length; }, 0); });
+    h += '<div class="xsub2">'+all.length+'件。行と頭文字を選ぶと、その項目が出ます（キーワードを入れても探せます）</div>';
+    h += '<div class="engyobar">' + rows.map(function(gy){
+           return '<button type="button" class="engb'+(XE.gy===gy?' on':'')+'" data-xg="'+esc(gy)+'">'+esc(gy)+'<small>'+cntG[gy]+'</small></button>';
+         }).join('') + '</div>';
+    h += '<div class="xinirow">' + (rowOf[XE.gy]||[]).map(function(ini){
+           return '<button type="button" class="xini'+(XE.ini===ini?' on':'')+'" data-xi="'+esc(ini)+'">'+esc(ini)+'<small>'+byI[ini].length+'</small></button>';
+         }).join('') + '</div>';
     if(XE.ini){
       var list = byI[XE.ini], subs = [], bySub = {};
       h += '<div class="xinihd" id="xinihd">「'+esc(XE.ini)+'」で始まる項目 '+list.length+'件</div>';
@@ -5537,9 +5541,10 @@ document.getElementById('xenc').addEventListener('click', function(e){
   var t;
   if((t = e.target.closest('[data-xs]'))){ XE.subj = t.dataset.xs; XE.open = null; XE.limit = 150; xChips(); xResults(); return; }
   if((t = e.target.closest('[data-xmore]'))){ XE.limit += 150; xResults(); return; }
+  if((t = e.target.closest('[data-xg]'))){ XE.gy = t.dataset.xg; XE.ini = ''; XE.ini2 = ''; XE.open = null; xResults(); return; }
   if((t = e.target.closest('[data-xi2]'))){ XE.ini2 = t.dataset.xi2; XE.open = null; xResults(); var hd2 = document.getElementById('xinihd'); if(hd2) hd2.scrollIntoView({block:'start'}); return; }
   if((t = e.target.closest('[data-xi]'))){
-    XE.ini = (XE.ini === t.dataset.xi) ? '' : t.dataset.xi; XE.ini2 = ''; XE.open = null; xResults();
+    XE.ini = t.dataset.xi; XE.ini2 = ''; XE.open = null; xResults();
     var hd = document.getElementById('xinihd'); if(hd) hd.scrollIntoView({block:'start', behavior:'smooth'});
     return;
   }

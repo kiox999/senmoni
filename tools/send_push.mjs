@@ -26,9 +26,13 @@ for (const d of snap.docs) {
   if (!sub.uid || !sub.token) { skipped++; continue; }
   if (!acts.has(sub.uid)) {
     const a = await db.collection('pushAct').doc(sub.uid).get();
-    acts.set(sub.uid, a.exists ? (a.data().last || '') : '');
+    /* 本人の「1日の切り替え時刻」は同期データ(users/<uid>/state/global)にある。無ければ既定の4時 */
+    let ds;
+    try { const g = await db.doc('users/' + sub.uid + '/state/global').get(); if (g.exists) ds = JSON.parse(g.data().json).dayStart; } catch (e) { /* 既定値を使う */ }
+    acts.set(sub.uid, { last: a.exists ? (a.data().last || '') : '', ds });
   }
-  const day = dueDay(sub, acts.get(sub.uid), now);
+  const act = acts.get(sub.uid);
+  const day = dueDay(sub, act.last, now, act.ds);
   if (!day) { skipped++; continue; }
   if (DRY) { sent++; continue; }
   try {

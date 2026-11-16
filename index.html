@@ -1063,6 +1063,14 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 .hubtotal>div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
 .hubtotal span{display:block;font:600 11px var(--sans);color:var(--soft)}
 .hubtotal b{display:block;margin-top:2px;font:800 20px var(--mono);color:var(--accent)}
+.hubgoals{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:12px 14px;margin:2px 0 12px}
+.hubgoals h3{font:700 13px var(--sans);color:var(--ink);margin:0 0 2px}
+.hubgoals .hgsub{font:500 11.5px var(--sans);color:var(--soft);margin:0 0 8px}
+.hgrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
+.hgrow .hgname{flex:1;font:700 13.5px var(--sans);color:var(--ink)}
+.hgrow .hgtoday{font:600 12px var(--mono);color:var(--soft);white-space:nowrap}
+.hgrow .hgtoday.done{color:var(--sj)}
+.hgrow select{font:700 13px var(--sans);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:9px;padding:6px 8px}
 .hubtools{display:flex;gap:10px;margin:14px 0 0}
 .hubtool{flex:1;font:600 13px var(--sans);padding:12px 8px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 .hubtool:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1284,6 +1292,7 @@ footer.tabs button{font-size:11px}
   <div class="hubsub">科目を選んでください。学習の記録と段位は科目ごと、XPは全科目共通です。</div>
   <div id="hubTotal"></div>
   <div id="hubCards"></div>
+  <div id="hubGoals"></div>
   <button class="hubxenc" type="button" id="hubXenc"><span class="xi">📖</span><span>全科目の事典を検索<small>内科・小児科・救急科の疾患と、薬剤・略語・検査値をまとめて調べられます</small></span></button>
   <div class="hubtools">
     <button class="hubtool" type="button" data-hubact="settings">見た目・音の設定</button>
@@ -5397,7 +5406,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "32bad9b1c6c9";
+<script>window.BOARD_BUILD = "e4282dec8b9a";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5486,10 +5495,24 @@ function renderHub(){
     var p = progressOf(s.id);
     h += '<button class="subjcard sj-'+s.id+(s.isNew?' new':'')+'" type="button" data-subj="'+s.id+'">'
        + '<div class="sk">'+esc(s.kicker)+'</div><div class="sn">'+esc(s.name)+'</div><div class="sd">'+esc(s.desc)+'全'+countOf(s).toLocaleString('ja-JP')+'問。</div>'
-       + '<div class="sp">' + (p ? '<span>解答済 <b>'+p.seen+'</b> 問</span><span>段位 <b>'+esc(RANKNAME[p.rank]||p.rank)+'</b></span>' : '<span>まだ解いていません</span>') + '</div>'
+       + '<div class="sp">' + (p && (p.seen || p.rank) ? '<span>解答済 <b>'+p.seen+'</b> 問</span><span>段位 <b>'+esc(RANKNAME[p.rank]||p.rank)+'</b></span>' : '<span>まだ解いていません</span>') + '</div>'
        + '<div class="sarrow">›</div></button>';
   });
   document.getElementById('hubCards').innerHTML = h;
+  /* 科目ごとの1日の目標。各科目の設定タブと同じ値（dailyGoal）を読み書きする */
+  var GOALS = [5,10,15,20,30,40,50,75,100,150,200], now = new Date();
+  var tk = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
+  var gh = '<div class="hubgoals"><h3>1日の目標</h3><div class="hgsub">科目ごとに、1日に解く問題数の目標を決められます。</div>';
+  SUBJECTS.forEach(function(s){
+    var d = null; try{ d = JSON.parse(localStorage.getItem('board-'+s.id+'-v1')); }catch(e){}
+    var goal = (d && d.dailyGoal) || 20, done = (d && d.hist && d.hist[tk] && d.hist[tk].a) || 0;
+    gh += '<div class="hgrow sj-'+s.id+'"><span class="xsjdot"></span><span class="hgname">'+esc(s.short)+'</span>'
+        + '<span class="hgtoday'+(done>=goal?' done':'')+'">今日 '+done+' / '+goal+'問'+(done>=goal?' ✓':'')+'</span>'
+        + '<select data-hubgoal="'+s.id+'" aria-label="'+esc(s.short)+'の1日の目標">'
+        + GOALS.map(function(n){ return '<option value="'+n+'"'+(n===goal?' selected':'')+'>'+n+'問</option>'; }).join('')
+        + '</select></div>';
+  });
+  document.getElementById('hubGoals').innerHTML = gh + '</div>';
   document.getElementById('hub').classList.remove('hide');
   document.getElementById('app').classList.add('hide');
   document.getElementById('loading').classList.add('hide');
@@ -5532,6 +5555,15 @@ document.querySelector('.hubtools').addEventListener('click', function(e){
   loadSubject(id, b.dataset.hubact === 'tut' ? {tut:true} : {view:'settings'});
 });
 document.getElementById('hubContact').addEventListener('click', function(){ window.openContact({ page: 'hub' }); });
+document.getElementById('hubGoals').addEventListener('change', function(e){
+  var sel = e.target.closest('[data-hubgoal]'); if(!sel) return;
+  var key = 'board-'+sel.dataset.hubgoal+'-v1', d = null;
+  try{ d = JSON.parse(localStorage.getItem(key)); }catch(er){}
+  if(!d || typeof d !== 'object') d = {};
+  d.dailyGoal = parseInt(sel.value, 10) || 20;
+  try{ localStorage.setItem(key, JSON.stringify(d)); }catch(er){}
+  renderHub();
+});
 document.getElementById('hubCards').addEventListener('click', function(e){
   var b = e.target.closest('[data-subj]'); if(!b) return;
   try{ localStorage.setItem(SKEY, b.dataset.subj); }catch(err){ loadSubject(b.dataset.subj); return; }

@@ -1070,7 +1070,22 @@ html[data-theme="dark"][data-palette="gold"]{--accent:#E8C24E;--accentInk:#241B0
 .hgrow .hgname{flex:1;font:700 13.5px var(--sans);color:var(--ink)}
 .hgrow .hgtoday{font:600 12px var(--mono);color:var(--soft);white-space:nowrap}
 .hgrow .hgtoday.done{color:var(--sj)}
-.hubpush{margin-top:12px}
+.hubpush{margin-top:0}
+#hubFolds{margin-top:12px}
+.hubxenc{margin-bottom:0}
+/* 1日の目標・リマインド通知は折りたたみ。見出しに今の状態を出す */
+.hubfold{padding:0}
+.hubfold>summary{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent}
+.hubfold>summary::-webkit-details-marker{display:none}
+.hubfold>summary h3{flex:0 0 auto;margin:0}
+.hubfold>summary .hfstat{flex:1;min-width:0;text-align:right;font:600 12px var(--mono);color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hubfold>summary .hfstat b{font-weight:700;color:var(--ink)}
+.hubfold>summary .hfstat .ok{color:var(--good,#2E8B57)}
+.hubfold>summary::after{content:'';flex:0 0 auto;width:7px;height:7px;border-right:2px solid var(--soft);border-bottom:2px solid var(--soft);transform:rotate(45deg);margin:-3px 2px 0 0;transition:transform .15s}
+.hubfold[open]>summary::after{transform:rotate(-135deg);margin-top:3px}
+.hubfold>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:14px}
+.hubfold .hfbody{padding:0 14px 12px}
+.hubfold .hfstat .xsjdot{margin-right:3px}
 .hpnote{font:500 12px/1.6 var(--sans);color:var(--soft);padding:6px 0 2px}
 .hpnote.warn{color:var(--bad,#C0392B)}
 .hpsw{flex:1;display:flex;align-items:center;gap:9px;font:700 13.5px var(--sans);color:var(--ink);cursor:pointer}
@@ -1298,9 +1313,11 @@ footer.tabs button{font-size:11px}
   <div class="hubsub">科目を選んでください。学習の記録と段位は科目ごと、XPは全科目共通です。</div>
   <div id="hubTotal"></div>
   <div id="hubCards"></div>
-  <div id="hubGoals"></div>
-  <div id="hubPush"></div>
   <button class="hubxenc" type="button" id="hubXenc"><span class="xi">📖</span><span>全科目の事典を検索<small>内科・小児科・救急科の疾患と、薬剤・略語・検査値をまとめて調べられます</small></span></button>
+  <div id="hubFolds">
+    <div id="hubGoals"></div>
+    <div id="hubPush"></div>
+  </div>
   <div class="hubtools">
     <button class="hubtool" type="button" data-hubact="settings">見た目・音の設定</button>
     <button class="hubtool" type="button" data-hubact="tut">使い方を見る</button>
@@ -3776,11 +3793,26 @@ var TUTORIAL = [
     b:'貯めたXPで認定試験を受けられます。5級から十段まであり、'
      +'段位が上がるほど問題数が増え、合格ラインと複数解答の割合が高くなります。'
      +'初段からは、複数解答の問題で「いくつ選ぶか」が表示されなくなります。' },
+  { tab:'home', sel:'#subjBtn', t:'科目を切り替える',
+    b:'右上の「科目切替」を押すと、科目を選ぶ最初の画面に戻ります。'
+     +'画面の左端からのスワイプ（戻る操作）でも、1つ前の画面に戻れます。' },
+  { tab:'hub', sel:'#hubCards', t:'科目を選ぶ画面',
+    b:'アプリを開くと最初に出る画面です。科目のカードを押すと、その科目の演習に入ります。'
+     +'学習の記録と段位は科目ごと、XPは全科目共通です。' },
+  { tab:'hub', sel:'#hubXenc', t:'全科目の事典を検索',
+    b:'内科・小児科・救急科の疾患と、薬剤・略語・検査値を科目をまたいでまとめて調べられます。' },
+  { tab:'hub', sel:'#hubFolds', t:'1日の目標とリマインド通知',
+    b:'見出しを押すと開きます。科目ごとの1日の目標と、1日の切り替え時刻を決められます。'
+     +'リマインド通知は、その日まだ1問も解いていないときに、決めた時刻にお知らせします。' },
+  { tab:'hub', sel:'#syncMount', t:'端末をまたいで引き継ぐ',
+    b:'Googleでログインすると、学習の記録を別の端末に引き継げます。'
+     +'その下の「お問い合わせ」からは、不具合や問題の誤りを報告できます。' },
   { tab:'home', sel:null, t:'準備ができました',
     b:'この案内は、設定タブの「使い方を見る」からいつでも見直せます。'
      +'それでは、始めましょう。' }
 ];
 function tutClose(){
+  if(window.BOARD_HUB_PEEK) window.BOARD_HUB_PEEK(false);
   document.body.classList.remove('tutTabs');
   tutLock(false);
   var mp = document.querySelector('main');
@@ -3841,6 +3873,8 @@ function tutLock(on){
 }
 function tutRender(){
   var s = TUTORIAL[tutStep];
+  /* 科目選択の画面の説明のあいだだけ、その画面を見せる */
+  if(window.BOARD_HUB_PEEK) window.BOARD_HUB_PEEK(s.tab === 'hub');
   tutLock(true);
   var o = document.getElementById('tutOverlay');
   if(!o){ o = document.createElement('div'); o.id='tutOverlay'; document.body.appendChild(o); }
@@ -3877,7 +3911,8 @@ function tutRender(){
     if(window.innerWidth >= 1000){ var dc = o.querySelector('.tutcard'); if(dc) dc.style.bottom = '14px'; }
     return;
   }
-  if(s.tab) go(s.tab);
+  if(s.tab && s.tab !== 'hub') go(s.tab);
+  if(s.tab === 'hub') document.body.classList.remove('tutTabs');
   var r = s.sel ? tutSpot(s.sel) : (tutSpot(null), null);
   o.className = (r ? 'spot' : '') + (s.tabfree ? ' tabfree' : '');
   document.body.classList.toggle('tutTabs', !!s.tabfree);
@@ -5437,7 +5472,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "24d070f89549";
+<script>window.BOARD_BUILD = "3486f691d800";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5514,6 +5549,17 @@ var RANKNAME = ['なし','5級','4級','3級','2級','1級','初段','二段','�
 /* リマインド通知（その日まだ解いていないときに届くプッシュ通知）の設定欄。
    未設定(firebase-config.js の vapidKey が空)なら何も出さない */
 var hubDoneToday = '', hubPushMsg = '', hubPushBusy = false;
+/* 折りたたみの開閉は端末に覚えておく（初めは閉じておく） */
+var hubFold = {}; try{ hubFold = JSON.parse(localStorage.getItem('board-hubfold')) || {}; }catch(e){}
+function foldHead(key, title, stat){
+  return '<details class="hubgoals hubfold'+(key==='push'?' hubpush':'')+'" data-fold="'+key+'"'+(hubFold[key]?' open':'')+'>'
+       + '<summary><h3>'+title+'</h3><span class="hfstat">'+(stat||'')+'</span></summary><div class="hfbody">';
+}
+document.getElementById('hubFolds').addEventListener('toggle', function(e){
+  var d = e.target; if(!d || !d.dataset || !d.dataset.fold) return;
+  hubFold[d.dataset.fold] = d.open ? 1 : 0;
+  try{ localStorage.setItem('board-hubfold', JSON.stringify(hubFold)); }catch(er){}
+}, true);
 function renderHubPush(){
   var el = document.getElementById('hubPush'); if(!el) return;
   var P = window.BoardSync && window.BoardSync.push;
@@ -5521,7 +5567,8 @@ function renderHubPush(){
   var st = P.state();
   if(!st.configured || st.supported === null){ el.innerHTML = ''; return; }
   if(hubDoneToday) P.markActive(hubDoneToday);
-  var h = '<div class="hubgoals hubpush"><h3>リマインド通知</h3><div class="hgsub">その日まだ1問も解いていないときに、決めた時刻に通知でお知らせします。</div>';
+  var h = foldHead('push', 'リマインド通知', (st.supported && st.signedIn && st.on) ? '<b>'+st.hour+':00</b> に通知' : 'オフ')
+        + '<div class="hgsub">その日まだ1問も解いていないときに、決めた時刻に通知でお知らせします。</div>';
   if(!st.supported){
     var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     h += '<div class="hpnote">' + (ios
@@ -5538,7 +5585,7 @@ function renderHubPush(){
     else if(st.perm === 'denied') h += '<div class="hpnote warn">通知がブロックされています。ブラウザ（または端末）の設定で、このアプリの通知を許可してください。</div>';
   }
   if(hubPushMsg) h += '<div class="hpnote warn">'+esc(hubPushMsg)+'</div>';
-  el.innerHTML = h + '</div>';
+  el.innerHTML = h + '</div></details>';
 }
 (function(){
   var el = document.getElementById('hubPush'); if(!el) return;
@@ -5583,10 +5630,11 @@ function renderHub(){
   var hds = (g && typeof g.dayStart === 'number' && g.dayStart >= 0 && g.dayStart <= 6) ? Math.floor(g.dayStart) : 4;
   now = new Date(now.getTime() - hds*3600000);
   var tk = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
-  var gh = '<div class="hubgoals"><h3>1日の目標</h3><div class="hgsub">科目ごとに、1日に解く問題数の目標を決められます。</div>';
+  var gh = '', gst = [];
   SUBJECTS.forEach(function(s){
     var d = null; try{ d = JSON.parse(localStorage.getItem('board-'+s.id+'-v1')); }catch(e){}
     var goal = (d && d.dailyGoal) || 20, done = (d && d.hist && d.hist[tk] && d.hist[tk].a) || 0;
+    gst.push('<span class="sj-'+s.id+'"><span class="xsjdot"></span></span>'+(done>=goal ? '<span class="ok">'+done+'/'+goal+'✓</span>' : '<b>'+done+'</b>/'+goal));
     gh += '<div class="hgrow sj-'+s.id+'"><span class="xsjdot"></span><span class="hgname">'+esc(s.short)+'</span>'
         + '<span class="hgtoday'+(done>=goal?' done':'')+'">今日 '+done+' / '+goal+'問'+(done>=goal?' ✓':'')+'</span>'
         + '<select data-hubgoal="'+s.id+'" aria-label="'+esc(s.short)+'の1日の目標">'
@@ -5596,7 +5644,8 @@ function renderHub(){
   gh += '<div class="hgrow"><span class="hgname" style="font-weight:600">1日の切り替え時刻</span><select data-hubday aria-label="1日の切り替え時刻">'
       + [0,1,2,3,4,5,6].map(function(n){ return '<option value="'+n+'"'+(n===hds?' selected':'')+'>'+(n===0?'0時':'午前'+n+'時')+'</option>'; }).join('')
       + '</select></div><div class="hpnote">この時刻より前の深夜に解いた分は、前の日の分として数えます（目標・連続日数・リマインド通知）。</div>';
-  document.getElementById('hubGoals').innerHTML = gh + '</div>';
+  document.getElementById('hubGoals').innerHTML = foldHead('goals', '1日の目標', gst.join('　'))
+    + '<div class="hgsub">科目ごとに、1日に解く問題数の目標を決められます。今日の分は見出しに「解いた数/目標」で出ます。</div>' + gh + '</div></details>';
   hubDoneToday = SUBJECTS.some(function(s){ var d=null; try{ d = JSON.parse(localStorage.getItem('board-'+s.id+'-v1')); }catch(e){} return !!(d && d.hist && d.hist[tk] && d.hist[tk].a); }) ? tk : '';
   renderHubPush();
   document.getElementById('hub').classList.remove('hide');
@@ -5634,6 +5683,19 @@ function loadSubject(id, start){
   sc.onerror = function(){ alert('問題データを読み込めませんでした（'+s.name+'）。通信状況を確認して、もう一度お試しください。'); try{ localStorage.removeItem(SKEY); }catch(e){} renderHub(); };
   document.body.appendChild(rf);
 }
+/* 使い方の案内から、科目選択の画面を一時的に見せる（案内が終わったら演習の画面に戻す） */
+window.BOARD_HUB_PEEK = function(on){
+  var hub = document.getElementById('hub');
+  if(on){ renderHub(); return; }
+  if(hub.classList.contains('hide')) return;
+  hub.classList.add('hide'); document.getElementById('app').classList.remove('hide');
+};
+/* 案内中は、光らせた場所を押しても科目の切り替えなどが動かないようにする */
+['click','change'].forEach(function(ev){
+  document.getElementById('hub').addEventListener(ev, function(e){
+    if(document.getElementById('tutOverlay')){ e.stopPropagation(); e.preventDefault(); }
+  }, true);
+});
 document.querySelector('.hubtools').addEventListener('click', function(e){
   var b = e.target.closest('[data-hubact]'); if(!b) return;
   var last = null; try{ last = localStorage.getItem(SKEY); }catch(err){}

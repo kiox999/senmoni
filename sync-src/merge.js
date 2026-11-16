@@ -11,7 +11,8 @@ export var DOC_IDS = ['global', 'naika', 'shouni', 'kyukyu'];
 
 /* 全科目共通（購入物・XP・見た目） */
 export var GLOBAL_KEYS = ['theme', 'fontsize', 'fontfamily', 'sound', 'soundVol', 'tutSeen',
-  'xp', 'xpTotal', 'owned', 'ownedSkins', 'ownedPacks', 'palette', 'skin', 'pack'];
+  'xp', 'xpTotal', 'owned', 'ownedSkins', 'ownedPacks', 'palette', 'skin', 'pack',
+  'ownedFx', 'fx', 'ownedBgs', 'bg'];
 
 /* 科目ごと（学習データ） */
 export var SUBJECT_KEYS = ['prog', 'hist', 'log', 'marks', 'examLog', 'rank', 'feedback',
@@ -88,7 +89,7 @@ export function mergeGlobal(base, local, cloud) {
     if (local[k] === undefined && cloud[k] === undefined) return;
     out[k] = counter3(base[k], local[k], cloud[k]);
   });
-  ['owned', 'ownedSkins', 'ownedPacks'].forEach(function (k) {
+  ['owned', 'ownedSkins', 'ownedPacks', 'ownedFx', 'ownedBgs'].forEach(function (k) {
     if (local[k] === undefined && cloud[k] === undefined) return;
     out[k] = union(local[k], cloud[k]);
   });
@@ -96,7 +97,7 @@ export function mergeGlobal(base, local, cloud) {
     out.tutSeen = (isNum(local.tutSeen) && isNum(cloud.tutSeen))
       ? Math.max(local.tutSeen, cloud.tutSeen) : scalar3(base.tutSeen, local.tutSeen, cloud.tutSeen);
   }
-  ['theme', 'fontsize', 'fontfamily', 'sound', 'soundVol', 'palette', 'skin', 'pack'].forEach(function (k) {
+  ['theme', 'fontsize', 'fontfamily', 'sound', 'soundVol', 'palette', 'skin', 'pack', 'fx', 'bg'].forEach(function (k) {
     var v = scalar3(base[k], local[k], cloud[k]);
     if (v !== undefined) out[k] = clone(v);
   });
@@ -197,6 +198,6 @@ export function mergeDoc(docId, base, local, cloud) {
 /* 学習データが実質空か（初回ログイン時の確認ダイアログの要否判断に使う） */
 export function isEmptyDoc(docId, d) {
   d = obj(d);
-  if (docId === 'global') return !(num(d.xpTotal) > 0 || num(d.xp) > 0 || arr(d.owned).length > 1 || arr(d.ownedSkins).length > 1 || arr(d.ownedPacks).length > 1);
+  if (docId === 'global') return !(num(d.xpTotal) > 0 || num(d.xp) > 0 || arr(d.owned).length > 1 || arr(d.ownedSkins).length > 1 || arr(d.ownedPacks).length > 1 || arr(d.ownedFx).length > 0 || arr(d.ownedBgs).length > 0);
   return !(Object.keys(obj(d.prog)).length || Object.keys(obj(d.qtags)).length || Object.keys(obj(d.qatags)).length || Object.keys(obj(d.hist)).length || arr(d.feedback).length || arr(d.examLog).length || num(d.rank) > 0);
 }

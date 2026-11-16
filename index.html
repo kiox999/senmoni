@@ -929,6 +929,29 @@ html[data-theme="dark"][data-palette="default"][data-subj="shouni"]{--accent:#E8
 .xchips .chip[class*="sj-"].on{background:var(--sj);color:#fff;border-color:var(--sj)}
 html[data-theme="dark"] .xchips .chip[class*="sj-"].on{color:#0A0B0D}
 .xsjdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sj);margin-right:6px;vertical-align:1px}
+/* ---------- 正解したときの演出（XPで解放） ---------- */
+#fxLayer{position:fixed;inset:0;pointer-events:none;z-index:300;overflow:hidden}
+.fxp{position:absolute;pointer-events:none;will-change:transform,opacity}
+@keyframes fxFall{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+@keyframes fxRing{from{transform:translate(-50%,-50%) scale(0);opacity:.7}to{transform:translate(-50%,-50%) scale(1);opacity:0}}
+@keyframes fxUp{to{transform:translate(var(--dx),-110px) scale(1.25);opacity:0}}
+@keyframes fxBurst{to{transform:translate(var(--dx),var(--dy));opacity:0}}
+.fxicon{width:34px;height:24px;border-radius:7px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--deep);color:var(--accent)}
+.skrow .pend{display:block;font:700 10.5px var(--sans);color:var(--accent);margin-top:2px}
+/* 背景に模様があるときは、枠だけのボタン・入力欄も地を塗って読みやすくする */
+html[data-view="home"]:not([data-bg="none"]) #main :is(.ghost,.search,input,select,textarea,.chip:not(.on)){background-color:var(--card)}
+/* ---------- ホームの背景（XPで解放）。色見本(.bgpat-*)とホーム画面の両方に使う ---------- */
+.bgsw{width:44px;height:30px;border-radius:7px;flex:0 0 auto;border:1px solid var(--line);background:var(--bg)}
+.bgpat-dot,html[data-view="home"][data-bg="dot"] #app{background:radial-gradient(var(--line) 1.3px,transparent 1.5px) 0 0/14px 14px,var(--bg)}
+.bgpat-grid,html[data-view="home"][data-bg="grid"] #app{background:linear-gradient(var(--line) 1px,transparent 1px) 0 0/16px 16px,linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/16px 16px,var(--bg)}
+.bgpat-ecg,html[data-view="home"][data-bg="ecg"] #app{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='80'%3E%3Cpath d='M0 46 H46 L53 41 L60 46 H68 L73 54 L81 12 L89 68 L94 46 H114 Q122 33 130 46 H160' fill='none' stroke='%23F2C4C4' stroke-width='2'/%3E%3C/svg%3E") 0 0/160px 80px,linear-gradient(#FDF2F2 1px,transparent 1px) 0 0/10px 10px,linear-gradient(90deg,#FDF2F2 1px,transparent 1px) 0 0/10px 10px,#FFFFFF}
+html[data-theme="dark"] .bgpat-ecg,html[data-theme="dark"][data-view="home"][data-bg="ecg"] #app{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='80'%3E%3Cpath d='M0 46 H46 L53 41 L60 46 H68 L73 54 L81 12 L89 68 L94 46 H114 Q122 33 130 46 H160' fill='none' stroke='%23552A2C' stroke-width='2'/%3E%3C/svg%3E") 0 0/160px 80px,linear-gradient(#191113 1px,transparent 1px) 0 0/10px 10px,linear-gradient(90deg,#191113 1px,transparent 1px) 0 0/10px 10px,#0A0B0D}
+.bgpat-cell,html[data-view="home"][data-bg="cell"] #app{background:radial-gradient(circle at 20% 25%,#FFE3EC 0 22px,transparent 23px) 0 0/240px 240px,radial-gradient(circle at 72% 58%,#E3F0FF 0 30px,transparent 31px) 0 0/240px 240px,radial-gradient(circle at 42% 86%,#E5F6EC 0 16px,transparent 17px) 0 0/240px 240px,radial-gradient(circle at 90% 14%,#FFF0D6 0 18px,transparent 19px) 0 0/240px 240px,#FFFFFF}
+html[data-theme="dark"] .bgpat-cell,html[data-theme="dark"][data-view="home"][data-bg="cell"] #app{background:radial-gradient(circle at 20% 25%,#2A1520 0 22px,transparent 23px) 0 0/240px 240px,radial-gradient(circle at 72% 58%,#132138 0 30px,transparent 31px) 0 0/240px 240px,radial-gradient(circle at 42% 86%,#11251B 0 16px,transparent 17px) 0 0/240px 240px,radial-gradient(circle at 90% 14%,#2A2112 0 18px,transparent 19px) 0 0/240px 240px,#0A0B0D}
+.bgpat-wood,html[data-view="home"][data-bg="wood"] #app{background:repeating-linear-gradient(95deg,#F5EAD9 0 7px,#EEDFC8 7px 10px,#F7EEDF 10px 18px)}
+html[data-theme="dark"] .bgpat-wood,html[data-theme="dark"][data-view="home"][data-bg="wood"] #app{background:repeating-linear-gradient(95deg,#1C1611 0 7px,#221A13 7px 10px,#19140F 10px 18px)}
+.bgpat-night,html[data-view="home"][data-bg="night"] #app{background:radial-gradient(#B9C9F2 1px,transparent 1.6px) 0 0/44px 44px,radial-gradient(#D7C9F5 1px,transparent 1.6px) 22px 22px/44px 44px,linear-gradient(#EEF3FF,#F8F6FF)}
+html[data-theme="dark"] .bgpat-night,html[data-theme="dark"][data-view="home"][data-bg="night"] #app{background:radial-gradient(#FFFFFF 1px,transparent 1.6px) 0 0/44px 44px,radial-gradient(#9FB6FF 1px,transparent 1.6px) 22px 22px/44px 44px,linear-gradient(#0B1230,#1B2852)}
 html[data-palette="mint"]{--accent:#9A2E5C;--accentSoft:#F8E6EE;--accentInk:#FFFFFF;--barMid:#D9A3BB}
 html[data-theme="dark"][data-palette="mint"]{--accent:#E0709E;--accentInk:#2A0716;--accentSoft:#33141F;--barMid:#6B2C48}
 html[data-palette="sakura"]{--accent:#D4457B;--accentSoft:#FCE7EF;--accentInk:#FFFFFF;--barMid:#EFA8C3}
@@ -1477,10 +1500,10 @@ var DAY = 86400000;
 var K = 'board-' + SUBJ.id + '-v1';
 var S = load();
 function load(){
-  var d = { theme:'auto', cats:CATS.slice(), count:10, mode:'random', qtype:'all', shadow:false, sound:false, soundVol:0.7, rank:0, examLog:[], xp:0, xpTotal:0, palette:'default', owned:['default'], skin:'default', ownedSkins:['default'], pack:'bell', ownedPacks:['bell'], prog:{}, hist:{}, log:[], marks:{}, tutSeen:0, chicken:0, curtain:0, timeatk:0, taMin:10, bmNames:{1:'セット1',2:'セット2',3:'セット3'}, tagDefs:null, qtags:{}, qatags:{}, spacing:{lowMin:10, mid:2, high:9}, fontsize:'md', fontfamily:'default', feedback:[], dailyGoal:20, session:null };
+  var d = { theme:'auto', cats:CATS.slice(), count:10, mode:'random', qtype:'all', shadow:false, sound:false, soundVol:0.7, rank:0, examLog:[], xp:0, xpTotal:0, palette:'default', owned:['default'], skin:'default', ownedSkins:['default'], pack:'bell', ownedPacks:['bell'], fx:'none', ownedFx:[], bg:'none', ownedBgs:[], prog:{}, hist:{}, log:[], marks:{}, tutSeen:0, chicken:0, curtain:0, timeatk:0, taMin:10, bmNames:{1:'セット1',2:'セット2',3:'セット3'}, tagDefs:null, qtags:{}, qatags:{}, spacing:{lowMin:10, mid:2, high:9}, fontsize:'md', fontfamily:'default', feedback:[], dailyGoal:20, session:null };
   try{ var r = JSON.parse(localStorage.getItem(K)); if(r) for(var k in r) d[k]=r[k]; }catch(e){}
   /* 見た目・音・チュートリアル既読・XPと買ったもの（色・音色・演出）は全科目で共通。学習データ・段位は科目ごと */
-  var SHARED_KEYS = ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack'];
+  var SHARED_KEYS = ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack','ownedFx','fx','ownedBgs','bg'];
   try{ var g = JSON.parse(localStorage.getItem('board-global-v1')); if(g) for(var sk in g) if(SHARED_KEYS.indexOf(sk)>=0) d[sk]=g[sk]; }catch(e){}
   if(!d.cats || !d.cats.length) d.cats = CATS.slice();
   d.cats = d.cats.filter(function(c){ return CATS.indexOf(c) >= 0; });   /* 旧バージョンの分野名など無効値を除去 */
@@ -1511,6 +1534,10 @@ function load(){
   if(!d.pack) d.pack = 'bell';
   if(!d.ownedPacks || !d.ownedPacks.length) d.ownedPacks = ['bell'];
   if(d.ownedPacks.indexOf('bell')<0) d.ownedPacks.unshift('bell');
+  if(!Array.isArray(d.ownedFx)) d.ownedFx = [];
+  if(!Array.isArray(d.ownedBgs)) d.ownedBgs = [];
+  if(!d.fx) d.fx = 'none';
+  if(!d.bg) d.bg = 'none';
   if(!d.feedback) d.feedback = [];
   if(!d.dailyGoal) d.dailyGoal = 20;
   for(var pk in d.prog){ if(d.prog[pk].bm===true) d.prog[pk].bm = 1; if(d.prog[pk].bm===false) d.prog[pk].bm = 0; }
@@ -1518,7 +1545,7 @@ function load(){
   return d;
 }
 var saveTimer=null;
-function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} try{ var g={}; ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack'].forEach(function(k){ g[k]=S[k]; }); localStorage.setItem('board-global-v1', JSON.stringify(g)); }catch(e){} },80); }
+function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} try{ var g={}; ['theme','fontsize','fontfamily','sound','soundVol','tutSeen','xp','xpTotal','owned','ownedSkins','ownedPacks','palette','skin','pack','ownedFx','fx','ownedBgs','bg'].forEach(function(k){ g[k]=S[k]; }); localStorage.setItem('board-global-v1', JSON.stringify(g)); }catch(e){} },80); }
 
 /* ---------- マイリスト（タグ） ----------
    1問に複数のタグを付けられる。問題は qtags、一問一答は qatags に「ID→タグIDの配列」で持つ。
@@ -1694,6 +1721,75 @@ var SKINS = [
 function skinById(id){ for(var i=0;i<SKINS.length;i++) if(SKINS[i].id===id) return SKINS[i]; return SKINS[0]; }
 function ownsSkin(id){ return (S.ownedSkins||[]).indexOf(id) >= 0; }
 function curSkin(){ return ownsSkin(S.skin) ? (S.skin||'default') : 'default'; }
+/* 正解したときの演出（XPで解放）。「なし」と「波紋」は最初から使える */
+var FXS = [
+  { id:'none',     name:'なし',     cost:0,    icon:'—',  note:'演出を出さない' },
+  { id:'ring',     name:'波紋',     cost:0,    icon:'◎',  note:'正解した選択肢から波紋が広がる' },
+  { id:'confetti', name:'紙吹雪',   cost:1200, icon:'🎊', note:'3科目の色の紙吹雪が舞う' },
+  { id:'heart',    name:'ハート',   cost:2000, icon:'♥',  note:'ハートがふわっと浮かぶ' },
+  { id:'fire',     name:'花火',     cost:3500, icon:'✺',  note:'小さな花火が3つ上がる' },
+  { id:'pill',     name:'カプセル', cost:5000, icon:'💊', note:'カプセル錠が飛び散る' }
+];
+/* ホームの背景（XPで解放）。どれもダークモード用の色を用意している */
+var BGS = [
+  { id:'none',  name:'なし',             cost:0,    note:'無地' },
+  { id:'dot',   name:'ドット',           cost:600,  note:'細かい点の模様' },
+  { id:'grid',  name:'方眼ノート',       cost:600,  note:'ノートの方眼' },
+  { id:'ecg',   name:'心電図',           cost:1800, note:'心電図の記録紙と波形' },
+  { id:'cell',  name:'細胞',             cost:1800, note:'淡い色の丸い細胞' },
+  { id:'wood',  name:'木目の机',         cost:3000, note:'医局の机のような木目' },
+  { id:'night', name:'当直の夜空',       cost:4000, note:'星の夜空（ライトでは淡い色）' }
+];
+function fxById(id){ for(var i=0;i<FXS.length;i++) if(FXS[i].id===id) return FXS[i]; return FXS[0]; }
+function bgById(id){ for(var i=0;i<BGS.length;i++) if(BGS[i].id===id) return BGS[i]; return BGS[0]; }
+function ownsFx(id){ return fxById(id).cost === 0 || (S.ownedFx||[]).indexOf(id) >= 0; }
+function ownsBg(id){ return bgById(id).cost === 0 || (S.ownedBgs||[]).indexOf(id) >= 0; }
+function curFx(){ return ownsFx(S.fx) ? (S.fx||'none') : 'none'; }
+function curBg(){ return ownsBg(S.bg) ? (S.bg||'none') : 'none'; }
+function fxLayer(){
+  var l = document.getElementById('fxLayer');
+  if(!l){ l = document.createElement('div'); l.id = 'fxLayer'; document.body.appendChild(l); }
+  return l;
+}
+/* (x, y) は画面上の座標 */
+function playFx(id, x, y){
+  if(!id || id === 'none') return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var L = fxLayer();
+  function rnd(a, b){ return a + Math.random() * (b - a); }
+  function add(html, css, life){
+    var d = document.createElement('div'); d.className = 'fxp'; d.innerHTML = html || ''; d.setAttribute('style', css);
+    L.appendChild(d); setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, life || 1700);
+  }
+  var cols3 = ['#0B8466','#E8690C','#1B5FC1'];
+  if(id === 'ring'){
+    for(var i=0;i<2;i++) add('', 'left:'+x+'px;top:'+y+'px;width:170px;height:170px;border-radius:50%;border:3px solid var(--good);transform:translate(-50%,-50%) scale(0);animation:fxRing .8s ease-out '+(i*0.15)+'s forwards');
+  } else if(id === 'confetti'){
+    var cc = cols3.concat(['#F5B93C','#D4457B']);
+    for(var i=0;i<36;i++) add('', 'left:'+x+'px;top:'+(y+rnd(-50,-10))+'px;width:7px;height:11px;border-radius:2px;background:'+cc[i%5]+';--dx:'+rnd(-150,150)+'px;--dy:'+rnd(40,180)+'px;--r:'+rnd(-540,540)+'deg;animation:fxFall 1.2s cubic-bezier(.2,.7,.4,1) forwards');
+  } else if(id === 'heart'){
+    for(var i=0;i<11;i++) add('<span style="font-size:'+rnd(14,24)+'px;color:#E2557F">♥</span>', 'left:'+(x+rnd(-50,50))+'px;top:'+(y-10)+'px;--dx:'+rnd(-30,30)+'px;animation:fxUp '+rnd(0.9,1.4)+'s ease-out '+rnd(0,0.25)+'s forwards;opacity:1');
+  } else if(id === 'fire'){
+    var fc = ['#F5B93C','#FF6B58','#5B9CFF','#3CC99A','#C59BFF'];
+    for(var k=0;k<3;k++){ (function(k){
+      var cx = x + rnd(-90,90), cy = y - rnd(20,70), col = fc[(k*2+Math.floor(rnd(0,5)))%5];
+      setTimeout(function(){ for(var i=0;i<18;i++){ var a = i/18*Math.PI*2, dd = rnd(40,72);
+        add('', 'left:'+cx+'px;top:'+cy+'px;width:5px;height:5px;border-radius:50%;background:'+col+';box-shadow:0 0 6px '+col+';--dx:'+(Math.cos(a)*dd)+'px;--dy:'+(Math.sin(a)*dd)+'px;animation:fxBurst .9s ease-out forwards', 1100); } }, k*180);
+    })(k); }
+  } else if(id === 'pill'){
+    for(var i=0;i<14;i++){ var c1 = cols3[i%3];
+      add('<span style="display:inline-block;width:20px;height:9px;border-radius:5px;background:linear-gradient(90deg,'+c1+' 50%,#fff 50%);border:1px solid '+c1+'"></span>',
+          'left:'+x+'px;top:'+y+'px;--dx:'+rnd(-140,140)+'px;--dy:'+rnd(30,160)+'px;--r:'+rnd(-360,360)+'deg;animation:fxFall 1.3s cubic-bezier(.2,.7,.4,1) forwards');
+    }
+  }
+}
+/* 解答直後、正解の選択肢の位置で演出を出す */
+function fxAtCorrect(){
+  var id = curFx(); if(id === 'none') return;
+  var el = document.querySelector('#main .choice.ok'); if(!el) return;
+  var r = el.getBoundingClientRect();
+  playFx(id, r.left + Math.min(r.width/2, 160), r.top + r.height/2);
+}
 function paletteById(id){ for(var i=0;i<PALETTES.length;i++) if(PALETTES[i].id===id) return PALETTES[i]; return PALETTES[0]; }
 function owns(id){ return (S.owned||[]).indexOf(id) >= 0; }
 function applyTheme(){
@@ -1702,6 +1798,7 @@ function applyTheme(){
   document.documentElement.setAttribute('data-theme', t);
   var pal = owns(S.palette) ? (S.palette||'default') : 'default';
   document.documentElement.setAttribute('data-palette', pal);
+  document.documentElement.setAttribute('data-bg', curBg());
   var m = document.querySelector('meta[name="theme-color"]');
   if(m) m.setAttribute('content', t==='dark' ? '#0A0B0D' : '#FFFFFF');
 }
@@ -1834,6 +1931,7 @@ function go(v){
   if(typeof tutDemo !== 'undefined' && tutDemo && document.getElementById('tutOverlay')
      && !(S.session && S.session.tut)){ tutClose(); return; }
   view = v;
+  document.documentElement.setAttribute('data-view', v);
   Array.prototype.forEach.call(document.querySelectorAll('#tabs button'), function(b){
     var on = b.dataset.tab===v;
     if(v==='result') on = (b.dataset.tab === ((S.session&&S.session.exam)?'rank':'home'));
@@ -2429,6 +2527,7 @@ function submitAnswer(bet){
     if(broke >= 3) setTimeout(function(){ playSnd('broke'); }, 170);
   }
   save(); renderQuiz();
+  if(ok && !s.exam) fxAtCorrect();
 }
 /* 次の問題へ進んだら必ず先頭へ。描画直後の高さ変化（百科の閉じ等）でスクロール位置が
    残らないよう、即時と次フレームの2回戻す */
@@ -4877,6 +4976,7 @@ function renderStats(){
 }
 
 /* ---------- settings ---------- */
+var fxOpen = false, bgOpen = false, fxPending = '';
 var shopOpen = false, skinOpen = false, certOpen = false, heatOpen = false, discOpen = false, soundOpen = false;
 /* 復習間隔の表示単位。保存する値は従来どおり（自信なし＝分、まあまあ・自信あり＝日）で、単位は表示と入力だけに使う */
 var SP_UNITS = { min:{m:1, t:'分'}, hour:{m:60, t:'時間'}, day:{m:1440, t:'日'} };
@@ -4970,6 +5070,55 @@ function renderSettings(){
        }).join('')
      + '</div>'
      + '<div class="sub" style="margin:8px 2px 0">3問以上続けて正解したときに出る演出の色が変わります。</div>'
+     + '</div></details>';
+
+  var cf = fxById(curFx());
+  var nFxBuy = FXS.filter(function(f){ return !ownsFx(f.id) && S.xp>=f.cost; }).length;
+  h += '<details class="shop"'+(fxOpen?' open':'')+' id="fxBox">'
+     + '<summary><span class="sswatch fxicon">'+cf.icon+'</span>'
+     + '<span class="stitle">正解したときの演出</span>'
+     + '<span class="scount">'+FXS.filter(function(f){ return ownsFx(f.id); }).length+'/'+FXS.length+'</span>'
+     + (nFxBuy? '<span class="sbadge">'+nFxBuy+'</span>' : '')
+     + '<span class="schev">▾</span></summary>'
+     + '<div class="shopbody">'
+     + '<div class="walletbar"><div class="wlab">使えるXP</div><div class="wval">'+S.xp+' XP</div></div>'
+     + '<div class="skgrid">'
+     + FXS.map(function(f){
+         var own = ownsFx(f.id), cur = curFx()===f.id, canBuy = !own && S.xp >= f.cost, pend = fxPending === f.id && !own;
+         var cls = 'skrow' + (cur?' on':(own?'':(canBuy?' buyable':' locked')));
+         return '<button class="'+cls+'" data-fx="'+f.id+'">'
+              + '<span class="fxicon">'+f.icon+'</span>'
+              + '<span><span class="pname">'+f.name+'</span><span class="sknote">'+f.note+'</span>'
+              + (pend ? '<span class="pend">'+(canBuy ? 'もう一度タップで解放' : 'XPがたまったら解放できます')+'</span>' : '') + '</span>'
+              + '<span class="pcost">'+(own?(cur?'使用中':'使う'):(canBuy?f.cost+' XP':'🔒 '+f.cost))+'</span>'
+              + '</button>';
+       }).join('')
+     + '</div>'
+     + '<div class="sub" style="margin:8px 2px 0">タップすると試せます。演習で正解したときに、正解の選択肢から出ます（認定試験中は出ません）。</div>'
+     + '</div></details>';
+
+  var cb = bgById(curBg());
+  var nBgBuy = BGS.filter(function(b){ return !ownsBg(b.id) && S.xp>=b.cost; }).length;
+  h += '<details class="shop"'+(bgOpen?' open':'')+' id="bgBox">'
+     + '<summary><span class="sswatch bgsw bgpat-'+cb.id+'"></span>'
+     + '<span class="stitle">ホームの背景</span>'
+     + '<span class="scount">'+BGS.filter(function(b){ return ownsBg(b.id); }).length+'/'+BGS.length+'</span>'
+     + (nBgBuy? '<span class="sbadge">'+nBgBuy+'</span>' : '')
+     + '<span class="schev">▾</span></summary>'
+     + '<div class="shopbody">'
+     + '<div class="walletbar"><div class="wlab">使えるXP</div><div class="wval">'+S.xp+' XP</div></div>'
+     + '<div class="skgrid">'
+     + BGS.map(function(b){
+         var own = ownsBg(b.id), cur = curBg()===b.id, canBuy = !own && S.xp >= b.cost;
+         var cls = 'skrow' + (cur?' on':(own?'':(canBuy?' buyable':' locked')));
+         return '<button class="'+cls+'" data-bgp="'+b.id+'">'
+              + '<span class="bgsw bgpat-'+b.id+'"></span>'
+              + '<span><span class="pname">'+b.name+'</span><span class="sknote">'+b.note+'</span></span>'
+              + '<span class="pcost">'+(own?(cur?'使用中':'使う'):(canBuy?b.cost+' XP':'🔒 '+b.cost))+'</span>'
+              + '</button>';
+       }).join('')
+     + '</div>'
+     + '<div class="sub" style="margin:8px 2px 0">ホーム画面の背景に模様を付けます。ダークモードでは暗い色になります。</div>'
      + '</div></details>';
 
   var volLabel = S.sound ? ({0.4:'小',0.7:'中',1:'大'}[S.soundVol] || '中') : 'オフ';
@@ -5077,7 +5226,7 @@ function renderSettings(){
 
   /* 折りたたみボックスの開閉を変数に反映しておく。
      これがないと、他の設定を変更して再描画した際に開閉状態が元に戻ってしまう。 */
-  [['shopBox','shop'],['skinBox','skin'],['soundBox','sound'],['discBox','disc']].forEach(function(v){
+  [['shopBox','shop'],['skinBox','skin'],['soundBox','sound'],['discBox','disc'],['fxBox','fx'],['bgBox','bg']].forEach(function(v){
     var el = document.getElementById(v[0]);
     if(!el) return;
     el.addEventListener('toggle', function(){
@@ -5085,6 +5234,8 @@ function renderSettings(){
       if(v[1]==='skin')  skinOpen  = el.open;
       if(v[1]==='sound') soundOpen = el.open;
       if(v[1]==='disc')  discOpen  = el.open;
+      if(v[1]==='fx')    fxOpen    = el.open;
+      if(v[1]==='bg')    bgOpen    = el.open;
     });
   });
 
@@ -5111,6 +5262,27 @@ function renderSettings(){
       if(!confirm('音色「'+pkg.name+'」を '+pkg.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-pkg.cost)+' XP')) return;
       S.xp -= pkg.cost; S.ownedPacks.push(pid); S.pack = pid;
       save(); soundOpen = true; renderSettings(); playSnd('buy');
+      return;
+    }
+    var fb = e.target.closest('[data-fx]');
+    if(fb){
+      var fid = fb.dataset.fx, fxi = fxById(fid), fr = fb.getBoundingClientRect();
+      var fx0 = fr.left + 40, fy0 = fr.top + fr.height/2;
+      if(ownsFx(fid)){ S.fx = fid; fxPending = ''; save(); fxOpen = true; renderSettings(); playFx(fid, fx0, fy0); return; }
+      if(fxPending !== fid || S.xp < fxi.cost){ fxPending = fid; fxOpen = true; renderSettings(); playFx(fid, fx0, fy0); return; }
+      if(!confirm('正解したときの演出「'+fxi.name+'」を '+fxi.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-fxi.cost)+' XP')) return;
+      S.xp -= fxi.cost; S.ownedFx.push(fid); S.fx = fid; fxPending = ''; playSnd('buy');
+      save(); fxOpen = true; renderSettings();
+      return;
+    }
+    var bp = e.target.closest('[data-bgp]');
+    if(bp){
+      var bid = bp.dataset.bgp, bgi = bgById(bid);
+      if(ownsBg(bid)){ S.bg = bid; save(); applyTheme(); bgOpen = true; renderSettings(); return; }
+      if(S.xp < bgi.cost){ alert('XPが足りません。\n\n必要 '+bgi.cost+' XP ／ 手持ち '+S.xp+' XP\nあと '+(bgi.cost-S.xp)+' XP 必要です。'); return; }
+      if(!confirm('ホームの背景「'+bgi.name+'」を '+bgi.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-bgi.cost)+' XP')) return;
+      S.xp -= bgi.cost; S.ownedBgs.push(bid); S.bg = bid; playSnd('buy');
+      save(); applyTheme(); bgOpen = true; renderSettings();
       return;
     }
     var sb = e.target.closest('[data-skin]');
@@ -5199,7 +5371,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "75b423a6510f";
+<script>window.BOARD_BUILD = "98c66a4bae39";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

@@ -3721,7 +3721,7 @@ var TUTORIAL = [
   { tab:'home', sel:null, t:'はじめまして',
     b:'このアプリの使い方を、実際の画面で順に案内します。'
      +'途中でやめるときは「スキップ」を押してください。案内は設定タブからいつでも見直せます。' },
-  { tab:'home', sel:'main > .card', t:'今日の進み具合',
+  { tab:'home', sel:'main .card', t:'今日の進み具合',
     b:'今日解いた問題数がリングで表示されます。1日の目標は設定タブで変えられます。' },
   { tab:'home', sel:'[data-act="due"]', t:'今日の復習',
     b:'一度解いた問題は、自信度に応じた間隔をあけて、もう一度出題されます。'
@@ -3853,6 +3853,8 @@ function tutRender(){
     o.className = 'demo';
     o.innerHTML = '<div class="tutcard demo">'+tutBody(s)+'</div>';
     tutSpot(null);
+    /* パソコン版は解説が右の欄に出るので、案内は左の欄の下端に置く（上端だと正誤の表示に重なる） */
+    if(window.innerWidth >= 1000){ var dc = o.querySelector('.tutcard'); if(dc) dc.style.bottom = '14px'; }
     return;
   }
   if(s.tab) go(s.tab);
@@ -3861,6 +3863,14 @@ function tutRender(){
   document.body.classList.toggle('tutTabs', !!s.tabfree);
   o.innerHTML = '<div class="tutcard'+(r?' pinned':'')+'">'+tutBody(s)+'</div>';
   if(r) tutFitCard(r);
+  /* パソコン版は描画のあとで画面を2列に並べ替えるので、並べ替えが済んでから位置を測り直す */
+  if(s.sel){
+    var at = tutStep;
+    setTimeout(function(){
+      if(tutStep !== at || !document.getElementById('tutOverlay')) return;
+      var r2 = tutSpot(s.sel); if(r2) tutFitCard(r2);
+    }, 90);
+  }
 }
 /* 光らせた場所を避けつつ、カードが画面からはみ出さない位置に置く。
    カードの高さは描画してからでないと分からないため、ここで計算する。 */
@@ -3888,6 +3898,12 @@ function tutFitCard(r){
   }
   card.style.top = Math.round(Math.max(M, top)) + 'px';
   card.style.bottom = 'auto';
+  /* 広い画面では、光らせた場所の真上・真下に寄せる（画面中央に置くと離れてしまう） */
+  if(window.innerWidth >= 1000 && r.left != null){
+    var cw = card.offsetWidth, cx = r.left + r.width / 2;
+    cx = Math.max(cw/2 + M, Math.min(window.innerWidth - cw/2 - M, cx));
+    card.style.left = Math.round(cx) + 'px';
+  }
 }
 /* 体験中は案内カードを画面下端に固定し、そのぶん本文を上へ逃がす。
    カードが選択肢に重なって押せなくなるのを防ぐ。 */
@@ -5381,7 +5397,7 @@ if(START.tut || (!S.tutSeen && !START.enc)) setTimeout(showTutorial, 400);
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "2d1dc272a995";
+<script>window.BOARD_BUILD = "32bad9b1c6c9";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

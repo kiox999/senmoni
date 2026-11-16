@@ -12,7 +12,7 @@ export var DOC_IDS = ['global', 'naika', 'shouni', 'kyukyu'];
 /* 全科目共通（購入物・XP・見た目） */
 export var GLOBAL_KEYS = ['theme', 'fontsize', 'fontfamily', 'sound', 'soundVol', 'tutSeen',
   'xp', 'xpTotal', 'owned', 'ownedSkins', 'ownedPacks', 'palette', 'skin', 'pack',
-  'ownedFx', 'fx', 'ownedBgs', 'bg'];
+  'ownedFx', 'fx', 'ownedBgs', 'bg', 'dayStart'];
 
 /* 科目ごと（学習データ） */
 export var SUBJECT_KEYS = ['prog', 'hist', 'log', 'marks', 'examLog', 'rank', 'feedback',
@@ -97,7 +97,7 @@ export function mergeGlobal(base, local, cloud) {
     out.tutSeen = (isNum(local.tutSeen) && isNum(cloud.tutSeen))
       ? Math.max(local.tutSeen, cloud.tutSeen) : scalar3(base.tutSeen, local.tutSeen, cloud.tutSeen);
   }
-  ['theme', 'fontsize', 'fontfamily', 'sound', 'soundVol', 'palette', 'skin', 'pack', 'fx', 'bg'].forEach(function (k) {
+  ['theme', 'fontsize', 'fontfamily', 'sound', 'soundVol', 'palette', 'skin', 'pack', 'fx', 'bg', 'dayStart'].forEach(function (k) {
     var v = scalar3(base[k], local[k], cloud[k]);
     if (v !== undefined) out[k] = clone(v);
   });

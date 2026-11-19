@@ -5589,7 +5589,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "fcfab116e48e";
+<script>window.BOARD_BUILD = "b9ca7eb9c3c6";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -6195,12 +6195,27 @@ if(syncedBefore && window.BoardSyncGate) window.BoardSyncGate(2500).then(boot, b
         var cols = document.createElement('div'); cols.className = 'pccols' + (ttl === '段位認定' ? ' pcgrid' : '');
         var sec = null, n2 = h1.nextElementSibling, list = [];
         while(n2){ list.push(n2); n2 = n2.nextElementSibling; }
+        /* 段位：左に現在の段位・次の試験・受験履歴、右に全段位の一覧。
+           （見出しごとに区切ると、受験履歴が長い段位一覧の下の段に回って見えなくなる） */
+        var rkL = null, rkR = null;
+        if(ttl === '段位認定'){
+          rkL = document.createElement('section'); rkL.className = 'pcsec'; rkL.dataset.kind = 'solo';
+          rkR = document.createElement('section'); rkR.className = 'pcsec'; rkR.dataset.kind = 'solo';
+          cols.appendChild(rkL); cols.appendChild(rkR);
+        }
         list.forEach(function(c){
+          if(rkL){
+            if(!c.children.length && !c.textContent.trim()) return;
+            if(c.classList.contains('sub') && !rkL.children.length && !rkR.children.length) return;
+            var isAll = c.tagName === 'DETAILS' && c.id !== 'examHist';
+            (isAll ? rkR : rkL).appendChild(c);
+            if(c.tagName === 'DETAILS' && !c.open) c.open = true;
+            return;
+          }
           var empty = !c.children.length && !c.textContent.trim();
           if(empty) return;
           if(c.classList.contains('sub') && !sec){ return; }           /* 見出し直下の説明文はそのまま上に残す */
           var startNew = c.tagName === 'H2' || !sec || (sec.dataset.kind !== 'h2' ) ;
-          if(ttl === '段位認定') startNew = !sec || c.tagName === 'DETAILS';
           if(startNew){ sec = document.createElement('section'); sec.className = 'pcsec'; sec.dataset.kind = c.tagName === 'H2' ? 'h2' : 'solo'; cols.appendChild(sec); }
           else if(sec.dataset.kind === 'h2' && c.tagName === 'DETAILS'){ sec = document.createElement('section'); sec.className = 'pcsec'; sec.dataset.kind = 'solo'; cols.appendChild(sec); }
           sec.appendChild(c);

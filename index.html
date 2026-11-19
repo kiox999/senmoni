@@ -2176,7 +2176,7 @@ function audioCtx(){
       /* --- マスターチェーン --- */
       aMaster = actx.createGain(); aMaster.gain.value = 1;
       var lp = actx.createBiquadFilter();      /* 高域のキツさを落とす */
-      lp.type = 'lowpass'; lp.frequency.value = (SUBJ.sound === 'c' ? 4800 : SUBJ.sound === 'b' ? 5200 : 4200); lp.Q.value = 0.4;
+      lp.type = 'lowpass'; lp.frequency.value = (SUBJ.sound === 'c' ? 3000 : SUBJ.sound === 'b' ? 3200 : 2800); lp.Q.value = 0.4;   /* 耳に刺さる高域を抑える */
       var shelf = actx.createBiquadFilter();   /* 中低域に少し厚みを */
       shelf.type = 'lowshelf'; shelf.frequency.value = 320; shelf.gain.value = 2.5;
       var comp = actx.createDynamicsCompressor();
@@ -2197,7 +2197,7 @@ function audioCtx(){
     return actx;
   }catch(e){ return null; }
 }
-function vol(){ return (S.soundVol==null?0.7:S.soundVol) * 0.5; }
+function vol(){ return (S.soundVol==null?0.7:S.soundVol) * 0.3; }
 function busSend(node, wet){
   node.connect(aDry);
   if(aVerb && wet){ var g = actx.createGain(); g.gain.value = wet; node.connect(g); g.connect(aVerb); }
@@ -2221,7 +2221,9 @@ function ping(freq, delay, opt){
     var f = freq * p[0] * (1 + (idx? (idx%2?1:-1)*0.0016 : 0));
     o.frequency.setValueAtTime(f, t);
     if(opt.drop) o.frequency.exponentialRampToValueAtTime(Math.max(30, f*opt.drop), t + dur*0.9);
-    var pv = Math.max(0.0001, v * p[1]);
+    if(f > 4500) return;                         /* 高すぎる倍音は鳴らさない */
+    /* 1.5kHzより上は高いほど小さくする（キーンと響くのを防ぐ） */
+    var pv = Math.max(0.0001, v * p[1] * (f > 1500 ? Math.pow(1500 / f, 1.2) : 1));
     g.gain.setValueAtTime(0.0001, t);
     g.gain.linearRampToValueAtTime(pv, t + (opt.atk || 0.006));
     /* 高次倍音は早く減衰させる＝打鍵直後だけ明るい */
@@ -2241,11 +2243,11 @@ function noise(delay, opt){
   var src = ac.createBufferSource(); src.buffer = buf;
   var bp = ac.createBiquadFilter();
   bp.type = opt.filter || 'bandpass';
-  bp.frequency.setValueAtTime(opt.f || 2600, t);
+  bp.frequency.setValueAtTime(Math.min(opt.f || 2600, 3000), t);   /* 打点のノイズも高域に寄せすぎない */
   if(opt.f2) bp.frequency.exponentialRampToValueAtTime(Math.max(40,opt.f2), t + dur);
   bp.Q.value = opt.q==null?1.1:opt.q;
   var g = ac.createGain();
-  var v = (opt.vol==null?0.5:opt.vol) * vol();
+  var v = (opt.vol==null?0.5:opt.vol) * vol() * 0.6;
   g.gain.setValueAtTime(Math.max(0.0001,v), t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   src.connect(bp); bp.connect(g); busSend(g, opt.wet==null?0.5:opt.wet);
@@ -2278,10 +2280,12 @@ var packPreview = '';
 var PACK_TONE = {
   bell:    { type:'sine',     parts:[[1,1],[2,0.34],[3,0.13],[4,0.06]], dur:1.0, oct:1.0,  wet:1.0, atk:0.006 },
   marimba: { type:'sine',     parts:[[1,1],[4,0.22],[10,0.05]],         dur:0.72, oct:0.5,  wet:0.7, atk:0.004 },
-  crystal: { type:'sine',     parts:[[1,1],[2,0.5],[3,0.28],[5,0.12]],  dur:1.45, oct:2.0,  wet:1.5, atk:0.010 },
+  crystal: { type:'sine',     parts:[[1,1],[2,0.5],[3,0.28],[5,0.12]],  dur:1.45, oct:1.5,  wet:1.5, atk:0.010 },
   retro:   { type:'square',   parts:[[1,1]],                            dur:0.55, oct:1.0,  wet:0.25,atk:0.002 },
   harp:    { type:'triangle', parts:[[1,1],[2,0.28],[3,0.10]],          dur:1.6,  oct:1.0,  wet:1.3, atk:0.012 }
 };
+/* 全体の音の高さ。元の高さだと高音が耳に刺さるため、全音色をまとめて低くしてある */
+var SOFT_PITCH = 0.75;
 /* パックを踏まえて ping を呼ぶ */
 function tone(freq, delay, opt){
   var P = PACK_TONE[packPreview || curPack()] || PACK_TONE.bell;
@@ -2295,7 +2299,10 @@ function tone(freq, delay, opt){
     wet: (opt.wet == null ? 0.9 : opt.wet) * P.wet,
     drop: opt.drop
   };
-  ping(freq * P.oct, delay, o);
+  /* 1.3kHzを超える音はオクターブ下げて鳴らす（和音の関係は変わらない） */
+  var tf = freq * P.oct * SOFT_PITCH;
+  while(tf > 1300) tf /= 2;
+  ping(tf, delay, o);
 }
 
 var SND_A = {
@@ -5487,7 +5494,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "330ca1b3aaf6";
+<script>window.BOARD_BUILD = "e227b0f97b45";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

@@ -2270,6 +2270,8 @@ var SOUNDPACKS = [
 function packById(id){ for(var i=0;i<SOUNDPACKS.length;i++) if(SOUNDPACKS[i].id===id) return SOUNDPACKS[i]; return SOUNDPACKS[0]; }
 function ownsPack(id){ return (S.ownedPacks||[]).indexOf(id) >= 0; }
 function curPack(){ return ownsPack(S.pack) ? (S.pack||'bell') : 'bell'; }
+/* 設定画面での試聴用：買う前の音色を一時的に鳴らす（鳴らし終えたら必ず空に戻す） */
+var packPreview = '';
 
 /* パックごとの音色パラメータ。
    type:波形 / parts:倍音構成 / dur:長さ倍率 / oct:全体の移調(半音でなく倍率) / wet:残響量 */
@@ -2282,7 +2284,7 @@ var PACK_TONE = {
 };
 /* パックを踏まえて ping を呼ぶ */
 function tone(freq, delay, opt){
-  var P = PACK_TONE[curPack()] || PACK_TONE.bell;
+  var P = PACK_TONE[packPreview || curPack()] || PACK_TONE.bell;
   opt = opt || {};
   var o = {
     dur: (opt.dur || 0.5) * P.dur,
@@ -5061,7 +5063,7 @@ function renderStats(){
 }
 
 /* ---------- settings ---------- */
-var fxOpen = false, bgOpen = false, fxPending = '';
+var fxOpen = false, bgOpen = false, fxPending = '', packPending = '';
 var shopOpen = false, skinOpen = false, certOpen = false, heatOpen = false, discOpen = false, soundOpen = false;
 /* 復習間隔の表示単位。保存する値は従来どおり（自信なし＝分、まあまあ・自信あり＝日）で、単位は表示と入力だけに使う */
 var SP_UNITS = { min:{m:1, t:'分'}, hour:{m:60, t:'時間'}, day:{m:1440, t:'日'} };
@@ -5228,16 +5230,18 @@ function renderSettings(){
         + '<div class="skgrid" style="margin-bottom:4px">'
         + SOUNDPACKS.map(function(pk){
             var own = ownsPack(pk.id), cur = curPack()===pk.id;
-            var canBuy = !own && S.xp >= pk.cost;
+            var canBuy = !own && S.xp >= pk.cost, pend = packPending === pk.id && !own;
             var cls = 'skrow' + (cur?' on':(own?'':(canBuy?' buyable':' locked')));
             return '<button class="'+cls+'" data-pack="'+pk.id+'">'
                  + '<span class="pkicon">'+pk.icon+'</span>'
-                 + '<span><span class="pname">'+pk.name+'</span><span class="sknote">'+pk.note+'</span></span>'
+                 + '<span><span class="pname">'+pk.name+'</span><span class="sknote">'+pk.note+'</span>'
+                 + (pend ? '<span class="pend">試聴中　'+(canBuy ? 'もう一度タップで解放' : 'XPがたまったら解放できます')+'</span>' : '') + '</span>'
                  + '<span class="pcost">'+(own?(cur?'使用中':'使う'):(canBuy?pk.cost+' XP':'🔒 '+pk.cost))+'</span>'
                  + '</button>';
           }).join('')
         + '</div>'
-        + '<div class="spacingRow" style="margin-top:12px"><span>音を試す</span><span></span></div>'
+        + '<div class="sub" style="margin:8px 2px 0">まだ持っていない音色も、タップすると買う前に試し聞きできます。</div>'
+        + '<div class="spacingRow" style="margin-top:12px"><span>音を試す'+((packPending && !ownsPack(packPending)) ? '（'+packById(packPending).name+'を試聴中）' : '')+'</span><span></span></div>'
         + '<div class="chiprow" id="stestRow" style="flex-wrap:wrap">'
         + [['correct','正解'],['wrong','不正解'],['combo','コンボ'],['broke','途切れ'],
            ['pass','合格'],['fail','不合格'],['buy','購入']].map(function(v){
@@ -5346,10 +5350,15 @@ function renderSettings(){
     var pk = e.target.closest('[data-pack]');
     if(pk){
       var pid = pk.dataset.pack, pkg = packById(pid);
-      if(ownsPack(pid)){ S.pack = pid; save(); soundOpen = true; renderSettings(); playSnd('correct'); return; }
-      if(S.xp < pkg.cost){ alert('XPが足りません。\n\n必要 '+pkg.cost+' XP ／ 手持ち '+S.xp+' XP\nあと '+(pkg.cost-S.xp)+' XP 必要です。'); return; }
+      if(ownsPack(pid)){ S.pack = pid; packPending = ''; save(); soundOpen = true; renderSettings(); playSnd('correct'); return; }
+      /* 1回目のタップは試聴だけ。同じ音色をもう一度タップすると購入の確認に進む */
+      if(packPending !== pid || S.xp < pkg.cost){
+        packPending = pid; soundOpen = true; renderSettings();
+        packPreview = pid; playSnd('correct'); packPreview = '';
+        return;
+      }
       if(!confirm('音色「'+pkg.name+'」を '+pkg.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-pkg.cost)+' XP')) return;
-      S.xp -= pkg.cost; S.ownedPacks.push(pid); S.pack = pid;
+      S.xp -= pkg.cost; S.ownedPacks.push(pid); S.pack = pid; packPending = '';
       save(); soundOpen = true; renderSettings(); playSnd('buy');
       return;
     }
@@ -5391,13 +5400,16 @@ function renderSettings(){
     var stst = e.target.closest('[data-stest]');
     if(stst){
       var kind = stst.dataset.stest;
+      /* 試聴中の音色があれば、その音色で鳴らす */
+      var tpk = (packPending && !ownsPack(packPending)) ? packPending : '';
+      var tplay = function(n, a){ packPreview = tpk; playSnd(n, a); packPreview = ''; };
       if(kind === 'combo'){
         /* コンボは段階が伝わるよう3連→8連→20連を続けて鳴らす */
-        playSnd('combo', 0);
-        setTimeout(function(){ playSnd('combo', 2); }, 480);
-        setTimeout(function(){ playSnd('combo', 4); }, 980);
+        tplay('combo', 0);
+        setTimeout(function(){ tplay('combo', 2); }, 480);
+        setTimeout(function(){ tplay('combo', 4); }, 980);
       } else {
-        playSnd(kind || 'correct');
+        tplay(kind || 'correct');
       }
       return;
     }
@@ -5475,7 +5487,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "cf4712b47dea";
+<script>window.BOARD_BUILD = "330ca1b3aaf6";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5526,15 +5538,15 @@ if("serviceWorker" in navigator && (location.protocol === "https:" || location.h
 var SUBJECTS = [
   {id:'naika',  short:'内科',   name:'内科専門医試験',   kicker:'INTERNAL MED BOARD PREP', title:'内科 演習',
    exam:'内科専門医試験', multi:'2つ選べ', phStudy:'心不全、ネフローゼ', phSearch:'心不全', sound:'a',
-   desc:'消化管・循環器・神経・感染症など13分野。', total:4200,
+   desc:'消化管・循環器・神経・感染症など13分野。', total:4210,
    catLetter:{"消化管":"A","肝・胆・膵":"B","循環器":"C","代謝・内分泌":"D","腎・泌尿器":"E","免疫・膠原病":"F","血液":"G","感染症":"H","呼吸器":"I","神経":"J","中毒":"K","救急":"L","総論":"M"}},
   {id:'shouni', short:'小児科', name:'小児科専門医試験', kicker:'PED BOARD PREP', title:'小児科 演習',
    exam:'小児科専門医試験', multi:'2つ選べ・3つ選べ', phStudy:'川崎病、紫斑', phSearch:'川崎病', sound:'b',
-   desc:'周産期・内分泌・感染症・遺伝など18分野。', total:5138,
+   desc:'周産期・内分泌・感染症・遺伝など18分野。', total:5156,
    catLetter:{"消化管":"A","肝・胆・膵":"B","循環器":"C","内分泌・代謝":"D","腎・体液":"E","アレルギー・免疫":"F","血液・腫瘍":"G","感染症・予防接種":"H","呼吸器":"I","神経":"J","中毒・救急":"K","総論":"L","遺伝・発達":"M","周産期・新生児":"N","皮膚科":"O","精神科":"P","泌尿器":"Q","公衆衛生":"R"}},
   {id:'kyukyu', short:'救急科', name:'救急科専門医試験', kicker:'EMERGENCY MED BOARD PREP', title:'救急科 演習',
    exam:'救急科専門医試験', multi:'2つ選べ', phStudy:'敗血症、熱中症', phSearch:'心停止', sound:'c', isNew:true,
-   desc:'蘇生・外傷・中毒・環境障害・災害医療・法規など14分野。', total:3036,
+   desc:'蘇生・外傷・中毒・環境障害・災害医療・法規など14分野。', total:3039,
    catLetter:{"心肺蘇生・気道管理": "A", "ショック・循環管理": "B", "呼吸不全・人工呼吸管理": "C", "外傷": "D", "熱傷・電撃傷・化学損傷": "E", "中毒": "F", "環境障害": "G", "神経救急": "H", "感染症・敗血症": "I", "消化器・腎・代謝救急": "J", "小児・産科・高齢者救急": "K", "精神科救急・特殊病態": "L", "災害医療・救急医療体制・法規": "M", "救急検査・画像・手技": "N"}}
 ];
 var SKEY = 'board-subject';

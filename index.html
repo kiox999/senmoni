@@ -178,13 +178,33 @@ details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0
 .ddlist .ddlh:first-child{margin-top:0}
 /* マーカー（関連知識・事典の本文に引く蛍光ペン） */
 mark.uhl{background:rgba(255,214,10,.55);color:inherit;border-radius:2px;padding:1px 0;cursor:pointer;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+mark.uhl.c1{background:rgba(255,92,120,.42)}
+mark.uhl.c2{background:rgba(64,156,255,.38)}
+mark.uhl.c3{background:rgba(52,199,120,.42)}
 html[data-theme="dark"] mark.uhl{background:rgba(255,214,10,.34)}
-.hlhint{margin-top:12px;font:500 11px var(--sans);color:var(--soft)}
+html[data-theme="dark"] mark.uhl.c1{background:rgba(255,92,120,.38)}
+html[data-theme="dark"] mark.uhl.c2{background:rgba(64,156,255,.38)}
+html[data-theme="dark"] mark.uhl.c3{background:rgba(52,199,120,.34)}
+/* 暗記シート：選んだ色のマーカーを塗りつぶして隠す。タップした所だけ透ける */
+body.hlh0 mark.uhl.c0:not(.rev),body.hlh1 mark.uhl.c1:not(.rev),body.hlh2 mark.uhl.c2:not(.rev),body.hlh3 mark.uhl.c3:not(.rev){color:transparent!important;-webkit-text-fill-color:transparent;text-decoration:none}
+body.hlh0 mark.uhl.c0:not(.rev) *,body.hlh1 mark.uhl.c1:not(.rev) *,body.hlh2 mark.uhl.c2:not(.rev) *,body.hlh3 mark.uhl.c3:not(.rev) *{color:transparent!important;-webkit-text-fill-color:transparent;text-decoration:none!important;border-color:transparent!important;background:transparent!important}
+body.hlh0 .tl:has(mark.uhl.c0:not(.rev)),body.hlh1 .tl:has(mark.uhl.c1:not(.rev)),body.hlh2 .tl:has(mark.uhl.c2:not(.rev)),body.hlh3 .tl:has(mark.uhl.c3:not(.rev)){text-decoration:none}
+body.hlh0 mark.uhl.c0:not(.rev){background:#F2C200}
+body.hlh1 mark.uhl.c1:not(.rev){background:#EC5F7A}
+body.hlh2 mark.uhl.c2:not(.rev){background:#4A97EE}
+body.hlh3 mark.uhl.c3:not(.rev){background:#34B274}
+.hlbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);font:500 11px var(--sans);color:var(--soft)}
+.hlbar .hlbl{margin-right:2px}
+.hlbar .hlsheet{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
+.hldot{width:22px;height:22px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer;background:#F2C200;opacity:.45}
+.hldot.c1{background:#EC5F7A}.hldot.c2{background:#4A97EE}.hldot.c3{background:#34B274}
+.hlbar .hldot.on{opacity:1;border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--card)}
 .hlpill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 92px);z-index:9000;
-  padding:11px 22px;border:0;border-radius:999px;background:#1F2328;color:#FFE04A;font:800 14px var(--sans);
-  box-shadow:0 6px 22px rgba(0,0,0,.28);cursor:pointer;user-select:none;-webkit-user-select:none}
-.hlpill.del{color:#fff}
-.hlpill:disabled{opacity:.75;color:#fff}
+  display:flex;align-items:center;gap:10px;padding:9px 16px;border-radius:999px;background:#1F2328;color:#fff;font:700 12.5px var(--sans);
+  box-shadow:0 6px 22px rgba(0,0,0,.28);user-select:none;-webkit-user-select:none;white-space:nowrap}
+.hlpill .hldot{width:30px;height:30px;opacity:1;border-color:rgba(255,255,255,.25)}
+.hlpill .hldot.cur{border-color:#fff}
+.hlpill .hldel{border:0;border-radius:999px;padding:7px 12px;background:rgba(255,255,255,.14);color:#fff;font:700 12px var(--sans);cursor:pointer}
 .hlpill.hide{display:none}
 .ddtable{border-collapse:collapse;margin:0;font:400 12px/1.5 var(--sans);min-width:100%;white-space:nowrap;background:transparent}
 .ddtable td:last-child,.ddtable th:last-child{white-space:normal;min-width:8em}
@@ -1983,14 +2003,32 @@ function formatDeepdive(text){
     }
   }
   /* 事典の項目の本文は、マーカーを引ける枠（data-hl＝項目名）で包む */
-  return html + (title ? hlWrap(title, body) + HL_HINT : body);
+  return html + (title ? hlWrap(title, body) + hlBar() : body);
 }
 /* ---------- マーカー（関連知識・事典の本文に引く蛍光ペン） ----------
    本文の文字を選ぶと画面下に「マーカーを引く」が出る。引いた所をタップすると消せる。
    S.hl に「項目名 → [[空白を抜いた文字列, 同じ文字列のうち何番目か], …]」で持つ（科目ごと、クラウド同期の対象）。
    描画のたびに文字列を探して色を付けるので、関連知識・事典・一問一答のどこで開いても同じ所に付く。 */
 function hlStore(){ if(!S.hl || typeof S.hl !== 'object' || Array.isArray(S.hl)) S.hl = {}; return S.hl; }
-var HL_MAX = 300, HL_HINT = '<div class="hlhint">文字を選ぶと、マーカーを引けます。</div>';
+var HL_MAX = 300, HL_COLORS = ['黄', '赤', '青', '緑'];
+/* 暗記シートで隠す色（S.hlHide）。端末ごとの表示の設定なので同期はしない */
+function hlHidden(){ if(!Array.isArray(S.hlHide)) S.hlHide = []; return S.hlHide; }
+function hlHideSync(){
+  var hd = hlHidden();
+  for(var c = 0; c < HL_COLORS.length; c++) document.body.classList.toggle('hlh' + c, hd.indexOf(c) >= 0);
+  var ds = document.querySelectorAll('.hlbar [data-hlhide]');
+  for(var i = 0; i < ds.length; i++) ds[i].classList.toggle('on', hd.indexOf(+ds[i].getAttribute('data-hlhide')) >= 0);
+  var rv = document.querySelectorAll('mark.uhl.rev');
+  for(i = 0; i < rv.length; i++) rv[i].classList.remove('rev');
+}
+/* 本文の下に出す帯：使い方と、暗記シート（隠す色の切り替え） */
+function hlBar(){
+  var hd = hlHidden(), h = '<div class="hlbar"><span class="hlbl">文字を選ぶとマーカーを引けます</span><span class="hlsheet"><span>暗記シートで隠す色</span>';
+  HL_COLORS.forEach(function(nm, c){
+    h += '<button type="button" class="hldot c'+c+(hd.indexOf(c) >= 0 ? ' on' : '')+'" data-hlhide="'+c+'" aria-label="'+nm+'のマーカーを隠す"></button>';
+  });
+  return h + '</span></div>';
+}
 var hlRev = 1, hlBusy = false, hlPick = null;
 function hlWrap(name, inner){ return '<div data-hl="'+esc(name)+'">'+inner+'</div>'; }
 function hlStrip(t){ return String(t||'').replace(/\s+/g, ''); }
@@ -2028,7 +2066,7 @@ function hlApply(box){
       }
       segs.forEach(function(sg){
         var r = document.createRange(); r.setStart(sg.n, sg.s); r.setEnd(sg.n, sg.e);
-        var mk = document.createElement('mark'); mk.className = 'uhl'; mk.setAttribute('data-hi', idx);
+        var mk = document.createElement('mark'); mk.className = 'uhl c' + (it[2] || 0); mk.setAttribute('data-hi', idx);
         r.surroundContents(mk);
       });
     });
@@ -2043,7 +2081,7 @@ function hlScan(){
 function hlPill(){
   var p = document.getElementById('hlPill');
   if(!p){
-    p = document.createElement('button'); p.type = 'button'; p.id = 'hlPill'; p.className = 'hlpill hide';
+    p = document.createElement('div'); p.id = 'hlPill'; p.className = 'hlpill hide';
     /* ボタンを押しても文字の選択が外れないようにする */
     p.addEventListener('pointerdown', function(e){ e.preventDefault(); });
     p.addEventListener('mousedown', function(e){ e.preventDefault(); });
@@ -2051,10 +2089,17 @@ function hlPill(){
   }
   return p;
 }
-function hlShow(pick, label, off){
+/* pick: 新しく引くとき {name,t,nth}、引いた所を触ったとき {edit:true,name,idx,c}、null は案内だけ */
+function hlShow(pick, label){
   hlPick = pick;
-  var p = hlPill(); p.textContent = label; p.disabled = !!off; p.classList.remove('hide');
-  p.classList.toggle('del', !!(pick && pick.del));
+  var p = hlPill(), h = '<span>'+esc(label)+'</span>';
+  if(pick){
+    HL_COLORS.forEach(function(nm, c){
+      h += '<button type="button" class="hldot c'+c+(pick.edit && pick.c === c ? ' cur' : '')+'" data-hlc="'+c+'" aria-label="'+nm+'"></button>';
+    });
+    if(pick.edit) h += '<button type="button" class="hldel" data-hldel="1">消す</button>';
+  }
+  p.innerHTML = h; p.classList.remove('hide');
 }
 function hlHide(){ hlPick = null; var p = document.getElementById('hlPill'); if(p) p.classList.add('hide'); }
 /* いまの文字選択が、1つの枠の中に収まっていれば「どの項目の・どの文字列の・何番目か」を返す */
@@ -2077,36 +2122,61 @@ function hlFromSelection(){
 }
 function hlChanged(){ save(); hlRev++; hlScan(); }
 function hlOnSelect(){
-  if(hlPick && hlPick.del) return;              /* 「消す」を出している間は選択の変化で消さない */
+  if(hlPick && hlPick.edit) return;             /* 引いた所の操作を出している間は、選択の変化で消さない */
   var s = hlFromSelection();
   if(!s){ hlHide(); return; }
-  if(s.t.length > HL_MAX){ hlShow(null, '長すぎます（'+HL_MAX+'字まで）', true); return; }
-  hlShow(s, 'マーカーを引く');
+  if(s.t.length > HL_MAX){ hlShow(null, '長すぎます（'+HL_MAX+'字まで）'); return; }
+  /* すでに引いてある所をそのまま選び直したときは、色替え・消すを出す */
+  var ex = -1, exc = 0;
+  (hlStore()[s.name] || []).forEach(function(x, k){ if(x[0] === s.t && (x[1] || 0) === s.nth){ ex = k; exc = x[2] || 0; } });
+  if(ex >= 0){ hlShow({ edit:true, name:s.name, idx:ex, c:exc }, '色を変える'); return; }
+  hlShow(s, '色を選ぶ');
 }
 function hlOnClick(e){
-  var tg = e.target;
-  if(tg && tg.id === 'hlPill'){
-    var pk = hlPick; if(!pk) return;
-    var H = hlStore(), list = (H[pk.name] || []).slice();
-    if(pk.del){
-      list.splice(pk.idx, 1);
+  var tg = e.target, cl = function(q){ return tg && tg.closest && tg.closest(q); };
+  /* 暗記シートで隠す色の切り替え */
+  var hb = cl('.hlbar [data-hlhide]');
+  if(hb){
+    var hc = +hb.getAttribute('data-hlhide'), hd = hlHidden(), at = hd.indexOf(hc);
+    if(at >= 0) hd.splice(at, 1); else hd.push(hc);
+    save(); hlHideSync(); hlHide();
+    e.stopPropagation(); return;
+  }
+  if(cl('#hlPill')){
+    var pk = hlPick, cb = cl('[data-hlc]'), db = cl('[data-hldel]');
+    if(!pk || (!cb && !db)) return;
+    var H = hlStore(), list = (H[pk.name] || []).slice(), col = cb ? +cb.getAttribute('data-hlc') : 0;
+    if(pk.edit){
+      if(db) list.splice(pk.idx, 1);
+      else if(list[pk.idx]) list[pk.idx] = [list[pk.idx][0], list[pk.idx][1] || 0, col];
+      try{ window.getSelection().removeAllRanges(); }catch(err){}
     } else {
-      if(!list.some(function(x){ return x[0] === pk.t && (x[1] || 0) === pk.nth; })) list.push([pk.t, pk.nth]);
+      var same = -1;
+      list.forEach(function(x, k){ if(x[0] === pk.t && (x[1] || 0) === pk.nth) same = k; });
+      if(same >= 0) list[same] = [pk.t, pk.nth, col]; else list.push([pk.t, pk.nth, col]);
       try{ window.getSelection().removeAllRanges(); }catch(err){}
     }
     if(list.length) H[pk.name] = list; else delete H[pk.name];
     hlHide(); hlChanged();
     return;
   }
-  var mk = tg && tg.closest && tg.closest('mark.uhl');
+  var mk = cl('mark.uhl');
   if(mk){
     var sel = window.getSelection && window.getSelection();
     if(sel && !sel.isCollapsed) return;         /* なぞっている途中は選択を優先する */
     var box = mk.closest('[data-hl]'); if(!box) return;
-    hlShow({ del:true, name:box.dataset.hl, idx:+mk.getAttribute('data-hi') }, 'このマーカーを消す');
+    var idx = +mk.getAttribute('data-hi'), it = (hlStore()[box.dataset.hl] || [])[idx] || [], c = it[2] || 0;
+    if(hlHidden().indexOf(c) >= 0){
+      /* 暗記シートで隠している色は、タップで答えを見る／もう一度タップで隠す（同じマーカーの切れ端はまとめて） */
+      var parts = box.querySelectorAll('mark.uhl[data-hi="'+idx+'"]'), on = !mk.classList.contains('rev');
+      for(var i = 0; i < parts.length; i++) parts[i].classList.toggle('rev', on);
+      hlHide(); e.stopPropagation(); e.preventDefault(); return;   /* 用語リンクの上でも、リンクは開かずに答えを見るだけにする */
+    }
+    if(mk.closest('.tl')) return;               /* 用語リンクに引いた所は、タップではリンクを開く（色替え・消すは選び直して行う） */
+    hlShow({ edit:true, name:box.dataset.hl, idx:idx, c:c }, '色を変える');
     return;
   }
-  if(hlPick && hlPick.del) hlHide();
+  if(hlPick && hlPick.edit) hlHide();
 }
 /* 科目を切り替えてエンジンを作り直しても、処理が二重に付かないようにする */
 (function(){
@@ -2122,7 +2192,7 @@ function hlOnClick(e){
   document.addEventListener('selectionchange', selH);
   document.addEventListener('click', hlOnClick, true);
   window.__hlBind = { sel:selH, click:hlOnClick, mo:mo };
-  hlHide();
+  hlHide(); hlHideSync();
 })();
 function letters(n){ return 'abcdefgh'.slice(0,n).split(''); }
 function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
@@ -3553,7 +3623,7 @@ function encBodyHtml(e, noQuiz){
     if(sec.label) h += '<div class="enlabel">'+esc(sec.label)+'</div>';
     h += renderContentWithTable(sec.text);   /* [TABLE]記法を表として描画 */
   });
-  h += '</div>' + HL_HINT;
+  h += '</div>' + hlBar();
   if(e.rel && e.rel.length){
     var rl = e.rel.map(findDisease).filter(function(x, i, a){ return x && a.indexOf(x) === i; });
     if(rl.length) h += '<div class="enlabel">関連する疾患</div><div class="relrow">'
@@ -5776,7 +5846,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "178e45fd3ae0";
+<script>window.BOARD_BUILD = "ae43bcbd4118";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

@@ -1,7 +1,7 @@
 /* オフライン用キャッシュ。ビルドごとに CACHE 名が変わり、古いキャッシュは削除される */
-var CACHE = 'board-e0e5ee505d70';
+var CACHE = 'board-cf4712b47dea';
 var FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192-v2.png', 'icons/icon-512-v2.png',
-             'icons/icon-maskable-512-v2.png', 'icons/apple-touch-icon-v2.png',
+             'icons/icon-maskable-512-v2.png', 'icons/apple-touch-icon-v2.png', 'icons/badge-96.png',
              'data/naika.js', 'data/shouni.js', 'data/kyukyu.js', 'data/ref.js', 'firebase-config.js', 'sync.bundle.js'];
 self.addEventListener('install', function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(FILES); }).then(function(){ return self.skipWaiting(); }));
@@ -41,7 +41,7 @@ self.addEventListener('push', function(e){
   var d = p.data || p.notification || {};
   e.waitUntil(self.registration.showNotification(d.title || '専門医試験 演習', {
     body: d.body || '今日はまだ問題を解いていません。',
-    icon: 'icons/icon-192-v2.png', badge: 'icons/icon-192-v2.png', tag: 'board-remind', data: { url: d.url || './' }
+    icon: 'icons/icon-192-v2.png', badge: 'icons/badge-96.png', tag: 'board-remind', data: { url: d.url || './' }
   }));
 });
 self.addEventListener('notificationclick', function(e){

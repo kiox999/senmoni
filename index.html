@@ -2270,6 +2270,8 @@ var SOUNDPACKS = [
 function packById(id){ for(var i=0;i<SOUNDPACKS.length;i++) if(SOUNDPACKS[i].id===id) return SOUNDPACKS[i]; return SOUNDPACKS[0]; }
 function ownsPack(id){ return (S.ownedPacks||[]).indexOf(id) >= 0; }
 function curPack(){ return ownsPack(S.pack) ? (S.pack||'bell') : 'bell'; }
+/* 設定画面での試聴用：買う前の音色を一時的に鳴らす（鳴らし終えたら必ず空に戻す） */
+var packPreview = '';
 
 /* パックごとの音色パラメータ。
    type:波形 / parts:倍音構成 / dur:長さ倍率 / oct:全体の移調(半音でなく倍率) / wet:残響量 */
@@ -2282,7 +2284,7 @@ var PACK_TONE = {
 };
 /* パックを踏まえて ping を呼ぶ */
 function tone(freq, delay, opt){
-  var P = PACK_TONE[curPack()] || PACK_TONE.bell;
+  var P = PACK_TONE[packPreview || curPack()] || PACK_TONE.bell;
   opt = opt || {};
   var o = {
     dur: (opt.dur || 0.5) * P.dur,
@@ -5061,7 +5063,7 @@ function renderStats(){
 }
 
 /* ---------- settings ---------- */
-var fxOpen = false, bgOpen = false, fxPending = '';
+var fxOpen = false, bgOpen = false, fxPending = '', packPending = '';
 var shopOpen = false, skinOpen = false, certOpen = false, heatOpen = false, discOpen = false, soundOpen = false;
 /* 復習間隔の表示単位。保存する値は従来どおり（自信なし＝分、まあまあ・自信あり＝日）で、単位は表示と入力だけに使う */
 var SP_UNITS = { min:{m:1, t:'分'}, hour:{m:60, t:'時間'}, day:{m:1440, t:'日'} };
@@ -5228,16 +5230,18 @@ function renderSettings(){
         + '<div class="skgrid" style="margin-bottom:4px">'
         + SOUNDPACKS.map(function(pk){
             var own = ownsPack(pk.id), cur = curPack()===pk.id;
-            var canBuy = !own && S.xp >= pk.cost;
+            var canBuy = !own && S.xp >= pk.cost, pend = packPending === pk.id && !own;
             var cls = 'skrow' + (cur?' on':(own?'':(canBuy?' buyable':' locked')));
             return '<button class="'+cls+'" data-pack="'+pk.id+'">'
                  + '<span class="pkicon">'+pk.icon+'</span>'
-                 + '<span><span class="pname">'+pk.name+'</span><span class="sknote">'+pk.note+'</span></span>'
+                 + '<span><span class="pname">'+pk.name+'</span><span class="sknote">'+pk.note+'</span>'
+                 + (pend ? '<span class="pend">試聴中　'+(canBuy ? 'もう一度タップで解放' : 'XPがたまったら解放できます')+'</span>' : '') + '</span>'
                  + '<span class="pcost">'+(own?(cur?'使用中':'使う'):(canBuy?pk.cost+' XP':'🔒 '+pk.cost))+'</span>'
                  + '</button>';
           }).join('')
         + '</div>'
-        + '<div class="spacingRow" style="margin-top:12px"><span>音を試す</span><span></span></div>'
+        + '<div class="sub" style="margin:8px 2px 0">まだ持っていない音色も、タップすると買う前に試し聞きできます。</div>'
+        + '<div class="spacingRow" style="margin-top:12px"><span>音を試す'+((packPending && !ownsPack(packPending)) ? '（'+packById(packPending).name+'を試聴中）' : '')+'</span><span></span></div>'
         + '<div class="chiprow" id="stestRow" style="flex-wrap:wrap">'
         + [['correct','正解'],['wrong','不正解'],['combo','コンボ'],['broke','途切れ'],
            ['pass','合格'],['fail','不合格'],['buy','購入']].map(function(v){
@@ -5346,10 +5350,15 @@ function renderSettings(){
     var pk = e.target.closest('[data-pack]');
     if(pk){
       var pid = pk.dataset.pack, pkg = packById(pid);
-      if(ownsPack(pid)){ S.pack = pid; save(); soundOpen = true; renderSettings(); playSnd('correct'); return; }
-      if(S.xp < pkg.cost){ alert('XPが足りません。\n\n必要 '+pkg.cost+' XP ／ 手持ち '+S.xp+' XP\nあと '+(pkg.cost-S.xp)+' XP 必要です。'); return; }
+      if(ownsPack(pid)){ S.pack = pid; packPending = ''; save(); soundOpen = true; renderSettings(); playSnd('correct'); return; }
+      /* 1回目のタップは試聴だけ。同じ音色をもう一度タップすると購入の確認に進む */
+      if(packPending !== pid || S.xp < pkg.cost){
+        packPending = pid; soundOpen = true; renderSettings();
+        packPreview = pid; playSnd('correct'); packPreview = '';
+        return;
+      }
       if(!confirm('音色「'+pkg.name+'」を '+pkg.cost+' XP で解放しますか？\n\n手持ち '+S.xp+' XP → '+(S.xp-pkg.cost)+' XP')) return;
-      S.xp -= pkg.cost; S.ownedPacks.push(pid); S.pack = pid;
+      S.xp -= pkg.cost; S.ownedPacks.push(pid); S.pack = pid; packPending = '';
       save(); soundOpen = true; renderSettings(); playSnd('buy');
       return;
     }
@@ -5391,13 +5400,16 @@ function renderSettings(){
     var stst = e.target.closest('[data-stest]');
     if(stst){
       var kind = stst.dataset.stest;
+      /* 試聴中の音色があれば、その音色で鳴らす */
+      var tpk = (packPending && !ownsPack(packPending)) ? packPending : '';
+      var tplay = function(n, a){ packPreview = tpk; playSnd(n, a); packPreview = ''; };
       if(kind === 'combo'){
         /* コンボは段階が伝わるよう3連→8連→20連を続けて鳴らす */
-        playSnd('combo', 0);
-        setTimeout(function(){ playSnd('combo', 2); }, 480);
-        setTimeout(function(){ playSnd('combo', 4); }, 980);
+        tplay('combo', 0);
+        setTimeout(function(){ tplay('combo', 2); }, 480);
+        setTimeout(function(){ tplay('combo', 4); }, 980);
       } else {
-        playSnd(kind || 'correct');
+        tplay(kind || 'correct');
       }
       return;
     }
@@ -5475,7 +5487,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "423a61951e87";
+<script>window.BOARD_BUILD = "e68efafb6399";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

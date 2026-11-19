@@ -156,6 +156,8 @@ details.deep summary{font:600 12.5px var(--sans);color:var(--accent);cursor:poin
 details.deep summary::-webkit-details-marker{display:none}
 details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0}
 .deeptitle{font:800 14px var(--sans);color:var(--ink);padding-bottom:8px;margin-bottom:14px;border-bottom:1.5px solid var(--line)}
+.deepown{margin:0 0 16px;padding:10px 12px;border-radius:10px;background:var(--accentSoft)}
+.deepown .deeplabel{display:block;font:700 11px var(--sans);color:var(--accent);background:none;padding:0;margin:0 0 4px}
 .deepsec{margin-top:12px}
 .deepsec:first-of-type{margin-top:10px}
 .deepsec .deeplabel{font:700 11.5px var(--sans);color:var(--accent);background:var(--accentSoft);display:inline-block;padding:3px 9px;border-radius:6px;margin-bottom:6px}
@@ -1927,6 +1929,11 @@ function chkLine(q){
   var m = /^(\d{4})-(\d{2})$/.exec(q.chk || '');
   return m ? '<div class="chkline">内容を確認した時期：'+m[1]+'年'+parseInt(m[2],10)+'月</div>' : '';
 }
+/* 問題ごとの補足文（事典の本文とは別に持っている短い説明）。事典の本文の前に添える */
+function deepOwnHtml(q){
+  if(!q.deepOwn) return '';
+  return '<div class="deepown"><div class="deeplabel">この問題の補足</div>'+renderContentWithTable(q.deepOwn.replace(/^【.+?】\s*/, ''))+'</div>';
+}
 function formatDeepdive(text){
   if(!text) return '';
   var title = '';
@@ -2736,7 +2743,7 @@ function renderExamReview(){
          + (q.notes && q.notes[Lt] ? '<span class="cnote">'+esc(q.notes[Lt])+'</span>' : '') + '</div>';
     });
     h += pointCard(q.explanation, q.exl);
-    if(q.deepdive) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
+    if(q.deepdive) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+deepOwnHtml(q)+formatDeepdive(q.deepdive)+'</details>';
     h += chkLine(q);
     h += saveBtn('q', q.id, 'data-rvmark="'+q.id+'"');
     h += '<div class="fbrow"><button class="fbbtn" data-rv="memo" data-qid="'+q.id+'">この問題にメモを残す</button>'
@@ -4824,7 +4831,7 @@ function renderQuiz(){
 
   if(s.revealed){
     h += pointCard(q.explanation, q.exl);
-    if(q.deepdive && !s.tut) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
+    if(q.deepdive && !s.tut) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+deepOwnHtml(q)+formatDeepdive(q.deepdive)+'</details>';
     /* 正解した問題でも「自信がなかった」ものを後で見返せるようにする */
     h += chkLine(q);
     h += saveBtn('q', q.id, 'data-qmark="'+q.id+'"');
@@ -5048,7 +5055,7 @@ function searchResultsHtml(){
     var wantId = parseInt(idMatch[1],10);
     hits = QUESTIONS.filter(function(q){ return q.id===wantId; });
   } else {
-    hits = QUESTIONS.filter(function(q){ return (q.stem+q.explanation+(q.exl||'')+(q.deepdive||'')).toLowerCase().indexOf(qraw.toLowerCase())>=0; }).slice(0,20);
+    hits = QUESTIONS.filter(function(q){ return (q.stem+q.explanation+(q.exl||'')+(q.deepOwn||'')+(q.deepdive||'')).toLowerCase().indexOf(qraw.toLowerCase())>=0; }).slice(0,20);
   }
   return '<div class="list">' + (hits.length ? hits.map(function(q){
     return '<div class="li" data-open="'+q.id+'"><span style="flex:1">'+esc(q.stem.slice(0,34))+(q.stem.length>34?'…':'')+'</span><span class="n">'+letterOf(q.category)+'</span><span class="n" style="color:var(--soft)">#'+q.id+'</span></div>';
@@ -5593,7 +5600,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "b991283262a7";
+<script>window.BOARD_BUILD = "a48d5523bfc6";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5779,7 +5786,11 @@ function expandDeep(data){
   var en = (data && data.raw && data.raw.encyc) || [], map = {};
   en.forEach(function(e){ map[e.n] = e.b || ''; });
   ((data && data.raw && data.raw.questions) || []).forEach(function(q){
-    if(!q.deepdive && q.dd && map.hasOwnProperty(q.dd)) q.deepdive = '【' + q.dd + '】' + map[q.dd];
+    if(!q.dd || !map.hasOwnProperty(q.dd)) return;
+    /* 問題に独自の補足文がある場合も、事典の本文を必ず出す（補足文は deepOwn に分けて先頭に添える）。
+       以前は補足文があると事典の本文が出ず、たとえば PECARN を問う問題で基準の表が読めなかった。 */
+    if(q.deepdive && map[q.dd].indexOf(q.deepdive) < 0) q.deepOwn = q.deepdive;
+    q.deepdive = '【' + q.dd + '】' + map[q.dd];
   });
 }
 function loadSubject(id, start){

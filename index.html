@@ -156,6 +156,8 @@ details.deep summary{font:600 12.5px var(--sans);color:var(--accent);cursor:poin
 details.deep summary::-webkit-details-marker{display:none}
 details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0}
 .deeptitle{font:800 14px var(--sans);color:var(--ink);padding-bottom:8px;margin-bottom:14px;border-bottom:1.5px solid var(--line)}
+.deepown{margin:0 0 16px;padding:10px 12px;border-radius:10px;background:var(--accentSoft)}
+.deepown .deeplabel{display:block;font:700 11px var(--sans);color:var(--accent);background:none;padding:0;margin:0 0 4px}
 .deepsec{margin-top:12px}
 .deepsec:first-of-type{margin-top:10px}
 .deepsec .deeplabel{font:700 11.5px var(--sans);color:var(--accent);background:var(--accentSoft);display:inline-block;padding:3px 9px;border-radius:6px;margin-bottom:6px}
@@ -174,6 +176,36 @@ details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0
 .ddlist li::marker{color:var(--accent)}
 .ddlh{font-weight:700;color:var(--accent);margin:8px 0 0}
 .ddlist .ddlh:first-child{margin-top:0}
+/* マーカー（関連知識・事典の本文に引く蛍光ペン） */
+mark.uhl{background:rgba(255,214,10,.55);color:inherit;border-radius:2px;padding:1px 0;cursor:pointer;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+mark.uhl.c1{background:rgba(255,92,120,.42)}
+mark.uhl.c2{background:rgba(64,156,255,.38)}
+mark.uhl.c3{background:rgba(52,199,120,.42)}
+html[data-theme="dark"] mark.uhl{background:rgba(255,214,10,.34)}
+html[data-theme="dark"] mark.uhl.c1{background:rgba(255,92,120,.38)}
+html[data-theme="dark"] mark.uhl.c2{background:rgba(64,156,255,.38)}
+html[data-theme="dark"] mark.uhl.c3{background:rgba(52,199,120,.34)}
+/* 暗記シート：選んだ色のマーカーを塗りつぶして隠す。タップした所だけ透ける */
+body.hlh0 mark.uhl.c0:not(.rev),body.hlh1 mark.uhl.c1:not(.rev),body.hlh2 mark.uhl.c2:not(.rev),body.hlh3 mark.uhl.c3:not(.rev){color:transparent!important;-webkit-text-fill-color:transparent;text-decoration:none}
+body.hlh0 mark.uhl.c0:not(.rev) *,body.hlh1 mark.uhl.c1:not(.rev) *,body.hlh2 mark.uhl.c2:not(.rev) *,body.hlh3 mark.uhl.c3:not(.rev) *{color:transparent!important;-webkit-text-fill-color:transparent;text-decoration:none!important;border-color:transparent!important;background:transparent!important}
+body.hlh0 .tl:has(mark.uhl.c0:not(.rev)),body.hlh1 .tl:has(mark.uhl.c1:not(.rev)),body.hlh2 .tl:has(mark.uhl.c2:not(.rev)),body.hlh3 .tl:has(mark.uhl.c3:not(.rev)){text-decoration:none}
+body.hlh0 mark.uhl.c0:not(.rev){background:#F2C200}
+body.hlh1 mark.uhl.c1:not(.rev){background:#EC5F7A}
+body.hlh2 mark.uhl.c2:not(.rev){background:#4A97EE}
+body.hlh3 mark.uhl.c3:not(.rev){background:#34B274}
+.hlbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);font:500 11px var(--sans);color:var(--soft)}
+.hlbar .hlbl{margin-right:2px}
+.hlbar .hlsheet{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
+.hldot{width:22px;height:22px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer;background:#F2C200;opacity:.45}
+.hldot.c1{background:#EC5F7A}.hldot.c2{background:#4A97EE}.hldot.c3{background:#34B274}
+.hlbar .hldot.on{opacity:1;border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--card)}
+.hlpill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 92px);z-index:9000;
+  display:flex;align-items:center;gap:10px;padding:9px 16px;border-radius:999px;background:#1F2328;color:#fff;font:700 12.5px var(--sans);
+  box-shadow:0 6px 22px rgba(0,0,0,.28);user-select:none;-webkit-user-select:none;white-space:nowrap}
+.hlpill .hldot{width:30px;height:30px;opacity:1;border-color:rgba(255,255,255,.25)}
+.hlpill .hldot.cur{border-color:#fff}
+.hlpill .hldel{border:0;border-radius:999px;padding:7px 12px;background:rgba(255,255,255,.14);color:#fff;font:700 12px var(--sans);cursor:pointer}
+.hlpill.hide{display:none}
 .ddtable{border-collapse:collapse;margin:0;font:400 12px/1.5 var(--sans);min-width:100%;white-space:nowrap;background:transparent}
 .ddtable td:last-child,.ddtable th:last-child{white-space:normal;min-width:8em}
 .ddtable tbody{display:table;width:100%}
@@ -186,6 +218,12 @@ details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0
 .ddtable td:first-child{white-space:normal;min-width:4.5em}
 .ddtable th{background:var(--accentSoft);color:var(--accent);font-weight:700}
 .ddtable tr:first-child th{white-space:nowrap}
+/* 項目名を縦にまとめた表：項目ごとの区切りを太くし、続きの行は1列目扱いの太字にしない */
+.ddtable.grp td.gcell{background:var(--accentSoft);vertical-align:middle;font-weight:700}
+.ddtable.grp tr.gstart td{border-top:2px solid var(--line)}
+.ddtable.grp tr.cont td:first-child{font-weight:400;font-family:var(--mono);font-size:11.5px;padding-right:6px;min-width:6.5em}
+.ddtable.numlast td:last-child,.ddtable.numlast th:last-child{min-width:0;width:1%;white-space:nowrap;text-align:center;padding-left:12px;padding-right:12px}
+.ddtable.numlast td:last-child{font-weight:700}
 .fbbtn{display:inline-flex;align-items:center;min-height:40px;margin-top:6px;padding:2px 0;border:none;background:none;font:500 12px var(--sans);color:var(--soft);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .fbbtn:active{color:var(--accent)}
 .chkline{margin-top:10px;font:500 11.5px var(--sans);color:var(--soft)}
@@ -1490,10 +1528,26 @@ function encGyo(e){
 function blockTableHtml(body, fmt){
   var rows = body.trim().split('\n').map(function(r){ return r.split('|').map(function(c){ return c.trim(); }); }).filter(function(r){ return r.length && r.some(function(c){return c!=='';}); });
   if(!rows.length) return '';
-  var html = '<div class="ddtwrap"><table class="ddtable"><tbody>';
+  /* 1列目に同じ項目名が続く表（スコア表など）は、項目名のセルを縦につなげて1つにまとめる */
+  var span = [], grouped = false;
+  for(var i = 1; i < rows.length; i++){
+    if(span[i] === 0) continue;
+    var n = 1;
+    while(rows[0].length >= 3 && rows[i][0] !== '' && i + n < rows.length && rows[i + n][0] === rows[i][0]){ span[i + n] = 0; n++; }
+    span[i] = n; if(n > 1) grouped = true;
+  }
+  /* 最後の列が点数などの短い数字だけなら、幅を詰めて中央にそろえる */
+  var last = rows[0].length - 1;
+  var numLast = last >= 1 && rows.length > 1 && rows.slice(1).every(function(r){ return /^[\d.+\-−–〜～]{1,5}点?$/.test(r[last] || ''); });
+  var html = '<div class="ddtwrap"><table class="ddtable'+(grouped?' grp':'')+(numLast?' numlast':'')+'"><tbody>';
   rows.forEach(function(cells, ri){
     var tag = ri===0 ? 'th' : 'td';
-    html += '<tr>' + cells.map(function(c){ return '<'+tag+'>'+fmt(c)+'</'+tag+'>'; }).join('') + '</tr>';
+    var cont = grouped && ri > 0 && span[ri] === 0;
+    html += '<tr'+(cont ? ' class="cont"' : (grouped && ri > 0 ? ' class="gstart"' : ''))+'>' + cells.map(function(c, ci){
+      if(ci === 0 && cont) return '';
+      var at = (ci === 0 && grouped && ri > 0) ? ' class="gcell"'+(span[ri] > 1 ? ' rowspan="'+span[ri]+'"' : '') : '';
+      return '<'+tag+at+'>'+fmt(c)+'</'+tag+'>';
+    }).join('') + '</tr>';
   });
   return html + '</tbody></table></div>';
 }
@@ -1927,24 +1981,219 @@ function chkLine(q){
   var m = /^(\d{4})-(\d{2})$/.exec(q.chk || '');
   return m ? '<div class="chkline">内容を確認した時期：'+m[1]+'年'+parseInt(m[2],10)+'月</div>' : '';
 }
+/* 問題ごとの補足文（事典の本文とは別に持っている短い説明）。事典の本文の前に添える */
+function deepOwnHtml(q){
+  if(!q.deepOwn) return '';
+  return '<div class="deepown"><div class="deeplabel">この問題の補足</div>'+renderContentWithTable(q.deepOwn.replace(/^【.+?】\s*/, ''))+'</div>';
+}
 function formatDeepdive(text){
   if(!text) return '';
   var title = '';
   var tm = text.match(/^【(.+?)】\s*/);
   if(tm){ title = tm[1]; text = text.slice(tm[0].length); }
   var html = title ? '<div class="deeptitle">'+esc(title)+'</div>' : '';
-  var secs = encycSecs(text);
-  if(!secs.length) return html + renderContentWithTable(text);
+  var secs = encycSecs(text), body = '';
+  if(!secs.length) body = renderContentWithTable(text);
   for(var i=0;i<secs.length;i++){
     if(secs[i].label){
-      html += '<div class="deepsec"><div class="deeplabel">'+esc(secs[i].label)+'</div>'
+      body += '<div class="deepsec"><div class="deeplabel">'+esc(secs[i].label)+'</div>'
             + renderContentWithTable(secs[i].text)+'</div>';
     } else {
-      html += renderContentWithTable(secs[i].text);
+      body += renderContentWithTable(secs[i].text);
     }
   }
-  return html;
+  /* 事典の項目の本文は、マーカーを引ける枠（data-hl＝項目名）で包む */
+  return html + (title ? hlWrap(title, body) + hlBar() : body);
 }
+/* ---------- マーカー（関連知識・事典の本文に引く蛍光ペン） ----------
+   本文の文字を選ぶと画面下に「マーカーを引く」が出る。引いた所をタップすると消せる。
+   S.hl に「項目名 → [[空白を抜いた文字列, 同じ文字列のうち何番目か], …]」で持つ（科目ごと、クラウド同期の対象）。
+   描画のたびに文字列を探して色を付けるので、関連知識・事典・一問一答のどこで開いても同じ所に付く。 */
+function hlStore(){ if(!S.hl || typeof S.hl !== 'object' || Array.isArray(S.hl)) S.hl = {}; return S.hl; }
+var HL_MAX = 300, HL_COLORS = ['黄', '赤', '青', '緑'];
+/* 暗記シートで隠す色（S.hlHide）。端末ごとの表示の設定なので同期はしない */
+function hlHidden(){ if(!Array.isArray(S.hlHide)) S.hlHide = []; return S.hlHide; }
+function hlHideSync(){
+  var hd = hlHidden();
+  for(var c = 0; c < HL_COLORS.length; c++) document.body.classList.toggle('hlh' + c, hd.indexOf(c) >= 0);
+  var ds = document.querySelectorAll('.hlbar [data-hlhide]');
+  for(var i = 0; i < ds.length; i++) ds[i].classList.toggle('on', hd.indexOf(+ds[i].getAttribute('data-hlhide')) >= 0);
+  var rv = document.querySelectorAll('mark.uhl.rev');
+  for(i = 0; i < rv.length; i++) rv[i].classList.remove('rev');
+}
+/* 本文の下に出す帯：使い方と、暗記シート（隠す色の切り替え） */
+function hlBar(){
+  var hd = hlHidden(), h = '<div class="hlbar"><span class="hlbl">文字を選ぶとマーカーを引けます</span><span class="hlsheet"><span>暗記シートで隠す色</span>';
+  HL_COLORS.forEach(function(nm, c){
+    h += '<button type="button" class="hldot c'+c+(hd.indexOf(c) >= 0 ? ' on' : '')+'" data-hlhide="'+c+'" aria-label="'+nm+'のマーカーを隠す"></button>';
+  });
+  return h + '</span></div>';
+}
+var hlRev = 1, hlBusy = false, hlPick = null;
+function hlWrap(name, inner){ return '<div data-hl="'+esc(name)+'">'+inner+'</div>'; }
+function hlStrip(t){ return String(t||'').replace(/\s+/g, ''); }
+/* 枠の中の文字を空白抜きで1本につなぎ、各文字が「どのテキストノードの何文字目か」を控える */
+function hlIndex(box){
+  var w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, null), n, text = '', map = [];
+  while((n = w.nextNode())){
+    var v = n.nodeValue;
+    for(var i = 0; i < v.length; i++){ if(!/\s/.test(v.charAt(i))){ text += v.charAt(i); map.push([n, i]); } }
+  }
+  return { text:text, map:map };
+}
+function hlFind(text, t, nth){
+  var pos = -1, from = 0;
+  for(var k = 0; k <= nth; k++){ pos = text.indexOf(t, from); if(pos < 0) return -1; from = pos + 1; }
+  return pos;
+}
+function hlApply(box){
+  hlBusy = true;
+  try{
+    var olds = box.querySelectorAll('mark.uhl'), i;
+    for(i = 0; i < olds.length; i++){
+      var m = olds[i], par = m.parentNode;
+      while(m.firstChild) par.insertBefore(m.firstChild, m);
+      par.removeChild(m); par.normalize();
+    }
+    (hlStore()[box.dataset.hl] || []).forEach(function(it, idx){
+      if(!it || !it[0]) return;
+      var ix = hlIndex(box), pos = hlFind(ix.text, it[0], it[1] || 0);
+      if(pos < 0) return;                       /* 本文が書き換わって見つからないものは、色を付けないだけ */
+      var segs = [], cur = null;
+      for(var c = pos; c < pos + it[0].length; c++){
+        var nd = ix.map[c][0], off = ix.map[c][1];
+        if(cur && cur.n === nd) cur.e = off + 1; else { cur = { n:nd, s:off, e:off + 1 }; segs.push(cur); }
+      }
+      segs.forEach(function(sg){
+        var r = document.createRange(); r.setStart(sg.n, sg.s); r.setEnd(sg.n, sg.e);
+        var mk = document.createElement('mark'); mk.className = 'uhl c' + (it[2] || 0); mk.setAttribute('data-hi', idx);
+        r.surroundContents(mk);
+      });
+    });
+    box.setAttribute('data-hlv', hlRev);
+  }catch(e){}
+  hlBusy = false;
+}
+function hlScan(){
+  var bs = document.querySelectorAll('[data-hl]');
+  for(var i = 0; i < bs.length; i++) if(bs[i].getAttribute('data-hlv') !== String(hlRev)) hlApply(bs[i]);
+}
+function hlPill(){
+  var p = document.getElementById('hlPill');
+  if(!p){
+    p = document.createElement('div'); p.id = 'hlPill'; p.className = 'hlpill hide';
+    /* ボタンを押しても文字の選択が外れないようにする */
+    p.addEventListener('pointerdown', function(e){ e.preventDefault(); });
+    p.addEventListener('mousedown', function(e){ e.preventDefault(); });
+    document.body.appendChild(p);
+  }
+  return p;
+}
+/* pick: 新しく引くとき {name,t,nth}、引いた所を触ったとき {edit:true,name,idx,c}、null は案内だけ */
+function hlShow(pick, label){
+  hlPick = pick;
+  var p = hlPill(), h = '<span>'+esc(label)+'</span>';
+  if(pick){
+    HL_COLORS.forEach(function(nm, c){
+      h += '<button type="button" class="hldot c'+c+(pick.edit && pick.c === c ? ' cur' : '')+'" data-hlc="'+c+'" aria-label="'+nm+'"></button>';
+    });
+    if(pick.edit) h += '<button type="button" class="hldel" data-hldel="1">消す</button>';
+  }
+  p.innerHTML = h; p.classList.remove('hide');
+}
+function hlHide(){ hlPick = null; var p = document.getElementById('hlPill'); if(p) p.classList.add('hide'); }
+/* いまの文字選択が、1つの枠の中に収まっていれば「どの項目の・どの文字列の・何番目か」を返す */
+function hlFromSelection(){
+  var sel = window.getSelection && window.getSelection();
+  if(!sel || sel.isCollapsed || !sel.rangeCount) return null;
+  var r = sel.getRangeAt(0);
+  var el = function(n){ return n && (n.nodeType === 1 ? n : n.parentElement); };
+  var a = el(r.startContainer), b = el(r.endContainer);
+  var box = a && a.closest && a.closest('[data-hl]');
+  if(!box || !b || b.closest('[data-hl]') !== box) return null;
+  var t = hlStrip(r.toString());
+  if(!t) return null;
+  var pre = document.createRange(); pre.selectNodeContents(box); pre.setEnd(r.startContainer, r.startOffset);
+  var start = hlStrip(pre.toString()).length, full = hlIndex(box).text, nth = 0, pos = -1, from = 0;
+  if(full.substr(start, t.length) === t){
+    while((pos = full.indexOf(t, from)) >= 0 && pos < start){ nth++; from = pos + 1; }
+  }
+  return { name:box.dataset.hl, t:t, nth:nth };
+}
+function hlChanged(){ save(); hlRev++; hlScan(); }
+function hlOnSelect(){
+  if(hlPick && hlPick.edit) return;             /* 引いた所の操作を出している間は、選択の変化で消さない */
+  var s = hlFromSelection();
+  if(!s){ hlHide(); return; }
+  if(s.t.length > HL_MAX){ hlShow(null, '長すぎます（'+HL_MAX+'字まで）'); return; }
+  /* すでに引いてある所をそのまま選び直したときは、色替え・消すを出す */
+  var ex = -1, exc = 0;
+  (hlStore()[s.name] || []).forEach(function(x, k){ if(x[0] === s.t && (x[1] || 0) === s.nth){ ex = k; exc = x[2] || 0; } });
+  if(ex >= 0){ hlShow({ edit:true, name:s.name, idx:ex, c:exc }, '色を変える'); return; }
+  hlShow(s, '色を選ぶ');
+}
+function hlOnClick(e){
+  var tg = e.target, cl = function(q){ return tg && tg.closest && tg.closest(q); };
+  /* 暗記シートで隠す色の切り替え */
+  var hb = cl('.hlbar [data-hlhide]');
+  if(hb){
+    var hc = +hb.getAttribute('data-hlhide'), hd = hlHidden(), at = hd.indexOf(hc);
+    if(at >= 0) hd.splice(at, 1); else hd.push(hc);
+    save(); hlHideSync(); hlHide();
+    e.stopPropagation(); return;
+  }
+  if(cl('#hlPill')){
+    var pk = hlPick, cb = cl('[data-hlc]'), db = cl('[data-hldel]');
+    if(!pk || (!cb && !db)) return;
+    var H = hlStore(), list = (H[pk.name] || []).slice(), col = cb ? +cb.getAttribute('data-hlc') : 0;
+    if(pk.edit){
+      if(db) list.splice(pk.idx, 1);
+      else if(list[pk.idx]) list[pk.idx] = [list[pk.idx][0], list[pk.idx][1] || 0, col];
+      try{ window.getSelection().removeAllRanges(); }catch(err){}
+    } else {
+      var same = -1;
+      list.forEach(function(x, k){ if(x[0] === pk.t && (x[1] || 0) === pk.nth) same = k; });
+      if(same >= 0) list[same] = [pk.t, pk.nth, col]; else list.push([pk.t, pk.nth, col]);
+      try{ window.getSelection().removeAllRanges(); }catch(err){}
+    }
+    if(list.length) H[pk.name] = list; else delete H[pk.name];
+    hlHide(); hlChanged();
+    return;
+  }
+  var mk = cl('mark.uhl');
+  if(mk){
+    var sel = window.getSelection && window.getSelection();
+    if(sel && !sel.isCollapsed) return;         /* なぞっている途中は選択を優先する */
+    var box = mk.closest('[data-hl]'); if(!box) return;
+    var idx = +mk.getAttribute('data-hi'), it = (hlStore()[box.dataset.hl] || [])[idx] || [], c = it[2] || 0;
+    if(hlHidden().indexOf(c) >= 0){
+      /* 暗記シートで隠している色は、タップで答えを見る／もう一度タップで隠す（同じマーカーの切れ端はまとめて） */
+      var parts = box.querySelectorAll('mark.uhl[data-hi="'+idx+'"]'), on = !mk.classList.contains('rev');
+      for(var i = 0; i < parts.length; i++) parts[i].classList.toggle('rev', on);
+      hlHide(); e.stopPropagation(); e.preventDefault(); return;   /* 用語リンクの上でも、リンクは開かずに答えを見るだけにする */
+    }
+    if(mk.closest('.tl')) return;               /* 用語リンクに引いた所は、タップではリンクを開く（色替え・消すは選び直して行う） */
+    hlShow({ edit:true, name:box.dataset.hl, idx:idx, c:c }, '色を変える');
+    return;
+  }
+  if(hlPick && hlPick.edit) hlHide();
+}
+/* 科目を切り替えてエンジンを作り直しても、処理が二重に付かないようにする */
+(function(){
+  var W = window.__hlBind;
+  if(W){ document.removeEventListener('selectionchange', W.sel); document.removeEventListener('click', W.click, true); if(W.mo) W.mo.disconnect(); }
+  var tm = null, tm2 = null;
+  var selH = function(){ clearTimeout(tm); tm = setTimeout(hlOnSelect, 200); };
+  var mo = null;
+  if(window.MutationObserver){
+    mo = new MutationObserver(function(){ if(hlBusy) return; clearTimeout(tm2); tm2 = setTimeout(hlScan, 30); });
+    mo.observe(document.body, { childList:true, subtree:true });
+  }
+  document.addEventListener('selectionchange', selH);
+  document.addEventListener('click', hlOnClick, true);
+  window.__hlBind = { sel:selH, click:hlOnClick, mo:mo };
+  hlHide(); hlHideSync();
+})();
 function letters(n){ return 'abcdefgh'.slice(0,n).split(''); }
 function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
 function fmtIval(days){
@@ -2736,7 +2985,7 @@ function renderExamReview(){
          + (q.notes && q.notes[Lt] ? '<span class="cnote">'+esc(q.notes[Lt])+'</span>' : '') + '</div>';
     });
     h += pointCard(q.explanation, q.exl);
-    if(q.deepdive) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
+    if(q.deepdive) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+deepOwnHtml(q)+formatDeepdive(q.deepdive)+'</details>';
     h += chkLine(q);
     h += saveBtn('q', q.id, 'data-rvmark="'+q.id+'"');
     h += '<div class="fbrow"><button class="fbbtn" data-rv="memo" data-qid="'+q.id+'">この問題にメモを残す</button>'
@@ -3369,10 +3618,12 @@ function encBodyHtml(e, noQuiz){
     /* 「薬の種類」の項目では、別名ではなく含まれる薬の一般名を並べている */
     if(e.abl.length) h += '<div class="enlabel">'+(/薬の種類/.test(e.c||'') ? '主な薬（一般名）' : '別名・略称')+'</div><p class="dnames">'+e.abl.map(esc).join('、')+'</p>';
   }
+  h += '<div data-hl="'+esc(e.n)+'">';
   encycSecs(e.b).forEach(function(sec){
     if(sec.label) h += '<div class="enlabel">'+esc(sec.label)+'</div>';
     h += renderContentWithTable(sec.text);   /* [TABLE]記法を表として描画 */
   });
+  h += '</div>' + hlBar();
   if(e.rel && e.rel.length){
     var rl = e.rel.map(findDisease).filter(function(x, i, a){ return x && a.indexOf(x) === i; });
     if(rl.length) h += '<div class="enlabel">関連する疾患</div><div class="relrow">'
@@ -4232,10 +4483,12 @@ function qaHtml(){
          + '<span class="qaencv">'+(open?'▴':'▾')+'</span></button>';
       if(open){
         h += '<div class="qaencbody" data-n="'+esc(ent.n)+'">';
+        h += '<div data-hl="'+esc(ent.n)+'">';
         encycSecs(ent.b).forEach(function(sec){
           if(sec.label) h += '<div class="enlabel">'+esc(sec.label)+'</div>';
           h += renderContentWithTable(sec.text);
         });
+        h += '</div>';
         if(ent.q.length) h += '<button class="qalink" data-qaquiz="'+esc(ent.n)+'">この疾患の問題を解く（'+ent.q.length+'問）</button>';
         h += '</div>';
       }
@@ -4824,7 +5077,7 @@ function renderQuiz(){
 
   if(s.revealed){
     h += pointCard(q.explanation, q.exl);
-    if(q.deepdive && !s.tut) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+formatDeepdive(q.deepdive)+'</details>';
+    if(q.deepdive && !s.tut) h += '<details class="deep"><summary>関連知識を読む ＋</summary>'+deepOwnHtml(q)+formatDeepdive(q.deepdive)+'</details>';
     /* 正解した問題でも「自信がなかった」ものを後で見返せるようにする */
     h += chkLine(q);
     h += saveBtn('q', q.id, 'data-qmark="'+q.id+'"');
@@ -5048,7 +5301,7 @@ function searchResultsHtml(){
     var wantId = parseInt(idMatch[1],10);
     hits = QUESTIONS.filter(function(q){ return q.id===wantId; });
   } else {
-    hits = QUESTIONS.filter(function(q){ return (q.stem+q.explanation+(q.exl||'')+(q.deepdive||'')).toLowerCase().indexOf(qraw.toLowerCase())>=0; }).slice(0,20);
+    hits = QUESTIONS.filter(function(q){ return (q.stem+q.explanation+(q.exl||'')+(q.deepOwn||'')+(q.deepdive||'')).toLowerCase().indexOf(qraw.toLowerCase())>=0; }).slice(0,20);
   }
   return '<div class="list">' + (hits.length ? hits.map(function(q){
     return '<div class="li" data-open="'+q.id+'"><span style="flex:1">'+esc(q.stem.slice(0,34))+(q.stem.length>34?'…':'')+'</span><span class="n">'+letterOf(q.category)+'</span><span class="n" style="color:var(--soft)">#'+q.id+'</span></div>';
@@ -5593,7 +5846,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "b991283262a7";
+<script>window.BOARD_BUILD = "ae43bcbd4118";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5779,7 +6032,11 @@ function expandDeep(data){
   var en = (data && data.raw && data.raw.encyc) || [], map = {};
   en.forEach(function(e){ map[e.n] = e.b || ''; });
   ((data && data.raw && data.raw.questions) || []).forEach(function(q){
-    if(!q.deepdive && q.dd && map.hasOwnProperty(q.dd)) q.deepdive = '【' + q.dd + '】' + map[q.dd];
+    if(!q.dd || !map.hasOwnProperty(q.dd)) return;
+    /* 問題に独自の補足文がある場合も、事典の本文を必ず出す（補足文は deepOwn に分けて先頭に添える）。
+       以前は補足文があると事典の本文が出ず、たとえば PECARN を問う問題で基準の表が読めなかった。 */
+    if(q.deepdive && map[q.dd].indexOf(q.deepdive) < 0) q.deepOwn = q.deepdive;
+    q.deepdive = '【' + q.dd + '】' + map[q.dd];
   });
 }
 function loadSubject(id, start){

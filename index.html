@@ -1582,7 +1582,7 @@ function load(){
   if(!d.fx) d.fx = 'none';
   if(!d.bg) d.bg = 'none';
   if(!d.feedback) d.feedback = [];
-  if(!d.dailyGoal) d.dailyGoal = 20;
+  if(!(typeof d.dailyGoal === 'number' && d.dailyGoal >= 0)) d.dailyGoal = 20;   /* 0＝目標なし（他の科目に集中したいとき） */
   for(var pk in d.prog){ if(d.prog[pk].bm===true) d.prog[pk].bm = 1; if(d.prog[pk].bm===false) d.prog[pk].bm = 0; }
   tagMigrate(d);
   return d;
@@ -4271,7 +4271,7 @@ function renderHome(){
   }
   var st = streak(), due = dueList().length;
   var hk = todayKey(), today = S.hist[hk] || {a:0,c:0};
-  var goal = S.dailyGoal || 20, ringPct = Math.min(100, Math.round(100*today.a/goal));
+  var goal = S.dailyGoal >= 0 ? S.dailyGoal : 20, ringPct = goal ? Math.min(100, Math.round(100*today.a/goal)) : 0;
   var acc = accByCat();
   var ranked = CATS.map(function(c){ return { c:c, d:acc[c] }; })
     .filter(function(x){ return x.d.seen>=1; })
@@ -4289,9 +4289,9 @@ function renderHome(){
   }
 
   h += '<div class="card" style="display:flex;gap:18px;align-items:center;margin-bottom:12px">';
-  h += '<div style="width:86px;height:86px;border-radius:50%;flex:none;background:conic-gradient(var(--accent) 0deg '+(ringPct*3.6)+'deg,var(--accentSoft) '+(ringPct*3.6)+'deg 360deg);display:flex;align-items:center;justify-content:center"><div style="width:64px;height:64px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="mono" style="font-weight:700;font-size:19px;line-height:1">'+today.a+'</div><div style="font:500 10.5px var(--sans);color:var(--soft);margin-top:2px">/ '+goal+'問</div></div></div>';
-  var goalMet = today.a >= goal;
-  h += '<div style="flex:1"><div style="font:700 13px var(--sans);margin-bottom:9px;color:'+(goalMet?'var(--good)':'var(--ink)')+'">'+(goalMet?'今日の目標を達成しました':'今日の目標まで あと'+(goal-today.a)+'問')+'</div><div style="display:flex;gap:16px"><div><div class="mono" style="font-weight:700;font-size:16px">'+(today.a?Math.round(100*today.c/today.a):0)+'%</div><div class="label">今日の正答率</div></div><div><div class="mono" style="font-weight:700;font-size:16px;color:var(--bad)">'+due+'</div><div class="label">復習待ち</div></div></div></div></div>';
+  h += '<div style="width:86px;height:86px;border-radius:50%;flex:none;background:conic-gradient(var(--accent) 0deg '+(ringPct*3.6)+'deg,var(--accentSoft) '+(ringPct*3.6)+'deg 360deg);display:flex;align-items:center;justify-content:center"><div style="width:64px;height:64px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="mono" style="font-weight:700;font-size:19px;line-height:1">'+today.a+'</div><div style="font:500 10.5px var(--sans);color:var(--soft);margin-top:2px">'+(goal ? '/ '+goal+'問' : '問')+'</div></div></div>';
+  var goalMet = goal > 0 && today.a >= goal;
+  h += '<div style="flex:1"><div style="font:700 13px var(--sans);margin-bottom:9px;color:'+(goalMet?'var(--good)':'var(--ink)')+'">'+(goalMet?'今日の目標を達成しました':!goal?'この科目は目標なし':'今日の目標まで あと'+(goal-today.a)+'問')+'</div><div style="display:flex;gap:16px"><div><div class="mono" style="font-weight:700;font-size:16px">'+(today.a?Math.round(100*today.c/today.a):0)+'%</div><div class="label">今日の正答率</div></div><div><div class="mono" style="font-weight:700;font-size:16px;color:var(--bad)">'+due+'</div><div class="label">復習待ち</div></div></div></div></div>';
 
   h += '<button class="primary" data-act="due" style="margin-bottom:9px"><span class="badge">'+due+'</span><span style="flex:1"><span style="display:block;font:700 14px var(--sans)">今日の復習</span><span style="display:block;font:400 11px var(--sans);opacity:.75;margin-top:2px">'+(due ? '復習の時期が来た問題が'+due+'問あります' : 'いま復習する問題はありません')+'</span></span><span class="mono" style="opacity:.7">›</span></button>';
 
@@ -5247,9 +5247,9 @@ function renderSettings(){
      + '</div></details>';
 
   h += '<h2>1日の目標</h2><div class="card" style="margin-bottom:16px">'
-     + '<div class="sub" style="margin-bottom:10px">1日に解く問題数の目標です。ホームのリングに反映されます。</div>'
+     + '<div class="sub" style="margin-bottom:10px">1日に解く問題数の目標です。ホームのリングに反映されます。ほかの科目に集中したいときは「なし」にできます。</div>'
      + '<div class="chiprow" style="flex-wrap:wrap">'
-     + [5,10,15,20,30,40,50,75,100,150,200].map(function(n){ return '<button class="chip'+(S.dailyGoal===n?' on':'')+'" data-goal="'+n+'">'+n+'問</button>'; }).join('')
+     + [0,5,10,15,20,30,40,50,75,100,150,200].map(function(n){ return '<button class="chip'+(S.dailyGoal===n?' on':'')+'" data-goal="'+n+'">'+(n?n+'問':'なし')+'</button>'; }).join('')
      + '</div>'
      + '<div class="sub" style="margin:14px 0 8px">1日の切り替え時刻（全科目共通）。この時刻より前の深夜に解いた分は、前の日の分として数えます。</div>'
      + '<div class="chiprow" style="flex-wrap:wrap">'
@@ -5475,7 +5475,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "013089624e68";
+<script>window.BOARD_BUILD = "e0e5ee505d70";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
@@ -5629,26 +5629,27 @@ function renderHub(){
   });
   document.getElementById('hubCards').innerHTML = h;
   /* 科目ごとの1日の目標。各科目の設定タブと同じ値（dailyGoal）を読み書きする */
-  var GOALS = [5,10,15,20,30,40,50,75,100,150,200], now = new Date();
+  var GOALS = [0,5,10,15,20,30,40,50,75,100,150,200], now = new Date();
   var hds = (g && typeof g.dayStart === 'number' && g.dayStart >= 0 && g.dayStart <= 6) ? Math.floor(g.dayStart) : 4;
   now = new Date(now.getTime() - hds*3600000);
   var tk = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
   var gh = '', gst = [];
   SUBJECTS.forEach(function(s){
     var d = null; try{ d = JSON.parse(localStorage.getItem('board-'+s.id+'-v1')); }catch(e){}
-    var goal = (d && d.dailyGoal) || 20, done = (d && d.hist && d.hist[tk] && d.hist[tk].a) || 0;
-    gst.push('<span class="sj-'+s.id+'"><span class="xsjdot"></span></span>'+(done>=goal ? '<span class="ok">'+done+'/'+goal+'✓</span>' : '<b>'+done+'</b>/'+goal));
+    var goal = (d && typeof d.dailyGoal === 'number' && d.dailyGoal >= 0) ? d.dailyGoal : 20, met = goal > 0, done = (d && d.hist && d.hist[tk] && d.hist[tk].a) || 0;
+    met = met && done >= goal;
+    gst.push('<span class="sj-'+s.id+'"><span class="xsjdot"></span></span>'+(met ? '<span class="ok">'+done+'/'+goal+'✓</span>' : goal ? '<b>'+done+'</b>/'+goal : '<b>'+done+'</b>'));
     gh += '<div class="hgrow sj-'+s.id+'"><span class="xsjdot"></span><span class="hgname">'+esc(s.short)+'</span>'
-        + '<span class="hgtoday'+(done>=goal?' done':'')+'">今日 '+done+' / '+goal+'問'+(done>=goal?' ✓':'')+'</span>'
+        + '<span class="hgtoday'+(met?' done':'')+'">今日 '+done+(goal ? ' / '+goal+'問' : '問')+(met?' ✓':'')+'</span>'
         + '<select data-hubgoal="'+s.id+'" aria-label="'+esc(s.short)+'の1日の目標">'
-        + GOALS.map(function(n){ return '<option value="'+n+'"'+(n===goal?' selected':'')+'>'+n+'問</option>'; }).join('')
+        + GOALS.map(function(n){ return '<option value="'+n+'"'+(n===goal?' selected':'')+'>'+(n?n+'問':'なし')+'</option>'; }).join('')
         + '</select></div>';
   });
   gh += '<div class="hgrow"><span class="hgname" style="font-weight:600">1日の切り替え時刻</span><select data-hubday aria-label="1日の切り替え時刻">'
       + [0,1,2,3,4,5,6].map(function(n){ return '<option value="'+n+'"'+(n===hds?' selected':'')+'>'+(n===0?'0時':'午前'+n+'時')+'</option>'; }).join('')
       + '</select></div><div class="hpnote">この時刻より前の深夜に解いた分は、前の日の分として数えます（目標・連続日数・リマインド通知）。</div>';
   document.getElementById('hubGoals').innerHTML = foldHead('goals', '1日の目標', gst.join('　'))
-    + '<div class="hgsub">科目ごとに、1日に解く問題数の目標を決められます。今日の分は見出しに「解いた数/目標」で出ます。</div>' + gh + '</div></details>';
+    + '<div class="hgsub">科目ごとに、1日に解く問題数の目標を決められます（「なし」も選べます）。今日の分は見出しに「解いた数/目標」で出ます。</div>' + gh + '</div></details>';
   hubDoneToday = SUBJECTS.some(function(s){ var d=null; try{ d = JSON.parse(localStorage.getItem('board-'+s.id+'-v1')); }catch(e){} return !!(d && d.hist && d.hist[tk] && d.hist[tk].a); }) ? tk : '';
   renderHubPush();
   document.getElementById('hub').classList.remove('hide');
@@ -5719,7 +5720,7 @@ document.getElementById('hubGoals').addEventListener('change', function(e){
   var key = 'board-'+sel.dataset.hubgoal+'-v1', d = null;
   try{ d = JSON.parse(localStorage.getItem(key)); }catch(er){}
   if(!d || typeof d !== 'object') d = {};
-  d.dailyGoal = parseInt(sel.value, 10) || 20;
+  var gv = parseInt(sel.value, 10); d.dailyGoal = gv >= 0 ? gv : 20;
   try{ localStorage.setItem(key, JSON.stringify(d)); }catch(er){}
   renderHub();
 });

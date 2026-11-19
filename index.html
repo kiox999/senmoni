@@ -207,6 +207,10 @@ body.hlh3 mark.uhl.c3:not(.rev){background:#34B274}
 .hlpill .hldot.cur{border-color:#fff}
 .hlpill .hldel{border:0;border-radius:999px;padding:7px 12px;background:rgba(255,255,255,.14);color:#fff;font:700 12px var(--sans);cursor:pointer}
 .hlpill.hide{display:none}
+.hlclr{flex-basis:100%;margin-top:2px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--soft);font:600 11px var(--sans);cursor:pointer;text-align:center}
+.hlclr.hide{display:none}
+.hlclr.arm,[data-hlclrall].arm{border-color:var(--bad);color:var(--bad)}
+.hlbar .hlbl{line-height:1.7}
 .ddtable{border-collapse:collapse;margin:0;font:400 12px/1.5 var(--sans);min-width:100%;white-space:nowrap;background:transparent}
 .ddtable td:last-child,.ddtable th:last-child{white-space:normal;min-width:8em}
 .ddtable tbody{display:table;width:100%}
@@ -2004,7 +2008,7 @@ function formatDeepdive(text){
     }
   }
   /* 事典の項目の本文は、マーカーを引ける枠（data-hl＝項目名）で包む */
-  return html + (title ? hlWrap(title, body) + hlBar() : body);
+  return html + (title ? hlWrap(title, body) + hlBar(title) : body);
 }
 /* ---------- マーカー（関連知識・事典の本文に引く蛍光ペン） ----------
    本文の文字を選ぶと画面下に「マーカーを引く」が出る。引いた所をタップすると消せる。
@@ -2023,12 +2027,30 @@ function hlHideSync(){
   for(i = 0; i < rv.length; i++) rv[i].classList.remove('rev');
 }
 /* 本文の下に出す帯：使い方と、暗記シート（隠す色の切り替え） */
-function hlBar(){
-  var hd = hlHidden(), h = '<div class="hlbar"><span class="hlbl">文字を選ぶと、マーカー・コピー・検索ができます</span><span class="hlsheet"><span>暗記シートで隠す色</span>';
+function hlBar(name){
+  var hd = hlHidden(), h = '<div class="hlbar"><span class="hlbl">文字を選ぶと、マーカー・コピー・検索ができます。<br>引いた所をタップすると、色替えと消去ができます。</span><span class="hlsheet"><span>暗記シートで隠す色</span>';
   HL_COLORS.forEach(function(nm, c){
     h += '<button type="button" class="hldot c'+c+(hd.indexOf(c) >= 0 ? ' on' : '')+'" data-hlhide="'+c+'" aria-label="'+nm+'のマーカーを隠す"></button>';
   });
-  return h + '</span></div>';
+  h += '</span>';
+  /* この項目のマーカーをまとめて消す（引いてあるときだけ出す。2回押して実行） */
+  if(name) h += '<button type="button" class="hlclr hide" data-hlclr="'+esc(name)+'"></button>';
+  return h + '</div>';
+}
+function hlCount(){ var H = hlStore(), n = 0; Object.keys(H).forEach(function(k){ n += (H[k] || []).length; }); return n; }
+/* まとめて消すボタンの表示を、いまの本数に合わせる */
+function hlBarSync(){
+  var H = hlStore(), bs = document.querySelectorAll('[data-hlclr]'), i;
+  for(i = 0; i < bs.length; i++){
+    var n = (H[bs[i].getAttribute('data-hlclr')] || []).length;
+    bs[i].classList.toggle('hide', !n); bs[i].classList.remove('arm');
+    bs[i].textContent = 'この項目のマーカーをすべて消す（'+n+'か所）';
+  }
+  var all = document.querySelectorAll('[data-hlclrall]'), tot = hlCount();
+  for(i = 0; i < all.length; i++){
+    all[i].classList.remove('arm'); all[i].disabled = !tot;
+    all[i].textContent = tot ? 'この科目のマーカーをすべて消す（'+tot+'か所）' : 'マーカーは引かれていません';
+  }
 }
 var hlRev = 1, hlBusy = false, hlPick = null;
 function hlWrap(name, inner){ return '<div data-hl="'+esc(name)+'">'+inner+'</div>'; }
@@ -2078,6 +2100,8 @@ function hlApply(box){
 function hlScan(){
   var bs = document.querySelectorAll('[data-hl]');
   for(var i = 0; i < bs.length; i++) if(bs[i].getAttribute('data-hlv') !== String(hlRev)) hlApply(bs[i]);
+  var un = document.querySelector('[data-hlclr]:empty, [data-hlclrall]:empty');   /* 出たばかりのボタンに本数を入れる */
+  if(un) hlBarSync();
 }
 function hlPill(){
   var p = document.getElementById('hlPill');
@@ -2095,12 +2119,14 @@ function hlPill(){
 function hlShow(pick, label){
   hlPick = pick;
   var p = hlPill(), h = label ? '<span class="hlmsg">'+esc(label)+'</span>' : '';
+  if(pick && pick.nomark && pick.over && pick.over.length) h += '<button type="button" class="hldel" data-hldel="1">消す</button>';
   if(pick && !pick.nomark){
     HL_COLORS.forEach(function(nm, c){
       h += '<button type="button" class="hldot c'+c+(pick.edit && pick.c === c ? ' cur' : '')+'" data-hlc="'+c+'" aria-label="'+nm+'のマーカー"></button>';
     });
-    if(pick.edit) h += '<button type="button" class="hldel" data-hldel="1">消す</button>';
+    if(pick.edit || (pick.over && pick.over.length)) h += '<button type="button" class="hldel" data-hldel="1">消す</button>';
   }
+  if(pick && pick.link) h += '<button type="button" class="hldel" data-hllink="1">リンクを開く</button>';
   if(pick && pick.raw) h += '<button type="button" class="hldel" data-hlcopy="1">コピー</button><button type="button" class="hldel" data-hlweb="1">検索</button>';
   p.innerHTML = h; p.classList.remove('hide');
 }
@@ -2133,14 +2159,22 @@ function hlFromSelection(){
   if(full.substr(start, t.length) === t){
     while((pos = full.indexOf(t, from)) >= 0 && pos < start){ nth++; from = pos + 1; }
   }
-  return { name:box.dataset.hl, t:t, nth:nth, raw:String(sel.toString()).replace(/[\t\u00a0]+/g, ' ').replace(/ *\n+ */g, '\n').trim() };
+  /* 選んだ範囲に少しでも重なっているマーカー（まとめて消せるようにする） */
+  var over = [];
+  (hlStore()[box.dataset.hl] || []).forEach(function(it, k){
+    var ps = it && it[0] ? hlFind(full, it[0], it[1] || 0) : -1;
+    if(ps >= 0 && ps < start + t.length && ps + it[0].length > start) over.push(k);
+  });
+  return { name:box.dataset.hl, t:t, nth:nth, over:over, raw:String(sel.toString()).replace(/[\t\u00a0]+/g, ' ').replace(/ *\n+ */g, '\n').trim() };
 }
-function hlChanged(){ save(); hlRev++; hlScan(); }
+function hlChanged(){ save(); hlRev++; hlScan(); hlBarSync(); }
 function hlOnSelect(){
-  if(hlPick && hlPick.edit) return;             /* 引いた所の操作を出している間は、選択の変化で消さない */
   var s = hlFromSelection();
-  if(!s){ hlHide(); return; }
-  if(s.t.length > HL_MAX){ hlShow({ nomark:true, raw:s.raw }, 'マーカーは'+HL_MAX+'字まで'); return; }
+  if(!s){
+    if(hlPick && hlPick.edit) return;           /* 引いた所の操作を出している間は、選択が外れただけでは消さない */
+    hlHide(); return;
+  }
+  if(s.t.length > HL_MAX){ hlShow({ nomark:true, raw:s.raw, name:s.name, over:s.over }, 'マーカーは'+HL_MAX+'字まで'); return; }
   /* すでに引いてある所をそのまま選び直したときは、色替え・消すを出す */
   var ex = -1, exc = 0;
   (hlStore()[s.name] || []).forEach(function(x, k){ if(x[0] === s.t && (x[1] || 0) === s.nth){ ex = k; exc = x[2] || 0; } });
@@ -2157,9 +2191,28 @@ function hlOnClick(e){
     save(); hlHideSync(); hlHide();
     e.stopPropagation(); return;
   }
+  /* まとめて消す：1回目は確認の文言に変え、同じボタンをもう一度押すと消す */
+  var cb1 = cl('[data-hlclr]'), cb2 = cl('[data-hlclrall]'), cbx = cb1 || cb2;
+  if(cbx){
+    e.stopPropagation(); e.preventDefault();
+    if(!cbx.classList.contains('arm')){
+      hlBarSync(); cbx.classList.add('arm'); cbx.textContent = 'もう一度押すと消えます（元に戻せません）';
+      return;
+    }
+    if(cb1) delete hlStore()[cb1.getAttribute('data-hlclr')]; else S.hl = {};
+    hlHide(); hlChanged();
+    return;
+  }
+  var armed = document.querySelector('.hlclr.arm, [data-hlclrall].arm');
+  if(armed) hlBarSync();                         /* ほかの所を押したら、確認の状態を解く */
   if(cl('#hlPill')){
     var pk = hlPick, cb = cl('[data-hlc]'), db = cl('[data-hldel]');
     if(!pk) return;
+    if(cl('[data-hllink]')){
+      var lk = pk.link; hlHide();
+      if(lk) tlOpen(lk[0], lk[1], lk[2]);
+      return;
+    }
     if(cl('[data-hlcopy]')){
       hlCopy(pk.raw || '', function(ok){
         hlShow(null, ok ? 'コピーしました' : 'コピーできませんでした');
@@ -2177,6 +2230,10 @@ function hlOnClick(e){
     if(pk.edit){
       if(db) list.splice(pk.idx, 1);
       else if(list[pk.idx]) list[pk.idx] = [list[pk.idx][0], list[pk.idx][1] || 0, col];
+      try{ window.getSelection().removeAllRanges(); }catch(err){}
+    } else if(db){
+      /* 選んだ範囲に重なっているマーカーをまとめて消す */
+      (pk.over || []).slice().sort(function(x, y){ return y - x; }).forEach(function(k){ list.splice(k, 1); });
       try{ window.getSelection().removeAllRanges(); }catch(err){}
     } else {
       var same = -1;
@@ -2200,8 +2257,10 @@ function hlOnClick(e){
       for(var i = 0; i < parts.length; i++) parts[i].classList.toggle('rev', on);
       hlHide(); e.stopPropagation(); e.preventDefault(); return;   /* 用語リンクの上でも、リンクは開かずに答えを見るだけにする */
     }
-    if(mk.closest('.tl')) return;               /* 用語リンクに引いた所は、タップではリンクを開く（色替え・消すは選び直して行う） */
-    hlShow({ edit:true, name:box.dataset.hl, idx:idx, c:c }, '色を変える');
+    /* 用語リンクに引いた所は、リンクを開かずに操作を出す（開くときは「リンクを開く」） */
+    var tle = mk.closest('[data-tl]');
+    if(tle){ e.stopPropagation(); e.preventDefault(); }
+    hlShow({ edit:true, name:box.dataset.hl, idx:idx, c:c, link: tle ? [tle.dataset.tl, tle.dataset.tn, !!tle.closest('#refSheet')] : null }, '');
     return;
   }
   if(hlPick && hlPick.edit) hlHide();
@@ -3651,7 +3710,7 @@ function encBodyHtml(e, noQuiz){
     if(sec.label) h += '<div class="enlabel">'+esc(sec.label)+'</div>';
     h += renderContentWithTable(sec.text);   /* [TABLE]記法を表として描画 */
   });
-  h += '</div>' + hlBar();
+  h += '</div>' + hlBar(e.n);
   if(e.rel && e.rel.length){
     var rl = e.rel.map(findDisease).filter(function(x, i, a){ return x && a.indexOf(x) === i; });
     if(rl.length) h += '<div class="enlabel">関連する疾患</div><div class="relrow">'
@@ -3956,6 +4015,8 @@ function tlClose(){
 document.addEventListener('click', function(ev){
   var t = ev.target.closest && ev.target.closest('[data-tl]');
   if(!t) return;
+  /* マーカーを引いた所は、マーカーの操作（色替え・消す・リンクを開く）を先に出す */
+  if(ev.target.closest('mark.uhl')) return;
   ev.preventDefault(); ev.stopPropagation();
   tlOpen(t.dataset.tl, t.dataset.tn, !!t.closest('#refSheet'));
 }, true);
@@ -4179,6 +4240,10 @@ var TUTORIAL = [
   { tab:'study', sel:null, tabfree:1, t:'事典タブ',
     b:'問題の関連知識を疾患ごとにまとめた事典です。'
     +'関連する項目は親の項目の中にまとめてあります。各項目から、その疾患の問題だけを解くこともできます。' },
+  { tab:'study', sel:null, t:'マーカーと暗記シート',
+    b:'事典と、解答後の「関連知識」の本文は、文字を選ぶと4色のマーカーを引けます。同じメニューからコピーとWeb検索もできます。'
+     +'引いた所をタップすると、色替えと消去ができます。'
+     +'本文の下の「暗記シートで隠す色」を押すと、その色のマーカーが塗りつぶされ、タップした所だけ答えが見えます。' },
   { tab:'rank', sel:null, tabfree:1, t:'段位に挑戦',
     b:'貯めたXPで認定試験を受けられます。5級から十段まであり、'
      +'段位が上がるほど問題数が増え、合格ラインと複数解答の割合が高くなります。'
@@ -5688,7 +5753,8 @@ function renderSettings(){
      + '<p><b>免責。</b>本アプリの利用または利用できなかったことにより生じたいかなる損害についても、作成者は責任を負いません。ご利用をもって本内容に同意いただいたものとみなします。</p>'
      + '</div></div></details>';
 
-  h += '<div style="margin-top:16px"><button class="ghost danger" data-act="reset">この科目の学習データを消去</button></div><div style="height:20px"></div>';
+  h += '<div style="margin-top:16px"><button type="button" class="ghost" data-hlclrall="1"></button></div>';
+  h += '<div style="margin-top:10px"><button class="ghost danger" data-act="reset">この科目の学習データを消去</button></div><div style="height:20px"></div>';
   main.innerHTML = h;
 
   var sq = document.getElementById('sq');
@@ -5874,7 +5940,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "80165ac85dd3";
+<script>window.BOARD_BUILD = "23d68d84c71a";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

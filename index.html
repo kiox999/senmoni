@@ -186,6 +186,12 @@ details.deep p{font:400 13.5px/1.85 var(--sans);color:var(--ink);margin:10px 0 0
 .ddtable td:first-child{white-space:normal;min-width:4.5em}
 .ddtable th{background:var(--accentSoft);color:var(--accent);font-weight:700}
 .ddtable tr:first-child th{white-space:nowrap}
+/* 項目名を縦にまとめた表：項目ごとの区切りを太くし、続きの行は1列目扱いの太字にしない */
+.ddtable.grp td.gcell{background:var(--accentSoft);vertical-align:middle;font-weight:700}
+.ddtable.grp tr.gstart td{border-top:2px solid var(--line)}
+.ddtable.grp tr.cont td:first-child{font-weight:400;font-family:var(--mono);font-size:11.5px;padding-right:6px;min-width:6.5em}
+.ddtable.numlast td:last-child,.ddtable.numlast th:last-child{min-width:0;width:1%;white-space:nowrap;text-align:center;padding-left:12px;padding-right:12px}
+.ddtable.numlast td:last-child{font-weight:700}
 .fbbtn{display:inline-flex;align-items:center;min-height:40px;margin-top:6px;padding:2px 0;border:none;background:none;font:500 12px var(--sans);color:var(--soft);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .fbbtn:active{color:var(--accent)}
 .chkline{margin-top:10px;font:500 11.5px var(--sans);color:var(--soft)}
@@ -1490,10 +1496,26 @@ function encGyo(e){
 function blockTableHtml(body, fmt){
   var rows = body.trim().split('\n').map(function(r){ return r.split('|').map(function(c){ return c.trim(); }); }).filter(function(r){ return r.length && r.some(function(c){return c!=='';}); });
   if(!rows.length) return '';
-  var html = '<div class="ddtwrap"><table class="ddtable"><tbody>';
+  /* 1列目に同じ項目名が続く表（スコア表など）は、項目名のセルを縦につなげて1つにまとめる */
+  var span = [], grouped = false;
+  for(var i = 1; i < rows.length; i++){
+    if(span[i] === 0) continue;
+    var n = 1;
+    while(rows[0].length >= 3 && rows[i][0] !== '' && i + n < rows.length && rows[i + n][0] === rows[i][0]){ span[i + n] = 0; n++; }
+    span[i] = n; if(n > 1) grouped = true;
+  }
+  /* 最後の列が点数などの短い数字だけなら、幅を詰めて中央にそろえる */
+  var last = rows[0].length - 1;
+  var numLast = last >= 1 && rows.length > 1 && rows.slice(1).every(function(r){ return /^[\d.+\-−–〜～]{1,5}点?$/.test(r[last] || ''); });
+  var html = '<div class="ddtwrap"><table class="ddtable'+(grouped?' grp':'')+(numLast?' numlast':'')+'"><tbody>';
   rows.forEach(function(cells, ri){
     var tag = ri===0 ? 'th' : 'td';
-    html += '<tr>' + cells.map(function(c){ return '<'+tag+'>'+fmt(c)+'</'+tag+'>'; }).join('') + '</tr>';
+    var cont = grouped && ri > 0 && span[ri] === 0;
+    html += '<tr'+(cont ? ' class="cont"' : (grouped && ri > 0 ? ' class="gstart"' : ''))+'>' + cells.map(function(c, ci){
+      if(ci === 0 && cont) return '';
+      var at = (ci === 0 && grouped && ri > 0) ? ' class="gcell"'+(span[ri] > 1 ? ' rowspan="'+span[ri]+'"' : '') : '';
+      return '<'+tag+at+'>'+fmt(c)+'</'+tag+'>';
+    }).join('') + '</tr>';
   });
   return html + '</tbody></table></div>';
 }
@@ -5593,7 +5615,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "b991283262a7";
+<script>window.BOARD_BUILD = "197b36ad2414";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

@@ -516,6 +516,10 @@ html[data-theme="dark"] .certstats b{color:#EBD79A} html[data-theme="dark"] .cer
   align-items:center;justify-content:center;padding:20px;overflow:auto}
 .certoverlay .cert{width:100%;max-width:420px;margin:0}
 .certclose{margin-top:16px;font:600 12px var(--sans);color:rgba(255,255,255,.7)}
+.certsave{display:block;margin:12px auto 0;padding:9px 20px;border-radius:999px;border:1px solid #C9A227;background:transparent;
+  color:#8A6F22;font:700 12px var(--sans);cursor:pointer}
+html[data-theme="dark"] .certsave, .certoverlay .certsave{color:#E8C24E}
+.certsave:disabled{opacity:.5}
 /* 受験履歴 */
 .exhist{display:flex;flex-direction:column;gap:5px;margin-top:8px}
 .exrow{display:flex;align-items:center;gap:9px;width:100%;padding:11px 12px;border-radius:10px;
@@ -2892,8 +2896,99 @@ function certHtml(rec){
     +     '<span>'+ymd+'</span>'
     +     '<span class="mono">'+no+'</span>'
     +   '</div>'
-    + '</div></div>';
+    + '</div>'
+    + '<button type="button" class="certsave" data-certsave="'+esc(JSON.stringify({ rank:rec.rank, ok:rec.ok, total:rec.total, ts:rec.ts||Date.now() }))+'">画像として保存</button>'
+    + '</div>';
 }
+/* 認定証を画像（PNG）にする。画面の見た目に合わせてキャンバスへ描く（外部ライブラリは使わない）。
+   保存した画像はどの端末でも同じ見た目になるよう、ダークモードでも明るい紙の色で描く。 */
+function certCanvas(rec){
+  var r = rankById(rec.rank); if(!r) return null;
+  var d = new Date(rec.ts||Date.now());
+  var ymd = d.getFullYear()+'年 '+(d.getMonth()+1)+'月 '+d.getDate()+'日';
+  var no = 'No.' + String(rec.rank).padStart(2,'0') + '-' + String(Math.floor((rec.ts||0)/1000)%100000).padStart(5,'0');
+  var cs = getComputedStyle(document.documentElement);
+  var SANS = (cs.getPropertyValue('--sans') || 'sans-serif').trim(), MONO = (cs.getPropertyValue('--mono') || 'monospace').trim();
+  var K = 3, PAD = 14, W = 420, H = 282;                 /* 画面上の寸法(px)で描き、K倍に拡大して書き出す */
+  var cv = document.createElement('canvas'); cv.width = (W + PAD*2) * K; cv.height = (H + PAD*2) * K;
+  var c = cv.getContext('2d'); c.scale(K, K);
+  c.fillStyle = '#FBF8EE'; c.fillRect(0, 0, W + PAD*2, H + PAD*2);
+  c.translate(PAD, PAD);
+  function rr(x, y, w, h, rad){ c.beginPath(); c.moveTo(x+rad, y); c.arcTo(x+w, y, x+w, y+h, rad); c.arcTo(x+w, y+h, x, y+h, rad); c.arcTo(x, y+h, x, y, rad); c.arcTo(x, y, x+w, y, rad); c.closePath(); }
+  function text(t, x, y, font, color, align, ls){
+    c.font = font; c.fillStyle = color; c.textAlign = align || 'center'; c.textBaseline = 'alphabetic';
+    try{ c.letterSpacing = ls || '0px'; }catch(e){}
+    c.fillText(t, x, y);
+  }
+  /* 台紙 */
+  var g = c.createLinearGradient(0, 0, W*0.5, H); g.addColorStop(0, '#FDFBF3'); g.addColorStop(0.55, '#F5EFDD'); g.addColorStop(1, '#EFE3C4');
+  rr(1, 1, W-2, H-2, 14); c.fillStyle = g; c.fill(); c.lineWidth = 2; c.strokeStyle = '#C9A227'; c.stroke();
+  rr(8, 8, W-16, H-16, 9); c.lineWidth = 1; c.strokeStyle = 'rgba(201,162,39,.55)'; c.stroke();
+  /* 見出し */
+  text('CERTIFICATE OF ACHIEVEMENT', W/2, 38, '800 9.5px '+MONO, '#A2801E', 'center', '2.4px');
+  text(SUBJ.short+'　段位認定', W/2, 56, '600 10.5px '+SANS, '#8A6F22', 'center', '0.4px');
+  /* 段位 */
+  text(r.name, W/2, 112, '900 46px '+SANS, '#7A5E12', 'center', '2.8px');
+  c.fillStyle = '#C9A227'; rr(W/2-36, 126, 72, 2, 1); c.fill();
+  text('上記の段位を認定します', W/2, 151, '600 12px '+SANS, '#6B5716');
+  /* 数字3つ */
+  var cells = [['正解数', rec.ok+' / '+rec.total], ['正答率', (rec.total? (100*rec.ok/rec.total).toFixed(1):0)+'%'], ['合格基準', r.pass+'%']];
+  var bx = 22, bw = (W - 44 - 16) / 3;
+  cells.forEach(function(cl, i){
+    var x = bx + i*(bw+8);
+    rr(x, 170, bw, 48, 9); c.fillStyle = 'rgba(255,255,255,.55)'; c.fill();
+    text(cl[0], x + bw/2, 187, '600 9px '+MONO, '#96793A', 'center', '0.5px');
+    text(cl[1], x + bw/2, 208, '800 15px '+MONO, '#5E4B10');
+  });
+  /* 日付と番号 */
+  c.fillStyle = 'rgba(201,162,39,.4)'; c.fillRect(22, 232, W-44, 1);
+  text(ymd, 22, 254, '600 10px '+SANS, '#8A6F22', 'left');
+  text(no, W-22, 254, '600 10px '+MONO, '#8A6F22', 'right');
+  /* 印 */
+  c.save(); c.translate(W-42, 44); c.rotate(-12 * Math.PI/180); c.globalAlpha = 0.85;
+  c.beginPath(); c.arc(0, 0, 21, 0, Math.PI*2); c.lineWidth = 2.5; c.strokeStyle = '#C0392B'; c.stroke();
+  text('認', 0, 7, '800 19px '+SANS, '#C0392B');
+  c.restore();
+  return cv;
+}
+function certSave(rec, btn){
+  var r = rankById(rec.rank); if(!r) return;
+  var name = '認定証_' + SUBJ.short + '_' + r.name + '.png';
+  var done = function(){ if(btn){ btn.disabled = false; } };
+  if(btn) btn.disabled = true;
+  var go = function(){
+    var cv = certCanvas(rec); if(!cv){ done(); return; }
+    cv.toBlob(function(blob){
+      if(!blob){ done(); alert('画像を作れませんでした。'); return; }
+      var file = null;
+      try{ file = new File([blob], name, { type:'image/png' }); }catch(e){}
+      var touch = window.matchMedia && matchMedia('(pointer:coarse)').matches;
+      /* スマホ・タブレットは共有シートを開く（「画像を保存」で写真アプリに入る）。パソコンはそのままダウンロードする */
+      if(touch && file && navigator.canShare && navigator.canShare({ files:[file] })){
+        navigator.share({ files:[file], title:name }).then(done, function(e){
+          done(); if(e && e.name !== 'AbortError') dl();
+        });
+        return;
+      }
+      dl(); done();
+      function dl(){
+        var u = URL.createObjectURL(blob), a = document.createElement('a');
+        a.href = u; a.download = name; document.body.appendChild(a); a.click();
+        setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(u); }, 1500);
+      }
+    }, 'image/png');
+  };
+  /* 文字のフォントが読み込まれてから描く */
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(go, go); else go();
+}
+/* 科目を切り替えてエンジンを作り直しても、保存の処理が二重に付かないようにする */
+if(window.__certSaveH) document.removeEventListener('click', window.__certSaveH);
+window.__certSaveH = function(e){
+  var b = e.target.closest && e.target.closest('[data-certsave]'); if(!b) return;
+  var rec = null; try{ rec = JSON.parse(b.dataset.certsave); }catch(err){}
+  if(rec) certSave(rec, b);
+};
+document.addEventListener('click', window.__certSaveH);
 
 /* ---------- 段位認定 ---------- */
 /* cost:受験料 / n:問題数 / pass:合格率(%) / m:複数正解の割合 / sh:XX / t:制限時間(分, 0=無制限) */
@@ -4863,7 +4958,7 @@ function showCert(rec){
   var o = document.createElement('div');
   o.className = 'certoverlay';
   o.innerHTML = certHtml(rec) + '<div class="certclose">タップして閉じる</div>';
-  o.onclick = function(){ document.body.removeChild(o); };
+  o.onclick = function(e){ if(e && e.target && e.target.closest && e.target.closest('[data-certsave]')) return; document.body.removeChild(o); };
   document.body.appendChild(o);
 }
 function zoom(src){
@@ -5494,7 +5589,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "e227b0f97b45";
+<script>window.BOARD_BUILD = "fcfab116e48e";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

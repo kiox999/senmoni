@@ -202,6 +202,7 @@ body.hlh3 mark.uhl.c3:not(.rev){background:#34B274}
 .hlpill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 92px);z-index:9000;
   display:flex;align-items:center;gap:10px;padding:9px 16px;border-radius:999px;background:#1F2328;color:#fff;font:700 12.5px var(--sans);
   box-shadow:0 6px 22px rgba(0,0,0,.28);user-select:none;-webkit-user-select:none;white-space:nowrap}
+.hlpill{left:8px;right:8px;margin:0 auto;width:-moz-fit-content;width:fit-content;transform:none;flex-wrap:wrap;justify-content:center;border-radius:24px}
 .hlpill .hldot{width:30px;height:30px;opacity:1;border-color:rgba(255,255,255,.25)}
 .hlpill .hldot.cur{border-color:#fff}
 .hlpill .hldel{border:0;border-radius:999px;padding:7px 12px;background:rgba(255,255,255,.14);color:#fff;font:700 12px var(--sans);cursor:pointer}
@@ -2023,7 +2024,7 @@ function hlHideSync(){
 }
 /* 本文の下に出す帯：使い方と、暗記シート（隠す色の切り替え） */
 function hlBar(){
-  var hd = hlHidden(), h = '<div class="hlbar"><span class="hlbl">文字を選ぶとマーカーを引けます</span><span class="hlsheet"><span>暗記シートで隠す色</span>';
+  var hd = hlHidden(), h = '<div class="hlbar"><span class="hlbl">文字を選ぶと、マーカー・コピー・検索ができます</span><span class="hlsheet"><span>暗記シートで隠す色</span>';
   HL_COLORS.forEach(function(nm, c){
     h += '<button type="button" class="hldot c'+c+(hd.indexOf(c) >= 0 ? ' on' : '')+'" data-hlhide="'+c+'" aria-label="'+nm+'のマーカーを隠す"></button>';
   });
@@ -2090,16 +2091,30 @@ function hlPill(){
   return p;
 }
 /* pick: 新しく引くとき {name,t,nth}、引いた所を触ったとき {edit:true,name,idx,c}、null は案内だけ */
+/* pick.raw（選んだ文字そのまま）があるときは「コピー」「検索」も出す。pick.nomark はマーカーを引けない選択（長すぎる） */
 function hlShow(pick, label){
   hlPick = pick;
-  var p = hlPill(), h = '<span>'+esc(label)+'</span>';
-  if(pick){
+  var p = hlPill(), h = label ? '<span class="hlmsg">'+esc(label)+'</span>' : '';
+  if(pick && !pick.nomark){
     HL_COLORS.forEach(function(nm, c){
-      h += '<button type="button" class="hldot c'+c+(pick.edit && pick.c === c ? ' cur' : '')+'" data-hlc="'+c+'" aria-label="'+nm+'"></button>';
+      h += '<button type="button" class="hldot c'+c+(pick.edit && pick.c === c ? ' cur' : '')+'" data-hlc="'+c+'" aria-label="'+nm+'のマーカー"></button>';
     });
     if(pick.edit) h += '<button type="button" class="hldel" data-hldel="1">消す</button>';
   }
+  if(pick && pick.raw) h += '<button type="button" class="hldel" data-hlcopy="1">コピー</button><button type="button" class="hldel" data-hlweb="1">検索</button>';
   p.innerHTML = h; p.classList.remove('hide');
+}
+function hlCopy(text, done){
+  var fb = function(){
+    var ok = false;
+    try{
+      var ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0'; document.body.appendChild(ta);
+      ta.select(); ok = document.execCommand('copy'); document.body.removeChild(ta);
+    }catch(e){}
+    done(ok);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function(){ done(true); }, fb); else fb();
 }
 function hlHide(){ hlPick = null; var p = document.getElementById('hlPill'); if(p) p.classList.add('hide'); }
 /* いまの文字選択が、1つの枠の中に収まっていれば「どの項目の・どの文字列の・何番目か」を返す */
@@ -2118,19 +2133,19 @@ function hlFromSelection(){
   if(full.substr(start, t.length) === t){
     while((pos = full.indexOf(t, from)) >= 0 && pos < start){ nth++; from = pos + 1; }
   }
-  return { name:box.dataset.hl, t:t, nth:nth };
+  return { name:box.dataset.hl, t:t, nth:nth, raw:String(sel.toString()).replace(/[\t\u00a0]+/g, ' ').replace(/ *\n+ */g, '\n').trim() };
 }
 function hlChanged(){ save(); hlRev++; hlScan(); }
 function hlOnSelect(){
   if(hlPick && hlPick.edit) return;             /* 引いた所の操作を出している間は、選択の変化で消さない */
   var s = hlFromSelection();
   if(!s){ hlHide(); return; }
-  if(s.t.length > HL_MAX){ hlShow(null, '長すぎます（'+HL_MAX+'字まで）'); return; }
+  if(s.t.length > HL_MAX){ hlShow({ nomark:true, raw:s.raw }, 'マーカーは'+HL_MAX+'字まで'); return; }
   /* すでに引いてある所をそのまま選び直したときは、色替え・消すを出す */
   var ex = -1, exc = 0;
   (hlStore()[s.name] || []).forEach(function(x, k){ if(x[0] === s.t && (x[1] || 0) === s.nth){ ex = k; exc = x[2] || 0; } });
-  if(ex >= 0){ hlShow({ edit:true, name:s.name, idx:ex, c:exc }, '色を変える'); return; }
-  hlShow(s, '色を選ぶ');
+  if(ex >= 0){ hlShow({ edit:true, name:s.name, idx:ex, c:exc, raw:s.raw }, ''); return; }
+  hlShow(s, '');
 }
 function hlOnClick(e){
   var tg = e.target, cl = function(q){ return tg && tg.closest && tg.closest(q); };
@@ -2144,7 +2159,20 @@ function hlOnClick(e){
   }
   if(cl('#hlPill')){
     var pk = hlPick, cb = cl('[data-hlc]'), db = cl('[data-hldel]');
-    if(!pk || (!cb && !db)) return;
+    if(!pk) return;
+    if(cl('[data-hlcopy]')){
+      hlCopy(pk.raw || '', function(ok){
+        hlShow(null, ok ? 'コピーしました' : 'コピーできませんでした');
+        setTimeout(function(){ if(!hlPick) hlHide(); }, 1100);
+      });
+      return;
+    }
+    if(cl('[data-hlweb]')){
+      /* 改行は空白にして、新しいタブで検索を開く */
+      window.open('https://www.google.com/search?q=' + encodeURIComponent((pk.raw || '').replace(/\s+/g, ' ').slice(0, 200)), '_blank', 'noopener');
+      hlHide(); return;
+    }
+    if(!cb && !db) return;
     var H = hlStore(), list = (H[pk.name] || []).slice(), col = cb ? +cb.getAttribute('data-hlc') : 0;
     if(pk.edit){
       if(db) list.splice(pk.idx, 1);
@@ -5846,7 +5874,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "ae43bcbd4118";
+<script>window.BOARD_BUILD = "80165ac85dd3";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

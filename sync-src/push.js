@@ -9,14 +9,14 @@ export function utcHourOf(hour, off) {
 }
 
 /* 送信側の判定: いま送るべき宛先なら、その「日付(YYYY-MM-DD・端末の現地時間)」を返す。送らないなら null。
-   定期実行は遅れることがあるので、決めた時刻から2時間未満なら送る（sent で二重送信を防ぐ）。
+   定期実行は遅れることがあるので、決めた時刻から3時間未満なら送る（sent で二重送信を防ぐ）。
    dayStart は本人の「1日の切り替え時刻」（0〜6。未設定は4） */
 export function dueDay(sub, lastActive, nowMs, dayStart) {
   var ds = (typeof dayStart === 'number' && dayStart >= 0 && dayStart <= 6) ? Math.floor(dayStart) : 4;
   if (!sub || typeof sub.hour !== 'number' || typeof sub.tz !== 'number') return null;
   var local = nowMs - sub.tz * 60000;
   var diff = (new Date(local).getUTCHours() - sub.hour + 24) % 24;
-  if (diff > 1) return null;
+  if (diff > 2) return null;
   /* 1日の切り替え時刻(dayStart)より前の深夜は、前日として数える（アプリの todayKey と同じ数え方） */
   var day = new Date(local - diff * 3600000 - ds * 3600000).toISOString().slice(0, 10);
   if (sub.sent === day || lastActive === day) return null;

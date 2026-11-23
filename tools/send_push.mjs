@@ -17,7 +17,7 @@ const db = getFirestore(), fcm = getMessaging();
 const now = Date.now(), h = new Date(now).getUTCHours();
 
 /* 実行の遅れに備えて、1時間前が予定だった宛先も拾う（送信済みは sent で除外） */
-const snap = await db.collection('pushSubs').where('utcHour', 'in', [h, (h + 23) % 24]).get();
+const snap = await db.collection('pushSubs').where('utcHour', 'in', [h, (h + 23) % 24, (h + 22) % 24]).get();
 const acts = new Map();
 let sent = 0, skipped = 0, removed = 0, failed = 0;
 

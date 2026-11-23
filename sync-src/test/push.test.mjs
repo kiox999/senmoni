@@ -13,12 +13,13 @@ await t('現地時刻→協定世界時の換算', async () => {
   assert.equal(utcHourOf(20, -330), 14);   /* インド(+5:30)は切り捨て */
 });
 
-await t('送信判定: 決めた時刻〜2時間未満・未送信・その日未解答のときだけ送る', async () => {
+await t('送信判定: 決めた時刻〜3時間未満・未送信・その日未解答のときだけ送る', async () => {
   const sub = { hour: 20, tz: JST };
   const at = (iso) => Date.parse(iso);   /* UTC */
   assert.equal(dueDay(sub, '', at('2026-11-17T11:05:00Z')), '2026-11-17');            /* 20:05 JST */
   assert.equal(dueDay(sub, '', at('2026-11-17T12:40:00Z')), '2026-11-17');            /* 21:40 遅延実行 */
-  assert.equal(dueDay(sub, '', at('2026-11-17T13:05:00Z')), null);                    /* 22:05 遅すぎ */
+  assert.equal(dueDay(sub, '', at('2026-11-17T13:05:00Z')), '2026-11-17');            /* 22:05 かなり遅れた実行 */
+  assert.equal(dueDay(sub, '', at('2026-11-17T14:05:00Z')), null);                    /* 23:05 遅すぎ */
   assert.equal(dueDay(sub, '', at('2026-11-17T10:55:00Z')), null);                    /* 19:55 まだ */
   assert.equal(dueDay(sub, '2026-11-17', at('2026-11-17T11:05:00Z')), null);          /* 今日は解いた */
   assert.equal(dueDay(sub, '2026-11-16', at('2026-11-17T11:05:00Z')), '2026-11-17');  /* 昨日解いただけ */

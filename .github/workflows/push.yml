@@ -3,7 +3,9 @@ name: リマインド通知の送信
 # リポジトリの Secrets に FIREBASE_SERVICE_ACCOUNT が無いあいだは何もしない（docs/PUSH_SETUP.md）
 on:
   schedule:
-    - cron: '3 * * * *'
+    # GitHub の定期実行は間引かれることが多い（毎時指定でも1日数回しか動かないことがある）ので、
+    # 混みやすい毎時0分付近を避けて15分おきに指定する。重複して動いても sent で二重送信は防がれる
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
 permissions:
   contents: read

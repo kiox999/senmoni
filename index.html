@@ -194,7 +194,7 @@ body.hlh1 mark.uhl.c1:not(.rev){background:#EC5F7A}
 body.hlh2 mark.uhl.c2:not(.rev){background:#4A97EE}
 body.hlh3 mark.uhl.c3:not(.rev){background:#34B274}
 .hlbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);font:500 11px var(--sans);color:var(--soft)}
-.hlsheettop{margin:0 2px 12px}.encsave{margin-top:10px}.encsave .qmark{margin:0}.hlsheettop .hlbar{margin-top:6px;border-top:0;padding-top:0}.hlsheettop .hlbl{display:none}
+.hlsheettop{margin:0 2px 12px}.sheetidx{display:flex;flex-wrap:wrap;gap:6px;margin:0 2px 12px}.sheetgo{font:600 12px var(--sans);color:var(--accent);background:var(--accentSoft);border:none;border-radius:8px;padding:7px 10px;cursor:pointer;text-align:left}.ensheet .encard{margin-bottom:10px}.ensheet .enhead{scroll-margin-top:70px}.encsave{margin-top:10px}.encsave .qmark{margin:0}.hlsheettop .hlbar{margin-top:6px;border-top:0;padding-top:0}.hlsheettop .hlbl{display:none}
 .hlbar .hlbl{margin-right:2px}
 .hlbar .hlsheet{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
 .hldot{width:22px;height:22px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer;background:#F2C200;opacity:.45}
@@ -1274,6 +1274,13 @@ footer.tabs button{font-size:11px}
   #studyResults .encard.open>.enbody{position:fixed;top:0;bottom:0;left:calc(var(--pcnav) + 48px + var(--pcen) + 44px);right:0;overflow-y:auto;overflow-x:hidden;overflow-wrap:anywhere;border-top:none;padding:30px 32px 56px 0;background:var(--bg)}
   #studyResults .encard.open>.enbody>*{max-width:1040px}
   #studyResults .encard.open>.enbody::before{content:attr(data-n);display:block;font:700 22px var(--sans);color:var(--ink);margin:0 0 16px;padding-bottom:12px;border-bottom:1px solid var(--line);max-width:1040px}
+  /* 「マーカーあり」「マイリスト」：右の欄に全項目を続けて並べ、左は目次にする */
+  #studyResults .ensheet{position:fixed;top:0;bottom:0;left:calc(var(--pcnav) + 48px + var(--pcen) + 44px);right:0;overflow-y:auto;overflow-x:hidden;overflow-wrap:anywhere;padding:30px 32px 56px 0;background:var(--bg)}
+  #studyResults .ensheet>*{max-width:1040px}
+  #studyResults .ensheet .encard.open>.enbody{position:static;padding:2px 18px 16px;border-top:1px solid var(--line);background:none}
+  #studyResults .ensheet .encard.open>.enbody::before{content:none}
+  #studyResults .ensheet .enhead{scroll-margin-top:16px}
+  #studyResults .sheetidx{flex-direction:column;align-items:stretch}
   #app>main:has(>#studyResults):not(:has(.encard.open))::after{content:'左の一覧から項目を選ぶと、ここに内容が出ます';position:fixed;top:38px;left:calc(var(--pcnav) + 48px + var(--pcen) + 44px);right:32px;max-width:980px;box-sizing:border-box;padding:18px 20px;border:1px dashed var(--line);border-radius:12px;font:500 13px var(--sans);color:var(--soft)}
   /* 全科目の事典検索も同じ2分割 */
   #xenc{max-width:none;margin:0;padding:30px 40px 64px 48px}
@@ -1339,6 +1346,7 @@ footer.tabs button{font-size:11px}
   #app>main.pcq>.pcside,#app>main.pcqa .qaencbody{left:calc(var(--pcnav) + 28px + var(--pcl) + 28px);padding-right:22px}
   #app>main.pcq:not(:has(>.pcside))::after,#app>main.pcqa:not(:has(.qaencbody))::after{left:calc(var(--pcnav) + 28px + var(--pcl) + 28px);right:22px}
   #studyResults .encard.open>.enbody{left:calc(var(--pcnav) + 28px + var(--pcen) + 28px);padding-right:22px}
+  #studyResults .ensheet{left:calc(var(--pcnav) + 28px + var(--pcen) + 28px);padding-right:22px}
   #app>main:has(>#studyResults):not(:has(.encard.open))::after{left:calc(var(--pcnav) + 28px + var(--pcen) + 28px);right:22px}
   #xenc{padding-left:28px;padding-right:24px}
   #xenc .encard.open>.enbody{left:calc(28px + var(--pcen) + 60px + 28px);padding-right:22px}
@@ -1758,7 +1766,7 @@ window.BOARD_ENCSTAR = function(e){
   if(!b || document.getElementById('tutOverlay')) return;
   e.preventDefault(); e.stopPropagation();
   var nm = b.getAttribute('data-encstar');
-  openTagSheet('enc', nm, function(){ encSaveSync(nm); if(mlOn && !qaOn && view === 'home') renderHome(); });
+  openTagSheet('enc', nm, function(){ encSaveSync(nm); studyChipsSync(); if(mlOn && !qaOn && view === 'home') renderHome(); });
 };
 if(!window.BOARD_ENCSTAR_ON){ window.BOARD_ENCSTAR_ON = 1; document.addEventListener('click', function(e){ if(window.BOARD_ENCSTAR) window.BOARD_ENCSTAR(e); }, true); }
 /* タグ選択パネル。★を押しただけでは何も保存されず、ここでタグを選んだときだけ変わる */
@@ -2190,7 +2198,7 @@ function hlFromSelection(){
   });
   return { name:box.dataset.hl, t:t, nth:nth, over:over, raw:String(sel.toString()).replace(/[\t\u00a0]+/g, ' ').replace(/ *\n+ */g, '\n').trim() };
 }
-function hlChanged(){ save(); hlRev++; hlScan(); hlBarSync(); }
+function hlChanged(){ save(); hlRev++; hlScan(); hlBarSync(); if(typeof studyChipsSync === 'function') studyChipsSync(); }
 function hlOnSelect(){
   var s = hlFromSelection();
   if(!s){
@@ -3708,24 +3716,34 @@ function renderStudy(){
   }
   var ph = studyTab==='drug' ? '一般名・商品名で探す（例：ボスミン、ST合剤）' : (studyTab==='term' ? '略語・検査値で探す（例：FENa、アニオンギャップ）' : '疾患名・キーワードで探す（例：'+SUBJ.phStudy+'）');
   h += '<input class="search" id="stq" type="search" inputmode="text" lang="ja" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="'+esc(ph)+'" value="'+esc(studyQ)+'">';
+  h += '<div class="scrollwrap"><div class="chiprow chipscroll" id="stcat">' + studyChipsHtml() + '</div></div>';
+
+  h += '<div id="studyResults">' + studyResultsHtml() + '</div>';
+  h += '<div style="height:20px"></div>';
+  main.innerHTML = h;
+  bindStudy();
+}
+/* 分類のチップ（「マイリスト」「マーカーあり」は該当があるときだけ出す） */
+function studyChipsHtml(){
+  var items = studyItems();
   var nHl = items.filter(hlHas).length;
   if(!nHl && studyCat === HLCAT) studyCat = '';
   var nMl = studyTab==='dis' ? items.filter(mlHas).length : 0;
   if(!nMl && studyCat === MLCAT) studyCat = '';
-  h += '<div class="scrollwrap"><div class="chiprow chipscroll" id="stcat"><button class="chip'+(studyCat?'':' on')+'" data-scat="">すべて</button>'
+  return '<button class="chip'+(studyCat?'':' on')+'" data-scat="">すべて</button>'
      + (nMl ? '<button class="chip hlchip'+(studyCat===MLCAT?' on':'')+'" data-scat="'+MLCAT+'">'+(studyMlNames ? 'マイリスト（絞り込み）' : 'マイリスト')+' '+nMl+'</button>' : '')
      + (nHl ? '<button class="chip hlchip'+(studyCat===HLCAT?' on':'')+'" data-scat="'+HLCAT+'">マーカーあり '+nHl+'</button>' : '')
      + studyCats().map(function(cc){
          var n = items.filter(function(e){ return catOf(e)===cc; }).length;
          if(!n) return '';
          return '<button class="chip'+(studyCat===cc?' on':'')+'" data-scat="'+esc(cc)+'">'+(studyTab==='dis'?esc(letterOf(cc))+'｜':'')+esc(cc)+' '+n+'</button>';
-       }).join('')
-     + '</div></div>';
-
-  h += '<div id="studyResults">' + studyResultsHtml() + '</div>';
-  h += '<div style="height:20px"></div>';
-  main.innerHTML = h;
-  bindStudy();
+       }).join('');
+}
+/* 保存やマーカーで件数が変わったら、チップだけ描き直す（スクロール位置は保つ） */
+function studyChipsSync(){
+  var el = document.getElementById('stcat');
+  if(!el || view !== 'study') return;
+  var x = el.scrollLeft; el.innerHTML = studyChipsHtml(); el.scrollLeft = x;
 }
 /* 検索結果の部分だけを組み立てる（入力欄を作り直さないためIME変換が途切れない） */
 /* 子項目は親の中に入れ子で表示する。
@@ -3785,6 +3803,11 @@ function studyResultsHtml(){
   }
   if(studyHlMode() && shown.length){
     h += '<div class="hlsheettop"><div class="sub">'+(studyCat===MLCAT ? 'マイリストに保存した項目' : 'マーカーを引いた項目')+'を開いて並べています。下の色を選ぶと、その色のマーカーをまとめて隠せます。</div>' + hlBar('') + '</div>';
+    /* 目次：押すとその項目へ移る（パソコン版では右の欄が全項目を続けて表示する） */
+    shown.sort(encCompare);
+    h += '<div class="sheetidx">' + shown.map(function(e){ return '<button type="button" class="sheetgo" data-sheetgo="'+esc(e.n)+'">'+esc(e.n)+'</button>'; }).join('') + '</div>';
+    h += '<div class="ensheet">' + shown.map(studyCardHtml).join('') + '</div>';
+    return h;
   }
   h += '<div class="enlist">';
   var lastGyo = null, sorted = !studyQ.trim();
@@ -3905,6 +3928,12 @@ function studyClick(ev){
         b2.classList.toggle('on', b2.dataset.scat === studyCat);
       });
       refreshStudyResults();
+      return;
+    }
+    var sg = ev.target.closest('[data-sheetgo]');
+    if(sg){
+      var hs = document.querySelectorAll('.ensheet .enhead');
+      for(var j=0;j<hs.length;j++) if(hs[j].getAttribute('data-en') === sg.dataset.sheetgo){ hs[j].scrollIntoView({block:'start', behavior:'smooth'}); break; }
       return;
     }
     var gy = ev.target.closest('[data-gy]');
@@ -6043,7 +6072,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "d02fef3609ef";
+<script>window.BOARD_BUILD = "d32c967cdc17";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

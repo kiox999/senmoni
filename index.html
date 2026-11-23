@@ -194,7 +194,7 @@ body.hlh1 mark.uhl.c1:not(.rev){background:#EC5F7A}
 body.hlh2 mark.uhl.c2:not(.rev){background:#4A97EE}
 body.hlh3 mark.uhl.c3:not(.rev){background:#34B274}
 .hlbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);font:500 11px var(--sans);color:var(--soft)}
-.hlsheettop{margin:0 2px 12px}.hlsheettop .hlbar{margin-top:6px;border-top:0;padding-top:0}.hlsheettop .hlbl{display:none}
+.hlsheettop{margin:0 2px 12px}.encsave{margin-top:10px}.encsave .qmark{margin:0}.hlsheettop .hlbar{margin-top:6px;border-top:0;padding-top:0}.hlsheettop .hlbl{display:none}
 .hlbar .hlbl{margin-right:2px}
 .hlbar .hlsheet{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
 .hldot{width:22px;height:22px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer;background:#F2C200;opacity:.45}
@@ -1674,6 +1674,7 @@ function tagMigrate(d){
   }
   if(!d.qtags || typeof d.qtags !== 'object') d.qtags = {};
   if(!d.qatags || typeof d.qatags !== 'object') d.qatags = {};
+  if(!d.etags || typeof d.etags !== 'object' || Array.isArray(d.etags)) d.etags = {};   /* 事典の項目（項目名→タグ） */
   function add(map, id, t){ if(!d.tagDefs[t]) return; var a = map[id] || (map[id] = []); if(a.indexOf(t) < 0) a.push(t); }
   /* 古いバージョンの端末から同期で届いた分も、ここで毎回タグへ移す */
   for(var pk in d.prog){ var b = d.prog[pk] && d.prog[pk].bm; if(b){ if(b>=1 && b<=3) add(d.qtags, pk, 't'+b); d.prog[pk].bm = 0; } }
@@ -1684,7 +1685,10 @@ function tagList(){
   return Object.keys(S.tagDefs).map(function(k){ var t = S.tagDefs[k]; return { id:k, n:t.n, c:t.c, o:t.o||0 }; })
     .sort(function(a,b){ return (a.o-b.o) || (a.id < b.id ? -1 : 1); });
 }
-function tagMap(kind){ return kind === 'qa' ? S.qatags : S.qtags; }
+function tagMap(kind){
+  if(kind === 'enc'){ if(!S.etags || typeof S.etags !== 'object' || Array.isArray(S.etags)) S.etags = {}; return S.etags; }
+  return kind === 'qa' ? S.qatags : S.qtags;
+}
 function tagsOf(kind, id){ var a = tagMap(kind)[id]; return a ? a.filter(function(t){ return S.tagDefs[t]; }) : []; }
 function tagOrdered(ids){ return tagList().filter(function(t){ return ids.indexOf(t.id) >= 0; }); }
 function setTag(kind, id, t, on){
@@ -1705,7 +1709,7 @@ function tagCreate(name){
 }
 function tagDelete(id){
   delete S.tagDefs[id];
-  ['q','qa'].forEach(function(kind){
+  ['q','qa','enc'].forEach(function(kind){
     var m = tagMap(kind);
     Object.keys(m).forEach(function(k){ var a = m[k].filter(function(x){ return x !== id; }); if(a.length) m[k] = a; else delete m[k]; });
   });
@@ -1713,7 +1717,7 @@ function tagDelete(id){
 }
 /* 有効な（いまの問題データに存在する）保存済みID。filter は「どれかのタグが付いている」で絞る */
 function taggedIds(kind, filter){
-  var src = kind === 'qa' ? QUICKQA : QUESTIONS, out = [];
+  var src = kind === 'qa' ? QUICKQA : (kind === 'enc' ? ENCYC.map(function(e){ return { id:e.n }; }) : QUESTIONS), out = [];
   src.forEach(function(x){
     var ts = tagsOf(kind, x.id);
     if(!ts.length) return;
@@ -1739,6 +1743,24 @@ function saveBtn(kind, id, attr){
        + '<b class="qmedit">変更</b></button>';
 }
 
+/* 事典の項目・関連知識の保存ボタン（項目名で保存する）。押すとタグのパネルが開く */
+function encSaveBtn(name){
+  if(!ENCYC.some(function(e){ return e.n === name; })) return '';
+  return '<div class="encsave">' + saveBtn('enc', name, 'data-encstar="'+esc(name)+'"') + '</div>';
+}
+function encSaveSync(name){
+  var bs = document.querySelectorAll('.encsave [data-encstar]');
+  for(var i = 0; i < bs.length; i++) if(bs[i].getAttribute('data-encstar') === name) bs[i].parentNode.innerHTML = saveBtn('enc', name, 'data-encstar="'+esc(name)+'"');
+}
+/* 科目を切り替えても登録は1回だけにし、中身はいまの科目の処理に差し替える */
+window.BOARD_ENCSTAR = function(e){
+  var b = e.target.closest && e.target.closest('[data-encstar]');
+  if(!b || document.getElementById('tutOverlay')) return;
+  e.preventDefault(); e.stopPropagation();
+  var nm = b.getAttribute('data-encstar');
+  openTagSheet('enc', nm, function(){ encSaveSync(nm); if(mlOn && !qaOn && view === 'home') renderHome(); });
+};
+if(!window.BOARD_ENCSTAR_ON){ window.BOARD_ENCSTAR_ON = 1; document.addEventListener('click', function(e){ if(window.BOARD_ENCSTAR) window.BOARD_ENCSTAR(e); }, true); }
 /* タグ選択パネル。★を押しただけでは何も保存されず、ここでタグを選んだときだけ変わる */
 function openTagSheet(kind, id, onDone){
   var old = document.getElementById('tagSheet'); if(old) old.remove();
@@ -1748,7 +1770,7 @@ function openTagSheet(kind, id, onDone){
   function paint(){
     var cur = tagsOf(kind, id), L = tagList();
     var h = '<div class="tsbox" role="dialog" aria-label="マイリストに保存">'
-          + '<div class="tshead"><b>マイリストに保存</b><span class="n">'+(kind==='qa' ? '一問一答 Q'+id : '問題 #'+id)+'</span></div>'
+          + '<div class="tshead"><b>マイリストに保存</b><span class="n">'+(kind==='qa' ? '一問一答 Q'+id : kind==='enc' ? '事典 '+esc(id) : '問題 #'+id)+'</span></div>'
           + '<div class="tssub">付けるタグを選んでください（複数選べます）</div><div class="tslist">';
     L.forEach(function(t){
       var on = cur.indexOf(t.id) >= 0;
@@ -2009,7 +2031,7 @@ function formatDeepdive(text){
     }
   }
   /* 事典の項目の本文は、マーカーを引ける枠（data-hl＝項目名）で包む */
-  return html + (title ? hlWrap(title, body) + hlBar(title) : body);
+  return html + (title ? hlWrap(title, body) + hlBar(title) + encSaveBtn(title) : body);
 }
 /* ---------- マーカー（関連知識・事典の本文に引く蛍光ペン） ----------
    本文の文字を選ぶと画面下に「マーカーを引く」が出る。引いた所をタップすると消せる。
@@ -3593,9 +3615,13 @@ function encycSecs(body){
   return out.filter(function(x){ return x.text; });
 }
 /* 「マーカーあり」の絞り込み：マーカーを引いた項目だけを、本文を開いた状態でまとめて並べる（暗記シートとして通して読める） */
-var HLCAT = '\u0001hl', studyHlFold = {};
+var HLCAT = '\u0001hl', MLCAT = '\u0001ml', studyHlFold = {}, studyMlNames = null;
 function hlHas(e){ return !!(e && (hlStore()[e.n] || []).length); }
-function studyHlMode(){ return studyCat === HLCAT && !studyQ.trim(); }
+/* マイリストの事典の項目（studyMlNames があればマイリスト画面で絞ったタグの分だけ） */
+function mlHas(e){ return !!(e && (studyMlNames ? studyMlNames.indexOf(e.n) >= 0 : tagsOf('enc', e.n).length)); }
+/* 「マーカーあり」「マイリスト」の絞り込み：該当する項目を開いた状態で並べる */
+function sheetHas(e){ return studyCat === HLCAT ? hlHas(e) : studyCat === MLCAT ? mlHas(e) : false; }
+function studyHlMode(){ return (studyCat === HLCAT || studyCat === MLCAT) && !studyQ.trim(); }
 function studyList(){
   var q = studyQ.trim().toLowerCase();
   var qa = q.replace(/[\s\-・.]/g,'');
@@ -3607,7 +3633,7 @@ function studyList(){
   }
   var out = [], rest = [];
   studyItems().forEach(function(e){
-    if(studyCat === HLCAT){ if(!hlHas(e)) return; }
+    if(studyCat === HLCAT || studyCat === MLCAT){ if(!sheetHas(e)) return; }
     else if(studyCat && catOf(e) !== studyCat) return;
     if(!q){ out.push(e); return; }
     var nm = e.n.toLowerCase();
@@ -3684,7 +3710,10 @@ function renderStudy(){
   h += '<input class="search" id="stq" type="search" inputmode="text" lang="ja" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="'+esc(ph)+'" value="'+esc(studyQ)+'">';
   var nHl = items.filter(hlHas).length;
   if(!nHl && studyCat === HLCAT) studyCat = '';
+  var nMl = studyTab==='dis' ? items.filter(mlHas).length : 0;
+  if(!nMl && studyCat === MLCAT) studyCat = '';
   h += '<div class="scrollwrap"><div class="chiprow chipscroll" id="stcat"><button class="chip'+(studyCat?'':' on')+'" data-scat="">すべて</button>'
+     + (nMl ? '<button class="chip hlchip'+(studyCat===MLCAT?' on':'')+'" data-scat="'+MLCAT+'">'+(studyMlNames ? 'マイリスト（絞り込み）' : 'マイリスト')+' '+nMl+'</button>' : '')
      + (nHl ? '<button class="chip hlchip'+(studyCat===HLCAT?' on':'')+'" data-scat="'+HLCAT+'">マーカーあり '+nHl+'</button>' : '')
      + studyCats().map(function(cc){
          var n = items.filter(function(e){ return catOf(e)===cc; }).length;
@@ -3720,6 +3749,7 @@ function encBodyHtml(e, noQuiz){
     h += renderContentWithTable(sec.text);   /* [TABLE]記法を表として描画 */
   });
   h += '</div>' + hlBar(e.n);
+  if(!noQuiz && e.kind !== 'drug' && ENCYC.indexOf(e) >= 0) h += encSaveBtn(e.n);
   if(e.rel && e.rel.length){
     var rl = e.rel.map(findDisease).filter(function(x, i, a){ return x && a.indexOf(x) === i; });
     if(rl.length) h += '<div class="enlabel">関連する疾患</div><div class="relrow">'
@@ -3754,7 +3784,7 @@ function studyResultsHtml(){
     h += '<div class="soft">該当する項目がありません。別の言葉で探してみてください。</div>';
   }
   if(studyHlMode() && shown.length){
-    h += '<div class="hlsheettop"><div class="sub">マーカーを引いた項目を開いて並べています。下の色を選ぶと、その色のマーカーをまとめて隠せます。</div>' + hlBar('') + '</div>';
+    h += '<div class="hlsheettop"><div class="sub">'+(studyCat===MLCAT ? 'マイリストに保存した項目' : 'マーカーを引いた項目')+'を開いて並べています。下の色を選ぶと、その色のマーカーをまとめて隠せます。</div>' + hlBar('') + '</div>';
   }
   h += '<div class="enlist">';
   var lastGyo = null, sorted = !studyQ.trim();
@@ -3809,7 +3839,7 @@ function studyCardHtml(e){
     if(op){
       h += '<div class="enbody" data-n="'+esc(e.n)+'">' + encBodyHtml(e);
       kids.forEach(function(k){
-        var kop = hm ? (hlHas(k) ? !studyHlFold[k.n] : studyChildOpen === k.n) : studyChildOpen === k.n;
+        var kop = hm ? (sheetHas(k) ? !studyHlFold[k.n] : studyChildOpen === k.n) : studyChildOpen === k.n;
         h += '<div class="enchild'+(kop?' open':'')+'">'
            + '<button class="enchead" data-enc="'+esc(k.n)+'">'
            +   '<span class="enctag">関連</span>'
@@ -3867,7 +3897,8 @@ function studyClick(ev){
     }
     var sc = ev.target.closest('[data-scat]');
     if(sc){
-      studyCat = sc.dataset.scat; studyOpen = null; studyGyo = ''; studyIni = '';
+      if(studyCat !== MLCAT || sc.dataset.scat !== MLCAT) studyMlNames = null;
+      studyCat = sc.dataset.scat; studyOpen = null; studyGyo = ''; studyIni = ''; studyHlFold = {};
       var el2 = document.getElementById('stcat');
       if(el2) studyChipLeft = el2.scrollLeft;
       Array.prototype.forEach.call(document.querySelectorAll('#stcat .chip'), function(b2){
@@ -3888,7 +3919,7 @@ function studyClick(ev){
       return;
     }
     var enc = ev.target.closest('[data-enc]');
-    if(enc && studyHlMode() && hlHas(ENCYC.filter(function(x){ return x.n === enc.dataset.enc; })[0])){
+    if(enc && studyHlMode() && sheetHas(ENCYC.filter(function(x){ return x.n === enc.dataset.enc; })[0])){
       studyHlFold[enc.dataset.enc] = !studyHlFold[enc.dataset.enc];
       refreshStudyResults();
       return;
@@ -4255,7 +4286,8 @@ var TUTORIAL = [
      +'ほかの選択肢が「なぜ違うか」もその場で確認できます。' },
   { tab:'quiz-explain', sel:'[data-qmark]', t:'解説の下からも保存',
     b:'正解しても自信がなかった問題は、ここからもマイリストに保存できます。'
-     +'保存した問題はホームの「マイリスト」でタグごとに解き直せます。一問一答も☆で保存できます。' },
+     +'保存した問題はホームの「マイリスト」でタグごとに解き直せます。一問一答も☆で保存できます。'
+     +'関連知識や事典の項目も、本文の下の「☆ マイリストに保存」から保存でき、マイリストの「事典」でまとめて読めます。' },
   { tab:'quiz-explain', sel:'.fbbtn', t:'メモを残す',
     b:'覚えにくい点や、自分なりの語呂などを問題ごとに書き留められます。'
      +'教科書の図などを撮って添付することもできます（1件につき4枚まで）。'
@@ -4619,13 +4651,14 @@ function qaHtml(){
 var mlOn = false, mlKind = 'q', mlFilter = [], mlOpenQa = null, mlCatOpen = {}, mlEditOpen = false;
 var qaTagPool = null, qaFromMl = false;   /* マイリストから一問一答を解くときの出題範囲 */
 function mlHtml(){
-  var nQ = taggedIds('q').length, nQa = taggedIds('qa').length;
+  var nQ = taggedIds('q').length, nQa = taggedIds('qa').length, nE = taggedIds('enc').length;
   mlFilter = mlFilter.filter(function(t){ return S.tagDefs[t]; });
   var L = tagList();
   var h = '<div class="qahead"><button class="x" data-mlclose="1">✕</button><span class="qatitle">マイリスト</span>'
-        + '<span class="qascore">'+(nQ+nQa)+'件</span></div>';
+        + '<span class="qascore">'+(nQ+nQa+nE)+'件</span></div>';
   h += '<div class="mlseg"><button class="'+(mlKind==='q'?'on':'')+'" data-mlkind="q">問題<span>'+nQ+'</span></button>'
-     + '<button class="'+(mlKind==='qa'?'on':'')+'" data-mlkind="qa">一問一答<span>'+nQa+'</span></button></div>';
+     + '<button class="'+(mlKind==='qa'?'on':'')+'" data-mlkind="qa">一問一答<span>'+nQa+'</span></button>'
+     + '<button class="'+(mlKind==='enc'?'on':'')+'" data-mlkind="enc">事典<span>'+nE+'</span></button></div>';
   h += '<div class="mlchips"><button class="mlchip'+(mlFilter.length?'':' on')+'" data-mltag="">すべて</button>';
   L.forEach(function(t){
     var on = mlFilter.indexOf(t.id) >= 0;
@@ -4636,7 +4669,9 @@ function mlHtml(){
   if(mlFilter.length > 1) h += '<div class="sub" style="margin:-4px 0 8px">選んだタグのどれかが付いたものを表示しています</div>';
 
   var ids = taggedIds(mlKind, mlFilter);
-  if(!ids.length){
+  if(mlKind === 'enc'){
+    h += mlEncHtml(ids, nE);
+  } else if(!ids.length){
     h += '<div class="card soft" style="text-align:center;padding:22px 14px">'
        + ((mlKind==='q'?nQ:nQa) ? 'このタグの'+(mlKind==='q'?'問題':'一問一答')+'はまだありません。'
           : (mlKind==='q' ? '問題画面の右上の☆を押すと、ここに保存できます。' : '一問一答の画面の☆を押すと、ここに保存できます。'))
@@ -4678,13 +4713,51 @@ function mlHtml(){
   h += '<details class="mledit" data-mledit="1"'+(mlEditOpen?' open':'')+'><summary>タグを編集（'+L.length+' / '+TAG_MAX+'）</summary><div class="sub" style="margin:8px 0">色の丸を押すと色が変わります。タグを削除しても、問題は消えません。</div><div class="list">';
   L.forEach(function(t){
     h += '<div class="li mltag"><button class="mlcol" data-mlcol="'+esc(t.id)+'" style="background:'+t.c+'" title="色を変える"></button>'
-       + '<span style="flex:1">'+esc(t.n)+'</span><span class="n">'+(tagCount('q',t.id)+tagCount('qa',t.id))+'</span>'
+       + '<span style="flex:1">'+esc(t.n)+'</span><span class="n">'+(tagCount('q',t.id)+tagCount('qa',t.id)+tagCount('enc',t.id))+'</span>'
        + '<button class="bmrename" data-mlren="'+esc(t.id)+'" title="名前を変更">✎</button>'
        + '<button class="bmrename" data-mldel="'+esc(t.id)+'" title="削除">✕</button></div>';
   });
   h += '</div>' + (L.length < TAG_MAX ? '<button class="ghost" data-mladd="1" style="margin-top:10px">＋ 新しいタグ</button>' : '') + '</details>';
   h += '<div style="height:20px"></div>';
   return h;
+}
+/* マイリストの「事典」：保存した項目を分野ごとに並べ、まとめて読む・1項目ずつ開く */
+function mlEncHtml(ids, nE){
+  var h = '';
+  if(!ids.length){
+    return h + '<div class="card soft" style="text-align:center;padding:22px 14px">'
+      + (nE ? 'このタグの事典の項目はまだありません。' : '事典の項目や、解説の「関連知識」の下にある「☆ マイリストに保存」を押すと、ここに保存できます。')
+      + '</div>';
+  }
+  h += '<button class="cta" data-mlread="1" style="margin-bottom:12px">この'+ids.length+'項目を続けて読む</button>';
+  var byCat = {}, order = [];
+  ENCYC.forEach(function(e){
+    if(ids.indexOf(e.n) < 0) return;
+    if(!byCat[e.c]){ byCat[e.c] = []; order.push(e.c); }
+    byCat[e.c].push(e);
+  });
+  order.sort(function(a,b){ return (CAT_LETTER[a]||'Z').localeCompare(CAT_LETTER[b]||'Z'); });
+  var openAll = ids.length <= 15;
+  order.forEach(function(c){
+    var key = 'enc:'+c, open = (key in mlCatOpen) ? mlCatOpen[key] : openAll;
+    h += '<details class="mlcat" data-mlcat="'+esc(key)+'"'+(open?' open':'')+'><summary><b>'+esc(letterOf(c))+'</b>'+esc(c)+'<span class="n">'+byCat[c].length+'</span></summary><div class="list">';
+    byCat[c].sort(encCompare).forEach(function(e){
+      h += '<div class="li mlli">'+starBtn('enc', e.n, 'mlstar', 'data-encstar="'+esc(e.n)+'"')
+         + '<span class="mltx" data-mlenc="'+esc(e.n)+'">'+esc(e.n)+(e.p ? '<span class="mlhint">'+esc(e.p)+'の関連項目</span>' : '')+'</span>'
+         + '<span class="n" style="color:var(--soft)">›</span></div>';
+    });
+    h += '</div></details>';
+  });
+  return h;
+}
+/* 事典のタブで1項目を開く（関連項目なら親の中で開く） */
+function openEncInStudy(name){
+  var hit = null; for(var i=0;i<ENCYC.length;i++) if(ENCYC[i].n===name){ hit = ENCYC[i]; break; }
+  if(!hit) return;
+  studyTab = 'dis'; studyCat = ''; studyQ = hit.p || hit.n; studyOpen = hit.p || hit.n; studyChildOpen = hit.p ? hit.n : null;
+  studyGyo = ''; studyIni = '';
+  go('study');
+  setTimeout(function(){ var o = document.querySelector('#main .enchild.open') || document.querySelector('#main .encard.open'); if(o) o.scrollIntoView({block:'start'}); }, 60);
 }
 function mlClick(e){
   var t = e.target;
@@ -4707,6 +4780,12 @@ function mlClick(e){
     renderHome(); return;
   }
   var o = t.closest('[data-open]'); if(o){ startSession([parseInt(o.dataset.open,10)], true); return; }
+  var oe = t.closest('[data-mlenc]'); if(oe){ openEncInStudy(oe.dataset.mlenc); return; }
+  if(t.closest('[data-mlread]')){
+    studyMlNames = taggedIds('enc', mlFilter);
+    studyTab = 'dis'; studyCat = MLCAT; studyQ = ''; studyOpen = null; studyChildOpen = null; studyHlFold = {}; studyChipLeft = 0;
+    go('study'); window.scrollTo(0,0); return;
+  }
   var qa = t.closest('[data-mlqa]'); if(qa){ var qid = parseInt(qa.dataset.mlqa,10); mlOpenQa = (mlOpenQa===qid) ? null : qid; renderHome(); return; }
   if(t.closest('[data-mlrun]')){
     var ids = taggedIds(mlKind, mlFilter);
@@ -4728,7 +4807,7 @@ function mlClick(e){
   if(rn){ var d2 = S.tagDefs[rn.dataset.mlren]; var nv = prompt('タグの名前（20文字まで）', d2.n); if(nv !== null && nv.trim()){ d2.n = nv.trim().slice(0,20); save(); renderHome(); } return; }
   var dl = t.closest('[data-mldel]');
   if(dl){
-    var did = dl.dataset.mldel, d3 = S.tagDefs[did], n = tagCount('q',did) + tagCount('qa',did);
+    var did = dl.dataset.mldel, d3 = S.tagDefs[did], n = tagCount('q',did) + tagCount('qa',did) + tagCount('enc',did);
     if(confirm('タグ「'+d3.n+'」を削除しますか？' + (n ? '\nこのタグを付けた'+n+'件からタグが外れます（問題は消えません）。' : ''))){ tagDelete(did); renderHome(); }
     return;
   }
@@ -4773,12 +4852,12 @@ function renderHome(){
 
   h += '<button class="primary" data-act="due" style="margin-bottom:9px"><span class="badge">'+due+'</span><span style="flex:1"><span style="display:block;font:700 14px var(--sans)">今日の復習</span><span style="display:block;font:400 11px var(--sans);opacity:.75;margin-top:2px">'+(due ? '復習の時期が来た問題が'+due+'問あります' : 'いま復習する問題はありません')+'</span></span><span class="mono" style="opacity:.7">›</span></button>';
 
-  var nMq = taggedIds('q').length, nMqa = taggedIds('qa').length;
+  var nMq = taggedIds('q').length, nMqa = taggedIds('qa').length, nMe = taggedIds('enc').length;
   h += '<button class="ghost markbtn" data-act="mylist" style="margin-bottom:9px">'
-     + '<span class="badge mk">'+(nMq+nMqa)+'</span>'
+     + '<span class="badge mk">'+(nMq+nMqa+nMe)+'</span>'
      + '<span style="flex:1;text-align:left"><span style="display:block;font:700 14px var(--sans)">マイリスト</span>'
      + '<span style="display:block;font:400 11px var(--sans);color:var(--soft);margin-top:2px">'
-     +   ((nMq+nMqa) ? '問題 '+nMq+'問・一問一答 '+nMqa+'問をタグ別に解き直す' : '☆で保存した問題をタグ別に解き直せます')
+     +   ((nMq+nMqa+nMe) ? '問題 '+nMq+'問・一問一答 '+nMqa+'問'+(nMe ? '・事典 '+nMe+'項目' : '')+'をタグ別に見直す' : '☆で保存した問題をタグ別に解き直せます')
      + '</span></span><span class="mono" style="opacity:.6">›</span></button>';
 
   h += '<button class="ghost qabtn" data-act="qa" style="margin-bottom:9px">'
@@ -5471,7 +5550,7 @@ function renderStats(){
   });
   h += '</div><div class="sub" style="margin-top:8px">分野をタップすると、その分野から出題します</div></details>';
 
-  var nMy = taggedIds('q').length + taggedIds('qa').length;
+  var nMy = taggedIds('q').length + taggedIds('qa').length + taggedIds('enc').length;
   h += '<div class="list" style="margin:16px 0 9px"><div class="li" data-act="mylist"><span style="flex:1;font-weight:700">マイリスト</span><span class="n">'+nMy+'件</span><span class="mono" style="opacity:.6">›</span></div></div>';
 
   if(S.feedback && S.feedback.length){
@@ -5964,7 +6043,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "fbbc6b4fbcc1";
+<script>window.BOARD_BUILD = "d02fef3609ef";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>

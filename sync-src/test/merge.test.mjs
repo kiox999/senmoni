@@ -101,6 +101,14 @@ t('マイリスト: 別々の問題に付けたタグは両方残り、端末で
   assert.deepEqual(m.qatags, { 5: ['t1'] });
   assert.deepEqual(Object.keys(m.tagDefs).sort(), ['later', 't1', 'u9']);
 });
+t('マイリスト（事典）: 項目ごとに変えた側を採用し、etags を知らない版が書いたクラウドでは消えない', () => {
+  const base = { etags: { A: ['t1'] } };
+  const local = { etags: { A: ['t1', 't2'], B: ['later'] } };
+  const cloud = { etags: { A: ['t1'], C: ['t3'] } };
+  assert.deepEqual(mergeSubject(base, local, cloud).etags, { A: ['t1', 't2'], B: ['later'], C: ['t3'] });
+  assert.deepEqual(mergeSubject(base, local, { rank: 1 }).etags, local.etags);
+});
+
 t('マーカー: 項目ごとに変えた側を採用し、hl を知らない版が書いたクラウドでは消えない', () => {
   const base = { hl: { A: [['あいう', 0]], B: [['かき', 0]] } };
   const local = { hl: { A: [['あいう', 0], ['えお', 1]], B: [['かき', 0]] } };

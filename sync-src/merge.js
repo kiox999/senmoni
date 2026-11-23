@@ -16,7 +16,7 @@ export var GLOBAL_KEYS = ['theme', 'fontsize', 'fontfamily', 'sound', 'soundVol'
 
 /* 科目ごと（学習データ） */
 export var SUBJECT_KEYS = ['prog', 'hist', 'log', 'marks', 'examLog', 'rank', 'feedback',
-  'bmNames', 'dailyGoal', 'spacing', 'tagDefs', 'qtags', 'qatags', 'hl'];
+  'bmNames', 'dailyGoal', 'spacing', 'tagDefs', 'qtags', 'qatags', 'hl', 'etags'];
 
 export function keysFor(docId) { return docId === 'global' ? GLOBAL_KEYS : SUBJECT_KEYS; }
 
@@ -188,6 +188,12 @@ export function mergeSubject(base, local, cloud) {
     out.hl = cloud.hl === undefined ? clone(obj(local.hl))
       : local.hl === undefined ? clone(obj(cloud.hl))
       : map3(base.hl, local.hl, cloud.hl);
+  }
+  /* マイリスト（事典の項目）: 「項目名→タグの配列」。etags を知らない版が書いたクラウドでも消えないよう hl と同じ扱い */
+  if (has('etags')) {
+    out.etags = cloud.etags === undefined ? clone(obj(local.etags))
+      : local.etags === undefined ? clone(obj(cloud.etags))
+      : map3(base.etags, local.etags, cloud.etags);
   }
   if (has('feedback')) out.feedback = mergeFeedback(base.feedback, local.feedback, cloud.feedback);
   if (has('rank')) out.rank = Math.max(num(local.rank), num(cloud.rank));

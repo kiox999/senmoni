@@ -194,6 +194,7 @@ body.hlh1 mark.uhl.c1:not(.rev){background:#EC5F7A}
 body.hlh2 mark.uhl.c2:not(.rev){background:#4A97EE}
 body.hlh3 mark.uhl.c3:not(.rev){background:#34B274}
 .hlbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);font:500 11px var(--sans);color:var(--soft)}
+.hlsheettop{margin:0 2px 12px}.hlsheettop .hlbar{margin-top:6px;border-top:0;padding-top:0}.hlsheettop .hlbl{display:none}
 .hlbar .hlbl{margin-right:2px}
 .hlbar .hlsheet{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
 .hldot{width:22px;height:22px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer;background:#F2C200;opacity:.45}
@@ -3591,6 +3592,10 @@ function encycSecs(body){
   }
   return out.filter(function(x){ return x.text; });
 }
+/* 「マーカーあり」の絞り込み：マーカーを引いた項目だけを、本文を開いた状態でまとめて並べる（暗記シートとして通して読める） */
+var HLCAT = '\u0001hl', studyHlFold = {};
+function hlHas(e){ return !!(e && (hlStore()[e.n] || []).length); }
+function studyHlMode(){ return studyCat === HLCAT && !studyQ.trim(); }
 function studyList(){
   var q = studyQ.trim().toLowerCase();
   var qa = q.replace(/[\s\-・.]/g,'');
@@ -3602,7 +3607,8 @@ function studyList(){
   }
   var out = [], rest = [];
   studyItems().forEach(function(e){
-    if(studyCat && catOf(e) !== studyCat) return;
+    if(studyCat === HLCAT){ if(!hlHas(e)) return; }
+    else if(studyCat && catOf(e) !== studyCat) return;
     if(!q){ out.push(e); return; }
     var nm = e.n.toLowerCase();
     var ab = (e.ab||'').toLowerCase();
@@ -3676,7 +3682,10 @@ function renderStudy(){
   }
   var ph = studyTab==='drug' ? '一般名・商品名で探す（例：ボスミン、ST合剤）' : (studyTab==='term' ? '略語・検査値で探す（例：FENa、アニオンギャップ）' : '疾患名・キーワードで探す（例：'+SUBJ.phStudy+'）');
   h += '<input class="search" id="stq" type="search" inputmode="text" lang="ja" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="'+esc(ph)+'" value="'+esc(studyQ)+'">';
+  var nHl = items.filter(hlHas).length;
+  if(!nHl && studyCat === HLCAT) studyCat = '';
   h += '<div class="scrollwrap"><div class="chiprow chipscroll" id="stcat"><button class="chip'+(studyCat?'':' on')+'" data-scat="">すべて</button>'
+     + (nHl ? '<button class="chip hlchip'+(studyCat===HLCAT?' on':'')+'" data-scat="'+HLCAT+'">マーカーあり '+nHl+'</button>' : '')
      + studyCats().map(function(cc){
          var n = items.filter(function(e){ return catOf(e)===cc; }).length;
          if(!n) return '';
@@ -3744,11 +3753,14 @@ function studyResultsHtml(){
   if(!shown.length){
     h += '<div class="soft">該当する項目がありません。別の言葉で探してみてください。</div>';
   }
+  if(studyHlMode() && shown.length){
+    h += '<div class="hlsheettop"><div class="sub">マーカーを引いた項目を開いて並べています。下の色を選ぶと、その色のマーカーをまとめて隠せます。</div>' + hlBar('') + '</div>';
+  }
   h += '<div class="enlist">';
   var lastGyo = null, sorted = !studyQ.trim();
   /* 検索していない長い一覧は、上に行の索引（A–Z あ か さ…）を出し、選んだ行だけを並べる。
      行が長ければ、その下に頭文字のボタンを出してさらに絞れるようにする */
-  if(sorted && shown.length > STUDY_FOLD && studyTab !== 'term'){
+  if(sorted && shown.length > STUDY_FOLD && studyTab !== 'term' && !studyHlMode()){
     var gyos = [], byG = {};
     shown.forEach(function(e){ var g = encGyo(e); if(!byG[g]){ byG[g] = []; gyos.push(g); } byG[g].push(e); });
     if(!byG[studyGyo]) studyGyo = gyos[0];
@@ -3784,7 +3796,8 @@ function studyResultsHtml(){
 }
 function studyCardHtml(e){
     var h = '';
-    var op = studyOpen === e.n;
+    var hm = studyHlMode();
+    var op = hm ? !studyHlFold[e.n] : studyOpen === e.n;
     var kids = childrenOf(e.n);
     h += '<div class="encard'+(op?' open':'')+'">'
        + '<button class="enhead" data-en="'+esc(e.n)+'">'
@@ -3796,7 +3809,7 @@ function studyCardHtml(e){
     if(op){
       h += '<div class="enbody" data-n="'+esc(e.n)+'">' + encBodyHtml(e);
       kids.forEach(function(k){
-        var kop = studyChildOpen === k.n;
+        var kop = hm ? (hlHas(k) ? !studyHlFold[k.n] : studyChildOpen === k.n) : studyChildOpen === k.n;
         h += '<div class="enchild'+(kop?' open':'')+'">'
            + '<button class="enchead" data-enc="'+esc(k.n)+'">'
            +   '<span class="enctag">関連</span>'
@@ -3875,6 +3888,11 @@ function studyClick(ev){
       return;
     }
     var enc = ev.target.closest('[data-enc]');
+    if(enc && studyHlMode() && hlHas(ENCYC.filter(function(x){ return x.n === enc.dataset.enc; })[0])){
+      studyHlFold[enc.dataset.enc] = !studyHlFold[enc.dataset.enc];
+      refreshStudyResults();
+      return;
+    }
     if(enc){
       studyChildOpen = (studyChildOpen===enc.dataset.enc) ? null : enc.dataset.enc;
       refreshStudyResults();
@@ -3883,6 +3901,11 @@ function studyClick(ev){
       return;
     }
     var en = ev.target.closest('[data-en]');
+    if(en && studyHlMode()){
+      studyHlFold[en.dataset.en] = !studyHlFold[en.dataset.en];
+      refreshStudyResults();
+      return;
+    }
     if(en){
       if(studyOpen !== en.dataset.en) studyChildOpen = null;   /* 別の親を開いたら子は閉じる */
       studyOpen = (studyOpen===en.dataset.en) ? null : en.dataset.en;
@@ -4243,7 +4266,8 @@ var TUTORIAL = [
   { tab:'study', sel:null, t:'マーカーと暗記シート',
     b:'事典と、解答後の「関連知識」の本文は、文字を選ぶと4色のマーカーを引けます。同じメニューからコピーとWeb検索もできます。'
      +'引いた所をタップすると、色替えと消去ができます。'
-     +'本文の下の「暗記シートで隠す色」を押すと、その色のマーカーが塗りつぶされ、タップした所だけ答えが見えます。' },
+     +'本文の下の「暗記シートで隠す色」を押すと、その色のマーカーが塗りつぶされ、タップした所だけ答えが見えます。'
+     +'事典の「マーカーあり」を選ぶと、マーカーを引いた項目がまとめて開き、続けて読めます。' },
   { tab:'rank', sel:null, tabfree:1, t:'段位に挑戦',
     b:'貯めたXPで認定試験を受けられます。5級から十段まであり、'
      +'段位が上がるほど問題数が増え、合格ラインと複数解答の割合が高くなります。'
@@ -5940,7 +5964,7 @@ window.BOARD_BACK = function(){
     <div class="dlgbtns"><button type="button" id="dlgCancel" class="dlgbtn">キャンセル</button><button type="button" id="dlgOk" class="dlgbtn ok">OK</button></div>
   </div>
 </div>
-<script>window.BOARD_BUILD = "6139e257cd57";
+<script>window.BOARD_BUILD = "68368d1734ad";
 if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){ window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
 </script>
 <script>
